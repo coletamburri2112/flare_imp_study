@@ -63,7 +63,7 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum):
     curves304 = best304['event_curves_more']
 
     sav_fname=("/Users/owner/Desktop/CU_Research/HMI_files/posfile"+str(year).zfill(4)+str(mo).zfill(2)+str(day).zfill(2)+"_"+str(sthr).zfill(2)+str(stmin).zfill(2)+"_"+str(arnum).zfill(5)+"_"+xcl+str(xclnum)+"_cut08_sat5000.00_brad.sav")
-sav_data=readsav(sav_fname)
+    sav_data=readsav(sav_fname)
     
     aia_cumul8 = sav_data.pos8
     last_cumul8 = aia_cumul8[-1,:,:]
