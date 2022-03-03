@@ -18,6 +18,24 @@ from itertools import product
 import scipy.signal
 import matplotlib.dates as mdates
 
+def conv_facts():
+    pix_to_arcsec = 0.6
+    arcsec_to_radians = 1/206265
+    radians_to_Mm = 149598
+    
+    conv_f = pix_to_arcsec*arcsec_to_radians*radians_to_Mm
+    
+    xarr_Mm = np.zeros(800)
+    yarr_Mm = np.zeros(800)
+    for i in range(800):
+        xarr_Mm[i] = (i-400)*conv_f
+        yarr_Mm[i] = (i-400)*conv_f
+        
+    X,Y = np.meshgrid(xarr_Mm,yarr_Mm)
+        
+    return X, Y, conv_f, xarr_Mm, yarr_Mm
+    
+
 def curve_length(curve):
     """ sum of Euclidean distances between points """
     return np.sum(np.sqrt(np.sum((curve[:-1] - curve[1:])**2,axis=1)))
@@ -678,5 +696,137 @@ def prep_times(dn1600, time304):
             dt304.append(datenum_to_datetime(time304[i]))
             
     return dt1600, dt304
-    
 
+# plotting routines
+
+def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, neg1600,
+            lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm, aiadat, hmi_cumul_mask1,
+            dt304, timelab, conv_f, ivs, dvs, year, mo, day, arnum, xcl, xclnum,
+            X, Y, xarr_Mm, yarr_Mm, dt1600, flag = 1):
+        
+
+    min304=min(filter_304[s304:e304])
+    max304=max(filter_304[s304:e304])
+    minpos1600=min(pos1600)
+    maxpos1600=max(pos1600)
+    minneg1600=min(neg1600)
+    maxneg1600=max(neg1600)
+    
+    norm304=(filter_304-min304)/(max304-min304)
+    normpos1600=(pos1600-minpos1600)/(maxpos1600-minpos1600)
+    normneg1600=(neg1600-minneg1600)/(maxneg1600-minneg1600)
+    scalefac = max(pos1600)/max(neg1600)
+    #plot 304 line, 1600 line, and figure
+    fig= plt.figure(figsize=(25,12))
+    
+    gs = fig.add_gridspec(9,9)
+    ax1 = fig.add_subplot(gs[:, 5:])
+    ax2 = fig.add_subplot(gs[0:4, 0:4])
+    ax0 = fig.add_subplot(gs[5:, 0:4])
+    lns1 = ax0.plot(dn1600[1:],lens_pos_Mm[1:],'-+',c='red',markersize=10,label='Pos. Elongation')
+    lns2 = ax0.plot(dn1600[1:],lens_neg_Mm[1:],'-+',c='blue',markersize=10,label='Neg. Elongation')
+    ax5 = ax0.twinx()
+    ax5.cla()
+    lns4 = ax5
+    lns5 = ax0.plot(dt1600[25:],distpos_Mm[25:],'-.',c='red',markersize=10,label='Pos. Separation')
+    ax0.plot(dt1600[25:],distneg_Mm[25:],'-.',c='blue',markersize=10,label='Neg. Separation')
+    
+    col1 = ax1.pcolormesh(X,Y,np.log10(aiadat[0,:,:]),cmap='pink',shading='auto')
+    col2 = ax1.contour(X,Y,hmi_cumul_mask1[0,:,:],cmap='seismic')
+    
+    lc304=ax2.plot(dt304,norm304,color='black',linewidth=1,label='Norm. 304$\AA$ Light Curve')
+    ax3=ax2.twinx()
+    lc1600=ax3.plot(dt1600,normpos1600,linewidth=3,color='red',label='Norm. 1600$\AA$ Light Curve, +')
+    lc1600=ax3.plot(dt1600,normneg1600,linewidth=3,color='blue',label='Norm. 1600$\AA$ Light Curve, +')
+    ax1.set_title(str(year)+"-"+str(mo)+"-"+str(day)+", AR"+str(arnum)+"\n"+xcl+str(xclnum)+" Class Flare\n",font='Times New Roman',fontsize=25,)#+"I = "+impulsivity+" mW/m$^2$/s")
+    ax2.set_title('304$\AA$ and 1600$\AA$ Light Curves',fontsize=25,)
+    
+    ax0.set_title('Ribbon Separation and Elongation',fontsize=25,)
+    ax0.legend(fontsize=15)
+    ax0.grid()
+    ax2.set_xlim([dn1600[0],dn1600[-1]])
+    ax3.set_xlim([dn1600[0],dn1600[-1]])
+    ax2.set_xticks([dn1600[0],dn1600[30],dn1600[60],dn1600[90],dn1600[120]])
+    ax2.set_xticklabels([timelab[0],timelab[30],timelab[60],timelab[90],timelab[120]])
+    ax3.set_xticks([dn1600[0],dn1600[30],dn1600[60],dn1600[90],dn1600[120]])
+    ax3.set_xticklabels([timelab[0],timelab[30],timelab[60],timelab[90],timelab[120]])
+    ax0.set_xticks([timelab[0],timelab[30],timelab[60],timelab[90],timelab[120]])
+    ax0.set_xticklabels([timelab[0],timelab[30],timelab[60],timelab[90],timelab[120]])
+    ax0.set_xlim([timelab[0],timelab[-1]])
+    ax1.scatter(ivs,dvs, color = 'k', s = 1)
+    lines, labels = ax0.get_legend_handles_labels()
+    lines2, labels2 = ax5.get_legend_handles_labels()
+    ax0.legend(lines + lines2, labels + labels2)
+    
+    ax5.set_ylim([0,140*conv_f])
+    
+    def animate(t): 
+        ax1.cla()
+        ax2.cla()
+        ax0.cla()
+        ax5 = ax0.twinx()
+        ax5.cla()
+        col1 = ax1.pcolormesh(X,Y,np.log10(aiadat[t,:,:]),cmap='pink',shading='auto')
+        col2 = ax1.contour(X,Y,hmi_cumul_mask1[t,:,:],cmap = 'seismic')
+        ax1.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=15)
+        ax1.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=15)
+        sep = ax0.plot(dt1600[25:],distpos_Mm[25:],'-.',c='red',markersize=10,label='Pos. Separation')
+        sep2 = ax0.plot(dt1600[25:],distneg_Mm[25:],'-.',c='blue',markersize=10,label='Neg. Separation')
+        ax1.scatter((ivs-400)*conv_f,(dvs-400)*conv_f, color = 'k', s = 1)
+        elon = ax5.plot(dt1600[1:],lens_pos_Mm[1:],'-+',c='red',markersize=10,label='Pos. Elongation')
+        elon2 = ax5.plot(dt1600[1:],lens_neg_Mm[1:],'-+',c='blue',markersize=10,label='Neg. Elongation')
+        ax1.set_xlim([-250*conv_f,250*conv_f])
+        ax1.set_ylim([-250*conv_f,250*conv_f])
+        lc304=ax2.plot(dt304,norm304,'-x',color='black',linewidth=1,label='304$\AA$')
+        ax3=ax2.twinx()
+        lc1600=ax3.plot(dt1600,normpos1600,linewidth=3,color='red',label='1600$\AA$, +')
+        lc1600=ax3.plot(dt1600,normneg1600,linewidth=3,color='blue',label='1600$\AA$, -')
+        ax2.set_xlim([dt1600[0],dt1600[-1]])
+        ax2.set_ylim([-0.05,1.05])
+        ax3.set_ylim([-0.05,1.05])
+    
+        myFmt = mdates.DateFormatter('%H:%M')
+        ax2.xaxis.set_major_formatter(myFmt)
+        ax3.xaxis.set_major_formatter(myFmt)
+        ax0.xaxis.set_major_formatter(myFmt)
+        ax5.xaxis.set_major_formatter(myFmt)
+        textstr = '1600Å +/- Factor: '+str(round(scalefac,3))
+        ax2.text(2*(max(dt1600)-min(dt1600))/5 + min(dt1600),0.1,textstr,fontsize=12,bbox=dict(boxstyle="square", facecolor="white",ec="k", lw=1,pad=0.3))
+        ax2.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],fontsize=15)
+        ax2.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],fontsize=15)
+        ax2.set_ylabel('Norm. Integ. Count, 1600$\AA$',color='purple',fontsize=15)
+    
+        lines, labels = ax2.get_legend_handles_labels()
+        lines2, labels2 = ax3.get_legend_handles_labels()
+        ax2.legend(lines + lines2, labels + labels2,loc='lower right')
+        ax2.grid(linestyle='dashed')
+        ax3.grid(linestyle='dashdot')
+        ax2.axvline(dt1600[t],linewidth=4,color='black')
+        ax0.axvline(dt1600[t],linewidth=4,color='black')
+        ax0.axvline(dt1600[t],linewidth=4,color='black')
+        ax1.set_title(str(year)+"-"+str(mo)+"-"+str(day)+", AR"+str(arnum)+", "+xcl+str(xclnum)+" Class Flare",fontsize=25)#"+I = "+impulsivity+" mW/m$^2$/s")
+        ax2.set_title('304$\AA$ and 1600$\AA$ Light Curves',fontsize=25)
+        ax0.set_xlim([dt1600[0],dt1600[-1]])
+        ax0.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],fontsize=15)
+        ax0.set_ylabel('Separation [Mm]',fontsize=15)
+        ax5.set_ylabel('Elongation [Mm]',fontsize=15)
+        ax0.set_title('Ribbon Separation and Elongation',fontsize=25,)
+        ax0.legend(fontsize=15)
+        ax0.grid()
+        ax1.text(57,95,str(dt1600[t].hour).zfill(2)+':'+str(dt1600[t].minute).zfill(2)+'.'+str(dt1600[t].second).zfill(2)+' UT',fontsize=20,bbox=dict(boxstyle="square", facecolor="white",ec="k", lw=1,pad=0.3))
+        
+        lines, labels = ax0.get_legend_handles_labels()
+        lines2, labels2 = ax5.get_legend_handles_labels()
+        ax0.legend(lines + lines2, labels + labels2,loc='lower right')
+    
+        ax5.set_ylim([0,140*conv_f])
+        return col1, col2, lc304, lc1600, sep, sep2, elon, elon2
+    
+    if flag == 1:
+        ani = animat.FuncAnimation(fig, animate, frames=np.shape(aiadat)[0], interval=20, repeat_delay=0)
+    elif flag == 0:
+        ani = animat.FuncAnimation(fig, animate, frames=5, interval=20, repeat_delay=0)
+    
+    ani.save(['/Users/owner/Desktop/'+mo+'_'+day+'_'+year+'.gif'],dpi=200)
+
+    return None
