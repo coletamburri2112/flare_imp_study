@@ -124,7 +124,7 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
     
     return hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c
 
-def spur_removal(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit, neg_crit, pt_range):
+def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3, pt_range=[-2,-1,1,2]):
     neg_rem = np.zeros(np.shape(hmi_neg_mask_c))
     pos_rem = np.zeros(np.shape(hmi_pos_mask_c))
 
@@ -186,7 +186,7 @@ def pil_gen(pil_mask_c, hmi_dat, lx=800, ly=800):
     
     return pil_mask_c, ivs, dvs, hmik
 
-def pos_mask_sep(aia_step8, hmi_dat):
+def mask_sep(aia_step8, hmi_dat):
     aia8 = aia_step8
     aia8_pos = np.zeros(np.shape(aia8))
     aia8_neg = np.zeros(np.shape(aia8))
@@ -229,3 +229,230 @@ def separation(aia8, ivs, dvs, aia8_pos, aia8_neg):
             distneg_mean[i] = np.mean(allneg_min)
             
     return distpos_med, distpos_mean, distneg_med, distpos_mean
+
+def mask_elon(aia_cumul8, hmi_dat):
+    aia8_a = aia_cumul8
+    aia8_pos_2 = np.zeros(np.shape(aia8_a))
+    aia8_neg_2 = np.zeros(np.shape(aia8_a))
+    
+    for i, j, k in np.ndindex(aia8_a.shape):
+            if aia8_a[i,j,k] == 1 and hmi_dat[j,k] > 0:
+                aia8_pos_2[i,j,k] = 1
+            elif aia8_a[i,j,k] == 1 and hmi_dat[j,k] < 0:
+                aia8_neg_2[i,j,k] = 1
+                
+    return aia8_pos_2, aia8_neg_2
+
+def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3, pt_range=[-2,-1,1,2]):
+    neg_rem1 = np.zeros(np.shape(aia8_pos_2))
+    pos_rem1 = np.zeros(np.shape(aia8_neg_2))
+
+    for i in range(len(neg_rem1)):
+        for j in range(len(neg_rem1[0])-2):
+            for k in range(len(neg_rem1[1])-2):
+                n = 0
+                if aia8_neg_2[i,j,k] == 1:
+                    for l in pt_range:
+                        for m in pt_range:
+                            if aia8_neg_2[i,j+l,k+m] == 1:
+                                n = n + 1
+                    if (n > neg_crit):
+                        neg_rem1[i,j,k] = 1
+                    else:
+                        neg_rem1[i,j,k] = 0
+                else:
+                    neg_rem1[i,j,k] = 0
+            
+    for i in range(len(pos_rem1)):
+        for j in range(len(pos_rem1[0])-2):
+            for k in range(len(pos_rem1[1])-2):
+                n = 0
+                if aia8_pos_2[i,j,k] == 1:
+                    for l in pt_range:
+                        for m in pt_range:
+                            if aia8_pos_2[i,j+l,k+m] == 1:
+                                n = n + 1
+                    if (n > pos_crit):
+                        pos_rem1[i,j,k] = 1
+                    else:
+                        pos_rem1[i,j,k] = 0
+                else:
+                    pos_rem1[i,j,k] = 0
+    
+    return neg_rem1, pos_rem1
+
+def lim_pil(ivs, dvs):
+    med_x = np.median(ivs)
+    med_y = np.median(dvs)
+    
+    ivs_lim = []
+    dvs_lim = []
+    
+    for i in range(len(ivs)):
+        if not (ivs[i] < (med_x - 200)) and not (ivs[i] > (med_x + 200)):
+            ivs_lim.append(ivs[i])
+            dvs_lim.append(dvs[i])
+            
+    return ivs_lim, dvs_lim, med_x, med_y
+
+def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y, ylim0_pos, ylim1_pos, ylim0_neg, ylim1_neg, xlim0_pos, xlim1_pos, xlim0_neg, xlim1_neg):
+    aia_pos_rem = np.zeros(np.shape(aia8_pos_2))
+    aia_neg_rem = np.zeros(np.shape(aia8_neg_2))
+    
+    for i in range(len(aia8_neg_2)):
+        for j in range(ylim0_neg,ylim1_neg):
+            for k in range(xlim0_neg,xlim1_neg):
+                if neg_rem1[i,j,k] > 0:
+                    aia_neg_rem[i,j,k] = 1
+                        
+    for i in range(len(aia8_pos_2)):
+        for j in range(ylim0_pos,ylim1_pos):
+            for k in range(xlim0_pos,xlim1_pos):
+                if pos_rem1[i,j,k] > 0:
+                    aia_pos_rem[i,j,k] = 1
+                    
+    return aia_pos_rem, aia_neg_rem
+
+def find_rib_coordinates(aia_pos_rem, aia_neg_rem):
+    lr_coord_pos = np.zeros([len(aia_pos_rem),4])        
+    lr_coord_neg = np.zeros([len(aia_neg_rem),4])
+
+
+    for i in range(len(aia_pos_rem)):
+        left_x = 0
+        left_y = 0
+        right_x = 0
+        right_y = 0
+        for k in range(len(aia_pos_rem[1])):
+            for j in range(len(aia_pos_rem[0])):
+                if aia_pos_rem[i,j,k] == 1:
+                    left_x = k
+                    left_y = j
+                    break
+            if left_x != 0:
+                break
+        for k in range(len(aia_pos_rem[1])-1,0,-1):
+            for j in range(len(aia_pos_rem[0])):
+                if aia_pos_rem[i,j,k] == 1:
+                    right_x = k
+                    right_y = j
+                    break
+            if right_x != 0:
+                break
+        lr_coord_pos[i,:] = [left_x,left_y,right_x,right_y]
+
+    for i in range(len(aia_neg_rem)):
+        left_x = 0
+        left_y = 0
+        right_x = 0
+        right_y = 0
+        for k in range(len(aia_neg_rem[1])):
+            for j in range(len(aia_neg_rem[0])):
+                if aia_neg_rem[i,j,k] == 1:
+                    left_x = k
+                    left_y = j
+                    break
+            if left_x != 0:
+                break
+        for k in range(len(aia_neg_rem[1])-1,0,-1):
+            for j in range(len(aia_neg_rem[0])):
+                if aia_neg_rem[i,j,k] == 1:
+                    right_x = k
+                    right_y = j
+                    break
+            if right_x != 0:
+                break
+        lr_coord_neg[i,:] = [left_x,left_y,right_x,right_y]
+        
+    return lr_coord_neg, lr_coord_pos
+
+def sort_pil(ivs_lim, dvs_lim):
+    pil_sort = np.vstack((ivs_lim, dvs_lim)).T
+    sortedpil = pil_sort[pil_sort[:,0].argsort()]
+    ivs_sort = sortedpil[:,0]
+    dvs_sort = sortedpil[:,1]
+    
+    return ivs_sort, dvs_sort, sortedpil
+
+
+def elon_dist_arrays(lr_coord_pos, lr_coord_neg, ivs_lim, dvs_lim, ivs_sort, dvs_sort):
+    left_pil_dist_pos = np.zeros([len(lr_coord_pos),len(ivs_sort)])
+    right_pil_dist_pos = np.zeros([len(lr_coord_pos),len(ivs_sort)])
+    left_pil_dist_neg = np.zeros([len(lr_coord_neg),len(ivs_sort)])
+    right_pil_dist_neg = np.zeros([len(lr_coord_neg),len(ivs_sort)])
+    pil_left_near_neg = np.zeros([len(left_pil_dist_neg),3])
+    pil_right_near_neg = np.zeros([len(right_pil_dist_neg),3])
+    pil_left_near_pos = np.zeros([len(left_pil_dist_pos),3])
+    pil_right_near_pos = np.zeros([len(right_pil_dist_pos),3])
+    
+    for i in range(len(lr_coord_pos)):
+        left_x,left_y,right_x,right_y = lr_coord_pos[i]
+        for j in range(len(ivs_sort)):
+            left_pil_dist_pos[i,j] = np.sqrt((left_x-ivs_sort[j])**2+(left_y-dvs_sort[j])**2)
+            right_pil_dist_pos[i,j] = np.sqrt((right_x-ivs_sort[j])**2+(right_y-dvs_sort[j])**2)
+    
+    for i in range(len(left_pil_dist_pos)):
+        ind = np.where(left_pil_dist_pos[i]==np.min(left_pil_dist_pos[i]))
+        pil_left_near_pos[i,:] = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]
+    
+    for j in range(len(right_pil_dist_pos)):
+        ind = np.where(right_pil_dist_pos[j]==np.min(right_pil_dist_pos[j]))
+        pil_right_near_pos[j,:] = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]
+                    
+
+    for i in range(len(lr_coord_neg)):
+        left_x,left_y,right_x,right_y = lr_coord_neg[i]
+        for j in range(len(ivs_sort)):
+            left_pil_dist_neg[i,j] = np.sqrt((left_x-ivs_sort[j])**2+(left_y-dvs_sort[j])**2)
+            right_pil_dist_neg[i,j] = np.sqrt((right_x-ivs_sort[j])**2+(right_y-dvs_sort[j])**2)
+    
+    for i in range(len(left_pil_dist_neg)):
+        ind = np.where(left_pil_dist_neg[i]==np.min(left_pil_dist_neg[i]))
+        pil_left_near_neg[i,:] = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]
+    
+    for j in range(len(right_pil_dist_neg)):
+        ind = np.where(right_pil_dist_neg[j]==np.min(right_pil_dist_neg[j]))
+        pil_right_near_neg[j,:] = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]               
+        
+    return pil_right_near_pos, pil_left_near_pos, pil_right_near_neg, pil_left_near_neg
+
+def elongation(pil_right_near_pos, pil_left_near_pos, pil_right_near_neg, pil_left_near_neg, sortedpil):
+    lens_pos = []
+    lens_neg = []
+    
+    for i in range(len(pil_right_near_pos)):
+        leftin = int(pil_left_near_pos[i,2])
+        rightin = int(pil_right_near_pos[i,2])
+        curvei = sortedpil[leftin:rightin,:]
+        lens_pos.append(curve_length(curvei))
+    
+    for i in range(len(pil_right_near_neg)):
+        leftin = int(pil_left_near_neg[i,2])
+        rightin = int(pil_right_near_neg[i,2])
+        curvei = sortedpil[leftin:rightin,:]
+        lens_neg.append(curve_length(curvei))
+        
+    return lens_pos, lens_neg
+
+def convert_to_Mm(lens_pos, dist_pos, lens_neg, dist_neg, conv_f):
+    lens_pos_Mm = np.zeros(np.shape(lens_pos))
+    lens_neg_Mm = np.zeros(np.shape(lens_neg))
+    distpos_Mm = np.zeros(np.shape(dist_pos))
+    distneg_Mm = np.zeros(np.shape(dist_neg))
+    
+    
+    for i in range(len(lens_pos)):
+        lens_pos_Mm[i] = lens_pos[i]*conv_f
+        lens_neg_Mm[i] = lens_neg[i]*conv_f
+        distpos_Mm[i] = dist_pos[i]*conv_f
+        distneg_Mm[i] = dist_pos[i]*conv_f
+        
+    dneg_len = np.diff(lens_neg_Mm)/24.
+    dpos_len = np.diff(lens_pos_Mm)/24.
+    dneg_dist = np.diff(distneg_Mm)/24.
+    dpos_dist = np.diff(distpos_Mm)/24.
+    
+    return lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm, dneg_len, dpos_len, dneg_dist, dpos_dist
+
+
+
