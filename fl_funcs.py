@@ -49,8 +49,7 @@ def find_nearest_ind(array, value):
     idx = np.nanargmin(np.abs(array - value))
     return idx
 
-def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum):
-    sav_data_aia=readsav(sav_fname)
+def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum, xcl):
 
     #load matlab file, get 304 light curves and start/peak/end times for flare
     best304 = sio.loadmat(bestflarefile)
@@ -63,7 +62,7 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum):
     curves304 = best304['event_curves_more']
 
     sav_fname=("/Users/owner/Desktop/CU_Research/HMI_files/posfile"+str(year).zfill(4)+str(mo).zfill(2)+str(day).zfill(2)+"_"+str(sthr).zfill(2)+str(stmin).zfill(2)+"_"+str(arnum).zfill(5)+"_"+xcl+str(xclnum)+"_cut08_sat5000.00_brad.sav")
-    sav_data=readsav(sav_fname)
+    sav_data = readsav(sav_fname)
     
     aia_cumul8 = sav_data.pos8
     last_cumul8 = aia_cumul8[-1,:,:]
@@ -72,9 +71,9 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum):
 
     aia_step8 = sav_data.inst_pos8
 
-    return sav_data_aia, best304, start304, peak304, end304, eventindices, times304, curves304, aia_cumul8, aia_step8, last_cumul8, hmi_dat, last_mask
+    return best304, start304, peak304, end304, eventindices, times304, curves304, aia_cumul8, aia_step8, last_cumul8, hmi_dat, last_mask
 
-def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat):
+def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
     hmi_cumul_mask = np.zeros(np.shape(aia_cumul8))
     hmi_cumul_mask1 = np.zeros(np.shape(aia_cumul8))
     for i in range(len(aia_cumul8)):
@@ -125,7 +124,7 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat):
     
     return hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c
 
-def spur_removal(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit, n_crit, pt_range):
+def spur_removal(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit, neg_crit, pt_range):
     neg_rem = np.zeros(np.shape(hmi_neg_mask_c))
     pos_rem = np.zeros(np.shape(hmi_pos_mask_c))
 
@@ -160,3 +159,73 @@ def spur_removal(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit, n_crit, pt_range):
                 pos_rem[i,j] = 0 
     
     return neg_rem, pos_rem
+
+def gauss_conv(pos_rem, neg_rem, sigma = 10):
+    
+    gauss_kernel = Gaussian2DKernel(sigma)
+    hmi_con_pos_c = convolve(pos_rem, gauss_kernel)
+    hmi_con_neg_c = convolve(neg_rem, gauss_kernel)
+    pil_mask_c = hmi_con_pos_c*hmi_con_neg_c
+    
+    return hmi_con_pos_c, hmi_con_neg_c, pil_mask_c
+
+def pil_gen(pil_mask_c, hmi_dat, lx=800, ly=800):
+    pil_mask_c = -1.0*pil_mask_c
+    thresh = 0.05*np.amax(pil_mask_c)
+    xc, yc = np.where(pil_mask_c > thresh)
+
+    x = np.linspace(0, lx, lx)
+    y = np.linspace(0, ly, ly)
+    a, b, c, d, e = np.polyfit(y[yc],x[xc],4)
+
+    ivs = y[yc]
+
+    dvs = a*ivs**4 + b*ivs**3 + c*ivs**2 + d*ivs + e
+    
+    hmik = hmi_dat/1000
+    
+    return pil_mask_c, ivs, dvs, hmik
+
+def pos_mask_sep(aia_step8, hmi_dat):
+    aia8 = aia_step8
+    aia8_pos = np.zeros(np.shape(aia8))
+    aia8_neg = np.zeros(np.shape(aia8))
+
+    for i in range(len(aia8)):
+        for j in range(len(aia8[0])):
+            for k in range(len(aia8[1])):
+                if aia8[i,j,k] == 1 and hmi_dat[j,k] > 0:
+                    aia8_pos[i,j,k] = 1
+                elif aia8[i,j,k] == 1 and hmi_dat[j,k] < 0:
+                    aia8_neg[i,j,k] = 1
+                    
+    return aia8_pos, aia8_neg
+
+def separation(aia8, ivs, dvs, aia8_pos, aia8_neg):
+    pil = list(zip(ivs,dvs))
+
+    distpos_med = np.zeros(len(aia8))
+    distneg_med = np.zeros(len(aia8))
+    distpos_mean = np.zeros(len(aia8))
+    distneg_mean = np.zeros(len(aia8))
+    
+    for i in range(len(aia8)):
+        posframe = aia8_pos[i,:,:]
+        negframe = aia8_neg[i,:,:]  
+        xpos,ypos = np.where(posframe == 1)
+        xneg,yneg = np.where(negframe == 1)
+        pos_ops = list(zip(ypos,xpos))
+        neg_ops = list(zip(yneg,xneg))
+        if len(pos_ops) > 0:
+            allpos = cdist(pos_ops,pil)
+            # set the minimum for each pixel first
+            allpos_min = np.amin(allpos,axis=1)
+            distpos_med[i] = np.median(allpos_min)
+            distpos_mean[i] = np.mean(allpos_min)
+        if len(neg_ops) > 0:
+            allneg = cdist(neg_ops,pil)
+            allneg_min = np.amin(allneg,axis=1)
+            distneg_med[i] = np.median(allneg_min)
+            distneg_mean[i] = np.mean(allneg_min)
+            
+    return distpos_med, distpos_mean, distneg_med, distpos_mean
