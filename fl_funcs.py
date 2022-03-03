@@ -51,6 +51,7 @@ def find_nearest_ind(array, value):
 
 def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum, xcl):
 
+    data_dir=pjoin(dirname(sio.__file__),'tests','data')
     #load matlab file, get 304 light curves and start/peak/end times for flare
     best304 = sio.loadmat(bestflarefile)
 
@@ -61,6 +62,8 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum, xcl
     times304 = best304['event_times_more']
     curves304 = best304['event_curves_more']
 
+    sav_fname_aia=pjoin(data_dir,"/Users/owner/Desktop/Final_Selection/AIA_Files/aia1600blos"+str(year).zfill(4)+str(mo).zfill(2)+str(day).zfill(2)+"_"+str(sthr).zfill(2)+str(stmin).zfill(2)+"_"+str(arnum).zfill(5)+"_"+xcl+str(xclnum)+".sav")
+    sav_data_aia = readsav(sav_fname_aia)
     sav_fname=("/Users/owner/Desktop/CU_Research/HMI_files/posfile"+str(year).zfill(4)+str(mo).zfill(2)+str(day).zfill(2)+"_"+str(sthr).zfill(2)+str(stmin).zfill(2)+"_"+str(arnum).zfill(5)+"_"+xcl+str(xclnum)+"_cut08_sat5000.00_brad.sav")
     sav_data = readsav(sav_fname)
     
@@ -71,7 +74,7 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum, xcl
 
     aia_step8 = sav_data.inst_pos8
 
-    return best304, start304, peak304, end304, eventindices, times304, curves304, aia_cumul8, aia_step8, last_cumul8, hmi_dat, last_mask
+    return sav_data_aia, best304, start304, peak304, end304, eventindices, times304, curves304, aia_cumul8, aia_step8, last_cumul8, hmi_dat, last_mask
 
 def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
     hmi_cumul_mask = np.zeros(np.shape(aia_cumul8))
@@ -454,5 +457,226 @@ def convert_to_Mm(lens_pos, dist_pos, lens_neg, dist_neg, conv_f):
     
     return lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm, dneg_len, dpos_len, dneg_dist, dpos_dist
 
+def prep_304_parameters(sav_data_aia, sav_data, eventindices, flnum, start304, peak304, end304, times304, curves304):
+    xlo = sav_data_aia.x1los
+    xhi = sav_data_aia.x2los
+    ylo = sav_data_aia.y1los
+    yhi = sav_data_aia.y2los
 
+    aiadat = sav_data_aia.aia1600
+    time = sav_data.time
+    
+    nt = len(time)
+    nx = aiadat.shape[1]
+    ny = aiadat.shape[2]
+    t1=str(sav_data.tim[0])
+    t2=str(sav_data.tim[-1])
+    tst=float(t1[14:15:1])+(float(t1[17:18:1])/60)+(float(t1[20:24:1])/3600)
+    tend=float(t2[14:15:1])+(float(t2[17:18:1])/60)+(float(t2[20:24:1])/3600)
+    times=np.linspace(tst,tend,nt)
+
+    x = np.linspace(xlo,xhi,nx)
+    y = np.linspace(ylo,yhi,ny)
+    x,y=np.meshgrid(x,y)
+    
+    times1600 = np.empty(nt,dtype=datetime.datetime)
+    sum1600 = np.empty(nt)
+    dn1600 = np.empty(nt)
+    
+    for i in range(nt):
+        timechoi = str(sav_data.tim[i])
+        times1600[i] = datetime.datetime.strptime(timechoi[2:21], '20%y-%m-%dT%H:%M:%S')
+        dn1600[i] = datenum(times1600[i])
+        timestep=aiadat[i,:,:]
+        sum1600[i]=timestep.sum()
+        
+    ind = (np.isclose(eventindices,flnum))
+    index = np.where(ind)[0][0]
+    
+    curve304 = curves304[index]
+    time304 = times304[index]
+    
+    #integrate over all pixels in 1600A line
+    for i in range(nt):
+        timestep=aiadat[i,:,:]
+        sum1600[i]=timestep.sum()
+        
+    startin = np.where(dn1600==find_nearest(dn1600,start304[ind][0]))
+    peakin = np.where(dn1600==find_nearest(dn1600,peak304[ind][0]))
+    endin = np.where(dn1600==find_nearest(dn1600,end304[ind][0]))
+    
+    for i in range(nt):
+        timechoi = str(sav_data.tim[i])
+        times1600[i] = datetime.datetime.strptime(timechoi[2:21], '20%y-%m-%dT%H:%M:%S')
+        
+    s304 = find_nearest_ind(time304,min(dn1600))
+    e304 = find_nearest_ind(time304,max(dn1600))
+    filter_304 = scipy.signal.medfilt(curve304,kernel_size=5)
+
+    med304 = np.median(curve304)
+    std304 = np.std(curve304)
+    for i in range(len(curve304)):
+        if curve304[i] < 0.54:
+            curve304[i]='NaN'
+        
+    timelab = np.empty(nt)
+    
+    timelabs = range(0,24*len(times),24)
+    
+    for i in range(len(timelabs)):
+        timelab[i] = timelabs[i]/60
+            
+    return startin, peakin, endin, times, s304, e304, filter_304, med304, std304, timelab
+    
+    
+def img_mask(aia8_pos, aia8_neg, aiadat, nt):
+    
+    # positive and negative masks onto 1600
+    #aia8_neg and aia8_pos are the masks for each frame
+    
+    posrib = np.zeros(np.shape(aia8_pos))
+    negrib = np.zeros(np.shape(aia8_neg))
+    
+    for i in range(len(aia8_pos)):
+        posrib[i,:,:] = aia8_pos[i,:,:]*aiadat[i,:,:]
+        
+    for j in range(len(aia8_neg)):
+        negrib[j,:,:] = aia8_neg[j,:,:]*aiadat[j,:,:]
+        
+    pos1600 = np.empty(nt)
+    neg1600 = np.empty(nt)
+    
+    for i in range(nt):
+        timesteppos = posrib[i,:,:]
+        pos1600[i]=timesteppos.sum()
+        timestepneg = negrib[i,:,:]
+        neg1600[i]=timestepneg.sum()
+        
+        
+    return posrib, negrib, pos1600, neg1600
+
+def load_from_file(flnum,pick=True):
+    ev = np.load(flnum,allow_pickle=pick)
+
+    dt1600 = ev['dt1600']
+    pos1600 = ev['pos1600']
+    neg1600 = ev['neg1600']
+    time304 = ev['time304']
+    filter_304 = ev['filter_304']
+    distpos_Mm = ev['distpos_Mm']
+    distneg_Mm = ev['distneg_Mm']
+    lens_pos_Mm = ev['lens_pos_Mm']
+    lens_neg_Mm = ev['lens_neg_Mm']
+    ivs = ev['ivs']
+    dvs = ev['dvs']
+        
+    return dt1600, pos1600, neg1600, time304, filter_304, distpos_Mm, distneg_Mm, lens_pos_Mm, lens_neg_Mm, ivs, dvs
+
+def elon_periods(dpos_len, dneg_len):
+    elonfiltpos = dpos_len
+    elonfiltneg = dneg_len
+    elonperiod_start_pos = []
+    elonperiod_end_pos = []
+    elonperiod_start_neg = []
+    elonperiod_end_neg = []
+    n = 0
+    m = 0
+    zer_n = 0
+    zer_m = 0
+    
+    for i in range(len(elonfiltpos)):
+        if elonfiltpos[i] > 0:
+            n += 1
+            if n == 1:
+                time = i
+            if n > 3 and time not in elonperiod_start_pos:
+                elonperiod_start_pos.append(time-1)
+        elif elonfiltpos[i] <= 0:
+            if n > 3:
+                zer_n += 1
+                if zer_n > 2:
+                    elonperiod_end_pos.append(i)
+                    n = 0
+                    zer_n = 0
+            else:
+                n = 0
+                continue
+                
+    for i in range(len(elonfiltneg)):
+        if elonfiltneg[i] > 0:
+            m += 1
+            if m == 1:
+                time = i
+            if m > 3 and time not in elonperiod_start_neg:
+                elonperiod_start_neg.append(time-3)
+        elif elonfiltneg[i] <= 0:
+            if m > 3:
+                zer_m += 1
+                if zer_m > 2:
+                    elonperiod_end_neg.append(i)
+                    m = 0
+                    zer_m = 0
+            else:
+                m = 0
+                continue
+    
+    return elonperiod_start_pos, elonperiod_end_pos, elonperiod_start_neg, elonperiod_end_neg
+
+def sep_periods(dpos_dist, dneg_dist, kernel_size=3):
+    sepfiltpos = scipy.signal.medfilt(dpos_dist,kernel_size=3)
+    sepfiltneg = scipy.signal.medfilt(dneg_dist,kernel_size=3)
+    
+    sepperiod_start_pos = []
+    sepperiod_end_pos = []
+    sepperiod_start_neg = []
+    sepperiod_end_neg = []
+    n = 0
+    m = 0
+    for i in range(20,len(sepfiltpos)):
+        if sepfiltpos[i] > 0:
+            n += 1
+            if n == 1:
+                time = i
+            if n > 3 and time not in sepperiod_start_pos:
+                sepperiod_start_pos.append(time)
+        elif sepfiltpos[i] <= 0:
+            if n > 3:
+                sepperiod_end_pos.append(i)
+                n = 0
+            else:
+                n = 0
+                continue
+                
+    for i in range(20,len(sepfiltneg)):
+        if sepfiltneg[i] > 0:
+            m += 1
+            if m == 1:
+                time = i
+            if m > 3 and time not in sepperiod_start_neg:
+                sepperiod_start_neg.append(time)
+        elif sepfiltneg[i] <= 0:
+            if m > 3:
+                sepperiod_end_neg.append(i)
+                m = 0
+            else:
+                m = 0
+                continue
+            
+    return sepperiod_start_pos, sepperiod_end_pos, sepperiod_start_neg, sepperiod_end_neg
+
+def prep_times(dn1600, time304):
+    dt1600 =[]
+    dt304 = []
+    for i in range(len(dn1600)):
+        dt1600.append(datenum_to_datetime(dn1600[i]))
+    
+        
+    for i in range(len(time304)):
+        if np.isnan(time304[i]):
+            dt304.append(datenum_to_datetime(time304[0]))
+        else:
+            dt304.append(datenum_to_datetime(time304[i]))
+            
+    return dt1600, dt304
+    
 
