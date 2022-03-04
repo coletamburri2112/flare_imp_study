@@ -35,6 +35,11 @@ def conv_facts():
         
     return X, Y, conv_f, xarr_Mm, yarr_Mm
     
+def exponential(x,a,b):
+    return a * np.exp(b * x )
+
+def exponential_neg(x,a,b):
+    return -a * np.exp(b * x)
 
 def curve_length(curve):
     """ sum of Euclidean distances between points """
@@ -1028,6 +1033,130 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
         
     fig.savefig([flnum+'sep_timing_plt.png'])
+    
+def flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600):
+    # process data for reconnection flux, reconnection rate, rise phase exponential modeling
+    hmi = sav_data.hmi
+    aia8 = sav_data.pos8
+    aia8_inst = sav_data.inst_pos8
+    aia8_pos = np.zeros(np.shape(aia8))
+    aia8_neg = np.zeros(np.shape(aia8))
+    aia8_inst_pos = np.zeros(np.shape(aia8_inst))
+    aia8_inst_neg = np.zeros(np.shape(aia8_inst))
+    xsh,ysh,zsh = aia8.shape
+    hmi_dat = sav_data.hmi
+    
+    for i, j, k in np.ndindex(aia8.shape):
+        if aia8[i,j,k] == 1 and hmi_dat[j,k] > 0:
+            aia8_pos[i,j,k] = 1
+        elif aia8[i,j,k] == 1 and hmi_dat[j,k] < 0:
+            aia8_neg[i,j,k] = 1
+            
+    for i, j, k in np.ndindex(aia8.shape):
+        if aia8_inst[i,j,k] == 1 and hmi_dat[j,k] > 0:
+            aia8_inst_pos[i,j,k] = 1
+        elif aia8_inst[i,j,k] == 1 and hmi_dat[j,k] < 0:
+            aia8_inst_neg[i,j,k] = 1    
+            
+    peak_pos = dt1600[np.argmax(pos1600)]
+    peak_neg = dt1600[np.argmax(neg1600)]
+    
+    return hmi, aia8_pos, aia8_neg, aia8_inst_pos, aia8_inst_neg, peak_pos, peak_neg
+
+def inst_flux_process(aia8_inst_pos, aia8_inst_neg, flnum, conv_f, hmi, dt1600, peak_pos, peak_neg):
+    rec_flux_pos_inst = np.zeros(len(aia8_inst_pos))
+    rec_flux_neg_inst = np.zeros(len(aia8_inst_neg))
+    pos_area_pix_inst = np.zeros(len(aia8_inst_pos))
+    neg_area_pix_inst = np.zeros(len(aia8_inst_neg))
+    pos_pix_inst = np.zeros(len(aia8_inst_pos))
+    neg_pix_inst = np.zeros(len(aia8_inst_neg))
+    
+    conv_f_cm = conv_f*1e6*100 # conversion factor in cm
+    ds2 = conv_f_cm**2 # for each pixel grid
+    
+    for i in range(len(aia8_inst_pos)):
+        pos_mask_inst = aia8_inst_pos[i,:,:]
+        neg_mask_inst = aia8_inst_neg[i,:,:]
+        
+        pos_area_pix_inst[i] = np.sum(pos_mask_inst)
+        neg_area_pix_inst[i] = np.sum(neg_mask_inst)
+        
+        hmi_pos_inst = pos_mask_inst*hmi # in G
+        hmi_neg_inst = neg_mask_inst*hmi # in G
+        
+        pos_pix_inst[i] = np.sum(hmi_pos_inst)
+        neg_pix_inst[i] = np.sum(hmi_neg_inst)
+        rec_flux_pos_inst[i] = np.sum(hmi_pos_inst)*ds2
+        rec_flux_neg_inst[i] = np.sum(hmi_neg_inst)*ds2
+    
+    fig,ax = plt.subplots(figsize=(10,10))
+    ax.scatter(dt1600,rec_flux_pos_inst,c='red',label='+')
+    ax.scatter(dt1600,rec_flux_neg_inst,c='blue',label='-')
+    ax.grid()
+    ax.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    ax.axvline(peak_pos,c='red',linestyle=':')
+    ax.axvline(peak_neg,c='blue',linestyle = '-.')
+    ax.set_ylabel('Reconnection Flux [Mx]',font='Times New Roman',fontsize=20)
+    ax.set_title('Reconnection Flux',font='Times New Roman',fontsize=25)
+    ax.legend()
+    
+    fig.savefig([flnum+'_inst_flx.png'])
+    
+    return rec_flux_pos_inst, rec_flux_neg_inst, pos_pix_inst, neg_pix_inst
+    
+def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
+                       hmi, dt1600):
+    rec_flux_pos = np.zeros(len(aia8_pos))
+    rec_flux_neg = np.zeros(len(aia8_neg))
+    pos_area_pix = np.zeros(len(aia8_pos))
+    neg_area_pix = np.zeros(len(aia8_neg))
+    pos_pix = np.zeros(len(aia8_pos))
+    neg_pix = np.zeros(len(aia8_neg))
+    
+    conv_f_cm = conv_f*1e6*100 # conversion factor in cm
+    ds2 = conv_f_cm**2
+    for i in range(len(aia8_pos)):
+        pos_mask = aia8_pos[i,:,:]
+        neg_mask = aia8_neg[i,:,:]
+        
+        pos_area_pix[i] = np.sum(pos_mask)
+        neg_area_pix[i] = np.sum(neg_mask)
+        
+        hmi_pos = pos_mask*hmi # in G
+        hmi_neg = neg_mask*hmi # in G
+        
+        pos_pix[i] = np.sum(hmi_pos)
+        neg_pix[i] = np.sum(hmi_neg)
+        rec_flux_pos[i] = np.sum(hmi_pos)*ds2
+        rec_flux_neg[i] = np.sum(hmi_neg)*ds2
+    
+    fig,ax = plt.subplots(figsize=(10,10))
+    ax.scatter(dt1600,rec_flux_pos,c='red',label='+')
+    ax.scatter(dt1600,rec_flux_neg,c='blue',label='-')
+    ax.grid()
+    ax.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    ax.axvline(peak_pos,c='red',linestyle=':')
+    ax.axvline(peak_neg,c='blue',linestyle = '-.')
+    ax.set_ylabel('Reconnection Flux [Mx]',font='Times New Roman',fontsize=20)
+    ax.set_title('Reconnection Flux',font='Times New Roman',fontsize=25)
+    ax.legend()
+    
+    fig.savefig([flnum+'_cumul_flx.png'])
+    
+    return rec_flux_pos, rec_flux_neg, pos_pix, neg_pix
+
+def exp_curve_fit(rise_pos_flx, rise_neg_flx, exp_ind, pos_pix, neg_pix):
+    rise_pos_flx = pos_pix[0:exp_ind]
+    rise_neg_flx = neg_pix[0:exp_ind]
+    
+    poptposflx, pcovposflx = scipy.optimize.curve_fit(exponential,range(0,len(rise_pos_flx)),rise_pos_flx)
+    poptnegflx, pcovnegflx = scipy.optimize.curve_fit(exponential_neg,range(0,len(rise_neg_flx)),rise_neg_flx)
+    
+    return poptposflx, pcovposflx, poptnegflx, pcovnegflx
+
+def exp_curve_plt(dt1600, rec_flux,_pos, rec_flux_neg, peak_pos, peak_neg)
+
+
 
 
 
