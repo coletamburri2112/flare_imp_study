@@ -960,5 +960,75 @@ def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
     
     return None
 
+def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm, flnum,
+                     lens_neg_Mm, elonperiod_start_neg, elonperiod_start_pos,
+                     elonperiod_end_neg, elonperiod_end_pos):
+    timelab = range(0,24*len(times),24)
+    fig,[ax1,ax2,ax3] = plt.subplots(3,1,figsize=(13,20))
+    ax3.plot(timelab[1:-1],dpos_len[1:],'-+',c='red',markersize=10,label='+ Ribbon')
+    ax3.plot(timelab[1:-1],dneg_len[1:],'-+',c='blue',markersize=10,label='- Ribbon')
+    ax3.legend(fontsize=15)
+    ax3.grid()
+    s = str(times1600[0])
+    ax3.set_xlabel('Time [s since '+s[2:13]+', '+s[13:-5]+']',font='Times New Roman',fontsize=17)
+    ax3.set_ylabel('Elongation Rate [Mm/sec]',font='Times New Roman',fontsize=17)
+    ax3.set_title('Ribbon Elongation Rate',font='Times New Roman',fontsize=25,)
+    
+    ax1.plot(timelab[1:-1],lens_pos_Mm[1:-1],'-o',c='red',markersize=6,label='mean')
+    ax2.plot(timelab[1:-1],lens_neg_Mm[1:-1],'-o',c='blue',markersize=6,label='mean')
+    ax1.grid()
+    ax1.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
+    ax1.set_title('Ribbon Elongation, Positive Ribbon',font='Times New Roman',fontsize=25,)
+    ax2.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
+    ax2.set_title('Ribbon Elongation, Negative Ribbon',font='Times New Roman',fontsize=25,)
+    ax2.grid()
+    for i,j,k,l in zip(elonperiod_start_pos,elonperiod_end_pos,elonperiod_start_neg,elonperiod_end_neg):
+        ax1.axvline(timelab[i],c='green')
+        ax1.axvline(timelab[j],c='red')
+        ax2.axvline(timelab[k],c='green')
+        ax2.axvline(timelab[l],c='red')
+        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
+        ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
+        
+    fig.savefig([flnum+'elon_timing_plt.png'])
+    
+    return None
+
+def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
+                    sepperiod_start_pos, sepperiod_end_pos, sepperiod_start_neg,
+                    sepperiod_end_neg, indstrt):
+    timelab = range(0,24*len(times),24)
+    fig,[ax1,ax2,ax3] = plt.subplots(3,1,figsize=(13,20))
+    ax3.plot(timelab[indstrt:-1],scipy.signal.medfilt(dpos_dist[indstrt:],kernel_size=3),'-+',c='red',markersize=10,label='+ Ribbon')
+    ax3.plot(timelab[indstrt:-1],scipy.signal.medfilt(dneg_dist[indstrt:],kernel_size=3),'-+',c='blue',markersize=10,label='- Ribbon')
+    ax3.legend(fontsize=15)
+    ax3.grid()
+    s = str(times[0])
+    ax3.set_xlabel('Time [s since '+s[2:12]+ ', '+s[13:-5]+']',font='Times New Roman',fontsize=17)
+    ax3.set_ylabel('Separation Rate [Mm/sec]',font='Times New Roman',fontsize=17)
+    ax3.set_title('Ribbon Separation Rate',font='Times New Roman',fontsize=25,)
+    
+        
+    ax1.plot(timelab[indstrt:-1],distpos_Mm[indstrt:-1],'-o',c='red',markersize=6,label='mean')
+    ax2.plot(timelab[indstrt:-1],distneg_Mm[indstrt:-1],'-o',c='blue',markersize=6,label='mean')
+    ax1.grid()
+    #ax1.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',fontsize=17)
+    ax1.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
+    ax1.set_title('Ribbon Separation, Positive Ribbon',font='Times New Roman',fontsize=25,)
+    #ax2.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',fontsize=17)
+    ax2.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
+    ax2.set_title('Ribbon Separation, Negative Ribbon',font='Times New Roman',fontsize=25,)
+    ax2.grid()
+    for i,j,k,l in zip(sepperiod_start_pos,sepperiod_end_pos,sepperiod_start_neg,sepperiod_end_neg):
+        ax1.axvline(timelab[i],c='green')
+        ax1.axvline(timelab[j],c='red')
+        ax2.axvline(timelab[k],c='green')
+        ax2.axvline(timelab[l],c='red')
+        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
+        ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
+        
+    fig.savefig([flnum+'sep_timing_plt.png'])
+
+
 
     
