@@ -704,7 +704,6 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, neg1600
             dt304, timelab, conv_f, ivs, dvs, year, mo, day, arnum, xcl, xclnum,
             X, Y, xarr_Mm, yarr_Mm, dt1600, flag = 1):
         
-
     min304=min(filter_304[s304:e304])
     max304=max(filter_304[s304:e304])
     minpos1600=min(pos1600)
@@ -830,3 +829,136 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, neg1600
     ani.save(['/Users/owner/Desktop/'+mo+'_'+day+'_'+year+'.gif'],dpi=200)
 
     return None
+
+def mask_plotting(X, Y, pos_rem, neg_rem, xarr_Mm, yarr_Mm, flnum):
+    fig1,ax1 = plt.subplots(figsize=(6,6))
+    ax1.pcolormesh(X,Y,pos_rem,cmap='bwr',vmin=-1, vmax=1)
+    ax1.set_title('Positive Mask',font="Times New Roman",fontsize=22,fontweight='bold')
+    
+    ax1.set_xlim([xarr_Mm[200],xarr_Mm[600]])
+    ax1.set_ylim([yarr_Mm[200],yarr_Mm[600]])
+    ax1.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
+    ax1.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
+    
+    ax1.tick_params(labelsize=15)
+    
+    fig2,ax2 = plt.subplots(figsize=(6,6))
+    ax2.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
+    ax2.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
+    ax2.tick_params(labelsize=15)
+    ax2.pcolormesh(X,Y,neg_rem,cmap='bwr',vmin=-1, vmax=1)
+    
+    ax2.set_title('Negative Mask',font="Times New Roman",fontsize=22,fontweight='bold')
+    ax2.set_xlim([xarr_Mm[200],xarr_Mm[600]])
+    ax2.set_ylim([yarr_Mm[200],yarr_Mm[600]])
+    
+    fig1.savefig([flnum+'_pos_mask.png'])
+    fig2.savefig([flnum+'_neg_mask.png'])
+    
+    return None
+
+def convolution_mask_plotting(X, Y, hmi_con_pos_c, hmi_con_neg_c, pil_mask_c,
+                              xarr_Mm, yarr_Mm, flnum, xlim=[200,600],
+                              ylim=[200,600]):
+    fig1,ax1 = plt.subplots(figsize=(6,6))
+    ax1.pcolormesh(X,Y,hmi_con_pos_c,cmap='bwr',vmin=-1, vmax=1)
+    ax1.set_title('Positive Mask Convolution',font="Times New Roman",fontsize=22,fontweight='bold')
+    ax1.set_xlim([xarr_Mm[200],xarr_Mm[600]])
+    ax1.set_ylim([yarr_Mm[200],yarr_Mm[600]])
+    ax1.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
+    ax1.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
+    ax1.tick_params(labelsize=15)
+
+    fig2,ax2 = plt.subplots(figsize=(6,6))
+    ax2.tick_params(labelsize=15)
+    ax2.pcolormesh(X,Y,hmi_con_neg_c,cmap='bwr',vmin=-1, vmax=1)
+    ax2.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
+    ax2.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
+    ax2.set_title('Negative Mask Convolution',font="Times New Roman",fontsize=22,fontweight='bold')
+    ax2.set_xlim([xarr_Mm[xlim[0]],xarr_Mm[xlim[1]]])
+    ax2.set_ylim([yarr_Mm[ylim[0]],yarr_Mm[ylim[1]]])
+    
+    
+    fig3,ax3 = plt.subplots()
+    ax3.pcolormesh(pil_mask_c)
+    ax3.set_title('pil mask',font="Times New Roman",fontsize=22,fontweight='bold')
+    ax3.tick_params(labelsize=15)
+    ax3.set_xlim([xarr_Mm[xlim[0]],xarr_Mm[xlim[1]]])
+    ax3.set_ylim([yarr_Mm[ylim[0]],yarr_Mm[ylim[1]]])
+    
+    fig1.savefig([flnum+'_pos_conv_mask.png'])
+    fig2.savefig([flnum+'_neg_conv_mask.png'])    
+    fig3.savefig([flnum+'_PIL_conv_mask.png'])  
+    
+    return None
+
+def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm, 
+                  yarr_Mm, flnum, xlim = [200,600], ylim = [200,600]):
+    # Generate the plot
+    fig, ax = plt.subplots(figsize=(7,10))
+    
+    # show color mesh
+    cmap = ax.pcolormesh(X,Y, pil_mask_c,cmap='hot')
+    
+    # plot the line
+    ax.scatter((ivs-400)*conv_f,(dvs-400)*conv_f, color = 'c', s = 1)
+    hmik = hmi_dat/1000
+    plt.contour(X,Y,hmik,levels=[-3,-1.8,-.6,.6,1.8,3],cmap='seismic')
+    
+    ax.set_xlim([xarr_Mm[xlim[0]],xarr_Mm[xlim[1]]])
+    ax.set_ylim([yarr_Mm[ylim[0]],yarr_Mm[ylim[1]]])
+    ax.set_xticks([-80,-60,-40,-20,0,20,40,60,80])
+    ax.set_yticks([-80,-60,-40,-20,0,20,40,60,80])
+    cbar=plt.colorbar(orientation='horizontal')
+    tick_font_size = 15
+    ax.tick_params(labelsize=tick_font_size)
+    cbar.ax.tick_params(labelsize=tick_font_size)
+    ax.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=15)
+    ax.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=15)
+        
+    cbar.ax.set_xlabel('HMI Contours'+r' $[kG]$',font='Times New Roman',fontsize=17,fontweight='bold')
+    ax.set_title('PIL Mask and Polynomial',font='Times New Roman',fontsize=25,fontweight='bold')
+    fig.savefig([flnum+'_pilpolyplot.png'])
+    return None
+
+def ribbon_sep_plot(distpos_arr,distneg_arr,times,flnum,pltstrt):
+    timelab = range(0,24*len(times),24)
+    fig,[ax1,ax2] = plt.subplots(2,1,figsize=(13,15))
+    ax1.plot(timelab[pltstrt:],distpos_arr[pltstrt:],'-+',c='red',markersize=10,label='median')
+    ax1.legend(fontsize=15)
+    ax1.grid()
+    s = str(times[0])
+    ax1.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',fontsize=15)
+    ax1.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',fontsize=15)
+    ax1.set_title('Ribbon Separation Methods, Positive Ribbon',font='Times New Roman',fontsize=25,)
+    
+    ax2.plot(timelab[pltstrt:],distneg_arr[pltstrt:],'-+',c='red',markersize=10,label='median')
+    ax2.legend(fontsize=15)
+    ax2.grid()
+    ax2.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',fontsize=15)
+    ax2.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',fontsize=15)
+    ax2.set_title('Ribbon Separation Methods, Negative Ribbon',font='Times New Roman',fontsize=25,)
+
+    fig.savefig([flnum+'sep_raw_plt.png'])
+    
+    return None
+
+def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
+    timelab = range(0,24*len(times),24)
+    
+    fig,ax1 = plt.subplots(figsize=(13,7))
+    ax1.plot(timelab[pltstrt:],lens_pos[pltstrt:],'-+',c='red',markersize=10,label='+ Ribbon')
+    ax1.plot(timelab[pltstrt:],lens_neg[pltstrt:],'-+',c='blue',markersize=10,label='- Ribbon')
+    ax1.legend(fontsize=15)
+    ax1.grid()
+    s = str(times[0])
+    ax1.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',fontsize=17)
+    ax1.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',fontsize=17)
+    ax1.set_title('Ribbon Elongation',font='Times New Roman',fontsize=25)
+
+    fig.savefig([flnum+'elon_raw_plt.png']) 
+    
+    return None
+
+
+    
