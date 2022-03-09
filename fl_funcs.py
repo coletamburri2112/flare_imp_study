@@ -1,22 +1,14 @@
 from os.path import dirname, join as pjoin
 import scipy.io as sio
 from scipy.io import readsav
-from scipy.io import loadmat
 import numpy as np
-import sys
 import matplotlib.pyplot as plt
-from matplotlib.colors import BoundaryNorm
-from matplotlib.ticker import MaxNLocator
 import matplotlib.animation as animat
 import datetime
-from scipy.ndimage import rotate
-from astropy.convolution import convolve, Gaussian2DKernel, Tophat2DKernel
-from astropy.modeling.models import Gaussian2D
 from scipy.spatial.distance import cdist
-from scipy.signal import fftconvolve
-from itertools import product
 import scipy.signal
 import matplotlib.dates as mdates
+from astropy.convolution import convolve, Gaussian2DKernel
 
 def conv_facts():
     pix_to_arcsec = 0.6
@@ -97,7 +89,7 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum, xcl
 
     aia_step8 = sav_data.inst_pos8
 
-    return sav_data_aia, best304, start304, peak304, end304, eventindices, times304, curves304, aia_cumul8, aia_step8, last_cumul8, hmi_dat, last_mask
+    return sav_data_aia, sav_data, best304, start304, peak304, end304, eventindices, times304, curves304, aia_cumul8, aia_step8, last_cumul8, hmi_dat, last_mask
 
 def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
     hmi_cumul_mask = np.zeros(np.shape(aia_cumul8))
@@ -227,15 +219,15 @@ def mask_sep(aia_step8, hmi_dat):
                     
     return aia8_pos, aia8_neg
 
-def separation(aia8, ivs, dvs, aia8_pos, aia8_neg):
+def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
     pil = list(zip(ivs,dvs))
 
-    distpos_med = np.zeros(len(aia8))
-    distneg_med = np.zeros(len(aia8))
-    distpos_mean = np.zeros(len(aia8))
-    distneg_mean = np.zeros(len(aia8))
+    distpos_med = np.zeros(len(aia_step8))
+    distneg_med = np.zeros(len(aia_step8))
+    distpos_mean = np.zeros(len(aia_step8))
+    distneg_mean = np.zeros(len(aia_step8))
     
-    for i in range(len(aia8)):
+    for i in range(len(aia_step8)):
         posframe = aia8_pos[i,:,:]
         negframe = aia8_neg[i,:,:]  
         xpos,ypos = np.where(posframe == 1)
@@ -487,7 +479,7 @@ def prep_304_parameters(sav_data_aia, sav_data, eventindices, flnum, start304, p
     yhi = sav_data_aia.y2los
 
     aiadat = sav_data_aia.aia1600
-    time = sav_data.time
+    time = sav_data.tim
     
     nt = len(time)
     nx = aiadat.shape[1]
@@ -549,7 +541,7 @@ def prep_304_parameters(sav_data_aia, sav_data, eventindices, flnum, start304, p
     for i in range(len(timelabs)):
         timelab[i] = timelabs[i]/60
             
-    return startin, peakin, endin, times, s304, e304, filter_304, med304, std304, timelab
+    return startin, peakin, endin, times, s304, e304, filter_304, med304, std304, timelab, aiadat, nt, dn1600, time304, times1600
     
     
 def img_mask(aia8_pos, aia8_neg, aiadat, nt):
@@ -578,7 +570,7 @@ def img_mask(aia8_pos, aia8_neg, aiadat, nt):
         
     return posrib, negrib, pos1600, neg1600
 
-def load_from_file(flnum,pick=True):
+def load_from_file(flnum, pick = True):
     ev = np.load(flnum,allow_pickle=pick)
 
     dt1600 = ev['dt1600']
@@ -622,21 +614,20 @@ def elon_periods(dpos_len, dneg_len):
                     n = 0
                     zer_n = 0
             else:
-                n = 0
                 continue
                 
-    for i in range(len(elonfiltneg)):
+    for j in range(len(elonfiltneg)):
         if elonfiltneg[i] > 0:
             m += 1
             if m == 1:
-                time = i
+                time = j
             if m > 3 and time not in elonperiod_start_neg:
-                elonperiod_start_neg.append(time-3)
-        elif elonfiltneg[i] <= 0:
+                elonperiod_start_neg.append(time-1)
+        elif elonfiltneg[j] <= 0:
             if m > 3:
                 zer_m += 1
                 if zer_m > 2:
-                    elonperiod_end_neg.append(i)
+                    elonperiod_end_neg.append(j)
                     m = 0
                     zer_m = 0
             else:
@@ -667,7 +658,6 @@ def sep_periods(dpos_dist, dneg_dist, kernel_size=3):
                 sepperiod_end_pos.append(i)
                 n = 0
             else:
-                n = 0
                 continue
                 
     for i in range(20,len(sepfiltneg)):
@@ -682,7 +672,6 @@ def sep_periods(dpos_dist, dneg_dist, kernel_size=3):
                 sepperiod_end_neg.append(i)
                 m = 0
             else:
-                m = 0
                 continue
             
     return sepperiod_start_pos, sepperiod_end_pos, sepperiod_start_neg, sepperiod_end_neg
@@ -794,7 +783,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, neg1600
         ax3.xaxis.set_major_formatter(myFmt)
         ax0.xaxis.set_major_formatter(myFmt)
         ax5.xaxis.set_major_formatter(myFmt)
-        textstr = '1600Å +/- Factor: '+str(round(scalefac,3))
+        textstr = '1600$\AA$ +/- Factor: '+str(round(scalefac,3))
         ax2.text(2*(max(dt1600)-min(dt1600))/5 + min(dt1600),0.1,textstr,fontsize=12,bbox=dict(boxstyle="square", facecolor="white",ec="k", lw=1,pad=0.3))
         ax2.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],fontsize=15)
         ax2.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],fontsize=15)
@@ -857,8 +846,8 @@ def mask_plotting(X, Y, pos_rem, neg_rem, xarr_Mm, yarr_Mm, flnum):
     ax2.set_xlim([xarr_Mm[200],xarr_Mm[600]])
     ax2.set_ylim([yarr_Mm[200],yarr_Mm[600]])
     
-    fig1.savefig([flnum+'_pos_mask.png'])
-    fig2.savefig([flnum+'_neg_mask.png'])
+    fig1.savefig(str(flnum)+'_pos_mask.png')
+    fig2.savefig(str(flnum)+'_neg_mask.png')
     
     return None
 
@@ -885,15 +874,15 @@ def convolution_mask_plotting(X, Y, hmi_con_pos_c, hmi_con_neg_c, pil_mask_c,
     
     
     fig3,ax3 = plt.subplots()
-    ax3.pcolormesh(pil_mask_c)
-    ax3.set_title('pil mask',font="Times New Roman",fontsize=22,fontweight='bold')
+    ax3.pcolormesh(X,Y,pil_mask_c)
+    ax3.set_title('Polarity Inversion Line Mask',font="Times New Roman",fontsize=22,fontweight='bold')
     ax3.tick_params(labelsize=15)
     ax3.set_xlim([xarr_Mm[xlim[0]],xarr_Mm[xlim[1]]])
     ax3.set_ylim([yarr_Mm[ylim[0]],yarr_Mm[ylim[1]]])
     
-    fig1.savefig([flnum+'_pos_conv_mask.png'])
-    fig2.savefig([flnum+'_neg_conv_mask.png'])    
-    fig3.savefig([flnum+'_PIL_conv_mask.png'])  
+    fig1.savefig(str(flnum)+'_pos_conv_mask.png')
+    fig2.savefig(str(flnum)+'_neg_conv_mask.png')    
+    fig3.savefig(str(flnum)+'_PIL_conv_mask.png')  
     
     return None
 
@@ -903,7 +892,7 @@ def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm,
     fig, ax = plt.subplots(figsize=(7,10))
     
     # show color mesh
-    cmap = ax.pcolormesh(X,Y, pil_mask_c,cmap='hot')
+    ax.pcolormesh(X,Y, pil_mask_c,cmap='hot')
     
     # plot the line
     ax.scatter((ivs-400)*conv_f,(dvs-400)*conv_f, color = 'c', s = 1)
@@ -921,30 +910,30 @@ def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm,
     ax.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=15)
     ax.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=15)
         
-    cbar.ax.set_xlabel('HMI Contours'+r' $[kG]$',font='Times New Roman',fontsize=17,fontweight='bold')
+    cbar.ax.set_xlabel('HMI Contours [kG]',font='Times New Roman',fontsize=17,fontweight='bold')
     ax.set_title('PIL Mask and Polynomial',font='Times New Roman',fontsize=25,fontweight='bold')
-    fig.savefig([flnum+'_pilpolyplot.png'])
+    fig.savefig(str(flnum)+'_pilpolyplot.png')
     return None
 
-def ribbon_sep_plot(distpos_arr,distneg_arr,times,flnum,pltstrt):
+def ribbon_sep_plot(dist_pos,dist_neg,times,flnum,pltstrt):
     timelab = range(0,24*len(times),24)
     fig,[ax1,ax2] = plt.subplots(2,1,figsize=(13,15))
-    ax1.plot(timelab[pltstrt:],distpos_arr[pltstrt:],'-+',c='red',markersize=10,label='median')
+    ax1.plot(timelab[pltstrt:],dist_pos[pltstrt:],'-+',c='red',markersize=10,label='median')
     ax1.legend(fontsize=15)
     ax1.grid()
     s = str(times[0])
     ax1.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',fontsize=15)
     ax1.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',fontsize=15)
-    ax1.set_title('Ribbon Separation Methods, Positive Ribbon',font='Times New Roman',fontsize=25,)
+    ax1.set_title('Positive Ribbon Separation',font='Times New Roman',fontsize=25)
     
-    ax2.plot(timelab[pltstrt:],distneg_arr[pltstrt:],'-+',c='red',markersize=10,label='median')
+    ax2.plot(timelab[pltstrt:],dist_neg[pltstrt:],'-+',c='red',markersize=10,label='median')
     ax2.legend(fontsize=15)
     ax2.grid()
     ax2.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',fontsize=15)
     ax2.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',fontsize=15)
-    ax2.set_title('Ribbon Separation Methods, Negative Ribbon',font='Times New Roman',fontsize=25,)
+    ax2.set_title('Negative Ribbon Separation',font='Times New Roman',fontsize=25)
 
-    fig.savefig([flnum+'sep_raw_plt.png'])
+    fig.savefig(str(flnum)+'sep_raw_plt.png')
     
     return None
 
@@ -961,7 +950,7 @@ def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
     ax1.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',fontsize=17)
     ax1.set_title('Ribbon Elongation',font='Times New Roman',fontsize=25)
 
-    fig.savefig([flnum+'elon_raw_plt.png']) 
+    fig.savefig(str(flnum)+'elon_raw_plt.png') 
     
     return None
 
@@ -995,7 +984,7 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm, flnum,
         ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
         
-    fig.savefig([flnum+'elon_timing_plt.png'])
+    fig.savefig(str(flnum)+'elon_timing_plt.png')
     
     return None
 
@@ -1032,7 +1021,7 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
         ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
         
-    fig.savefig([flnum+'sep_timing_plt.png'])
+    fig.savefig(str(flnum)+'sep_timing_plt.png')
     
 def flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600):
     # process data for reconnection flux, reconnection rate, rise phase exponential modeling
@@ -1154,7 +1143,7 @@ def exp_curve_fit(rise_pos_flx, rise_neg_flx, exp_ind, pos_pix, neg_pix):
     
     return poptposflx, pcovposflx, poptnegflx, pcovnegflx
 
-def exp_curve_plt(dt1600, rec_flux,_pos, rec_flux_neg, peak_pos, peak_neg)
+#def exp_curve_plt(dt1600, rec_flux,_pos, rec_flux_neg, peak_pos, peak_neg)
 
 
 
