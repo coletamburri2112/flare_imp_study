@@ -1,22 +1,14 @@
 from os.path import dirname, join as pjoin
 import scipy.io as sio
 from scipy.io import readsav
-from scipy.io import loadmat
 import numpy as np
-import sys
 import matplotlib.pyplot as plt
-from matplotlib.colors import BoundaryNorm
-from matplotlib.ticker import MaxNLocator
 import matplotlib.animation as animat
 import datetime
-from scipy.ndimage import rotate
-from astropy.convolution import convolve, Gaussian2DKernel, Tophat2DKernel
-from astropy.modeling.models import Gaussian2D
 from scipy.spatial.distance import cdist
-from scipy.signal import fftconvolve
-from itertools import product
 import scipy.signal
 import matplotlib.dates as mdates
+from astropy.convolution import convolve, Gaussian2DKernel
 
 def conv_facts():
     pix_to_arcsec = 0.6
@@ -227,15 +219,15 @@ def mask_sep(aia_step8, hmi_dat):
                     
     return aia8_pos, aia8_neg
 
-def separation(aia8, ivs, dvs, aia8_pos, aia8_neg):
+def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
     pil = list(zip(ivs,dvs))
 
-    distpos_med = np.zeros(len(aia8))
-    distneg_med = np.zeros(len(aia8))
-    distpos_mean = np.zeros(len(aia8))
-    distneg_mean = np.zeros(len(aia8))
+    distpos_med = np.zeros(len(aia_step8))
+    distneg_med = np.zeros(len(aia_step8))
+    distpos_mean = np.zeros(len(aia_step8))
+    distneg_mean = np.zeros(len(aia_step8))
     
-    for i in range(len(aia8)):
+    for i in range(len(aia_step8)):
         posframe = aia8_pos[i,:,:]
         negframe = aia8_neg[i,:,:]  
         xpos,ypos = np.where(posframe == 1)
@@ -794,7 +786,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, neg1600
         ax3.xaxis.set_major_formatter(myFmt)
         ax0.xaxis.set_major_formatter(myFmt)
         ax5.xaxis.set_major_formatter(myFmt)
-        textstr = '1600Å +/- Factor: '+str(round(scalefac,3))
+        textstr = '1600$\AA$ +/- Factor: '+str(round(scalefac,3))
         ax2.text(2*(max(dt1600)-min(dt1600))/5 + min(dt1600),0.1,textstr,fontsize=12,bbox=dict(boxstyle="square", facecolor="white",ec="k", lw=1,pad=0.3))
         ax2.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],fontsize=15)
         ax2.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],fontsize=15)
@@ -1154,7 +1146,7 @@ def exp_curve_fit(rise_pos_flx, rise_neg_flx, exp_ind, pos_pix, neg_pix):
     
     return poptposflx, pcovposflx, poptnegflx, pcovnegflx
 
-def exp_curve_plt(dt1600, rec_flux,_pos, rec_flux_neg, peak_pos, peak_neg)
+#def exp_curve_plt(dt1600, rec_flux,_pos, rec_flux_neg, peak_pos, peak_neg)
 
 
 
