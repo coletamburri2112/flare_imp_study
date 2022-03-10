@@ -463,7 +463,7 @@ def convert_to_Mm(lens_pos, dist_pos, lens_neg, dist_neg, conv_f):
         lens_pos_Mm[i] = lens_pos[i]*conv_f
         lens_neg_Mm[i] = lens_neg[i]*conv_f
         distpos_Mm[i] = dist_pos[i]*conv_f
-        distneg_Mm[i] = dist_pos[i]*conv_f
+        distneg_Mm[i] = dist_neg[i]*conv_f
         
     dneg_len = np.diff(lens_neg_Mm)/24.
     dpos_len = np.diff(lens_pos_Mm)/24.
@@ -601,38 +601,54 @@ def elon_periods(dpos_len, dneg_len):
     
     for i in range(len(elonfiltpos)):
         if elonfiltpos[i] > 0:
+
             n += 1
+
             if n == 1:
                 time = i
-            if n > 3 and time not in elonperiod_start_pos:
-                elonperiod_start_pos.append(time-1)
+            if n > 1 and time not in elonperiod_start_pos:
+
+                elonperiod_start_pos.append(time)
         elif elonfiltpos[i] <= 0:
-            if n > 3:
+            
+            if n > 1:
                 zer_n += 1
                 if zer_n > 2:
                     elonperiod_end_pos.append(i)
                     n = 0
                     zer_n = 0
             else:
+                n = 0
                 continue
                 
     for j in range(len(elonfiltneg)):
-        if elonfiltneg[i] > 0:
+        if elonfiltneg[j] > 0:
             m += 1
             if m == 1:
                 time = j
-            if m > 3 and time not in elonperiod_start_neg:
-                elonperiod_start_neg.append(time-1)
+            if m > 1 and time not in elonperiod_start_neg:
+                elonperiod_start_neg.append(time)
         elif elonfiltneg[j] <= 0:
-            if m > 3:
+            
+            if m > 1:
                 zer_m += 1
                 if zer_m > 2:
                     elonperiod_end_neg.append(j)
                     m = 0
                     zer_m = 0
-            else:
+            elif zer_m > 1:
                 m = 0
                 continue
+    
+    elonperiod_start_pos = list(set(elonperiod_start_pos))
+    elonperiod_end_pos = list(set(elonperiod_end_pos))
+    elonperiod_start_neg = list(set(elonperiod_start_neg))
+    elonperiod_end_neg = list(set(elonperiod_end_neg))
+    
+    elonperiod_start_pos.sort()
+    elonperiod_end_pos.sort()
+    elonperiod_start_neg.sort()
+    elonperiod_end_neg.sort()
     
     return elonperiod_start_pos, elonperiod_end_pos, elonperiod_start_neg, elonperiod_end_neg
 
@@ -658,6 +674,7 @@ def sep_periods(dpos_dist, dneg_dist, kernel_size=3):
                 sepperiod_end_pos.append(i)
                 n = 0
             else:
+                n = 0
                 continue
                 
     for i in range(20,len(sepfiltneg)):
@@ -672,7 +689,18 @@ def sep_periods(dpos_dist, dneg_dist, kernel_size=3):
                 sepperiod_end_neg.append(i)
                 m = 0
             else:
+                m = 0
                 continue
+            
+    sepperiod_start_pos = list(set(sepperiod_start_pos))
+    sepperiod_end_pos = list(set(sepperiod_end_pos))
+    sepperiod_start_neg = list(set(sepperiod_start_neg))
+    sepperiod_end_neg = list(set(sepperiod_end_neg))
+    
+    sepperiod_start_pos.sort()
+    sepperiod_end_pos.sort()
+    sepperiod_start_neg.sort()
+    sepperiod_end_neg.sort()
             
     return sepperiod_start_pos, sepperiod_end_pos, sepperiod_start_neg, sepperiod_end_neg
 
@@ -957,7 +985,7 @@ def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
 def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm, flnum,
                      lens_neg_Mm, elonperiod_start_neg, elonperiod_start_pos,
                      elonperiod_end_neg, elonperiod_end_pos):
-    timelab = range(0,24*len(times),24)
+    timelab = np.linspace(0,24*len(times),len(times))
     fig,[ax1,ax2,ax3] = plt.subplots(3,1,figsize=(13,20))
     ax3.plot(timelab[1:-1],dpos_len[1:],'-+',c='red',markersize=10,label='+ Ribbon')
     ax3.plot(timelab[1:-1],dneg_len[1:],'-+',c='blue',markersize=10,label='- Ribbon')
@@ -977,6 +1005,7 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm, flnum,
     ax2.set_title('Ribbon Elongation, Negative Ribbon',font='Times New Roman',fontsize=25,)
     ax2.grid()
     for i,j,k,l in zip(elonperiod_start_pos,elonperiod_end_pos,elonperiod_start_neg,elonperiod_end_neg):
+        print(i,j,k,l)
         ax1.axvline(timelab[i],c='green')
         ax1.axvline(timelab[j],c='red')
         ax2.axvline(timelab[k],c='green')

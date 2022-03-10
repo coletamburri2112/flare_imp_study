@@ -31,8 +31,8 @@ X, Y, conv_f, xarr_Mm, yarr_Mm = fl_funcs.conv_facts()
 
 print("Data loaded! Now just some masking and spur removal.")
 
-hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c = ...
-fl_funcs.pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask)
+hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c \
+    = fl_funcs.pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask)
 
 neg_rem, pos_rem = fl_funcs.spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, 
                                              pos_crit = 3, neg_crit = 2)
@@ -150,4 +150,11 @@ fl_funcs.elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
                           flnum, lens_neg_Mm, elonperiod_start_neg, 
                           elonperiod_start_pos, elonperiod_end_neg, 
                           elonperiod_end_pos)
+
+print("Plotting Separation with Periods")
+
+indstrt = 25
+fl_funcs.sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
+                    sepperiod_start_pos, sepperiod_end_pos, sepperiod_start_neg,
+                    sepperiod_end_neg, indstrt)
     
