@@ -6,6 +6,8 @@ Created on Wed Mar  9 12:15:45 2022
 @author: owner
 """
 import fl_funcs
+from fl_funcs import exponential
+from fl_funcs import exponential_neg
 
 year = 2013
 mo = 10
@@ -162,4 +164,43 @@ print("Processing data for reconnection flux model.")
 
 hmi, aia8_pos, aia8_neg, aia8_inst_pos, aia8_inst_neg, peak_pos, \
     peak_neg = fl_funcs.flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600)
+
+print("Load fluxes and pixel counts.")
+
+rec_flux_pos, rec_flux_neg, pos_pix, neg_pix, pos_area_pix, \
+    neg_area_pix, ds2, pos_area, neg_area = fl_funcs.cumul_flux_process(aia8_pos, aia8_neg, conv_f, 
+                                                    flnum, peak_pos, peak_neg,
+                                                    hmi, dt1600)
+    
+print("The same, for instantaneous flux.")
+
+rec_flux_pos_inst, rec_flux_neg_inst, pos_pix_inst, neg_pix_inst, \
+    ds2 = fl_funcs.inst_flux_process(aia8_inst_pos, aia8_inst_neg, flnum, 
+                            conv_f, hmi, dt1600, peak_pos, peak_neg)
+
+exp_ind = 29
+print("Exponential curve fitting for the fluxes.")
+
+poptposflx, pcovposflx, poptnegflx, pcovnegflx, \
+    poptpos, poptneg, pcovpos, pcovneg, rise_pos_flx, \
+        rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, pos_pix, neg_pix, 
+                                              exponential, exponential_neg, pos_area, neg_area)
+
+print("Exponential curve plot.")
+
+fl_funcs.exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx, 
+                       rise_neg_flx, peak_pos, peak_neg, exp_ind, ds2, 
+                       exponential, exponential_neg, poptposflx, poptnegflx, flnum)
+
+print("Ribbon Area Plot")
+
+fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, 
+                      neg_area_pix, peak_pos, peak_neg, exp_ind)
+
+print("Reconnection Rate Determination, Plotting.")
+
+rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg, 
+                                               dn1600, dt1600, peak_pos, 
+                                               peak_neg, flnum)
+
     
