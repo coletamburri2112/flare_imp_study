@@ -1052,6 +1052,8 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
         
     fig.savefig(str(flnum)+'sep_timing_plt.png')
     
+    return None
+    
 def flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600):
     # process data for reconnection flux, reconnection rate, rise phase exponential modeling
     hmi = sav_data.hmi
@@ -1120,7 +1122,7 @@ def inst_flux_process(aia8_inst_pos, aia8_inst_neg, flnum, conv_f, hmi, dt1600, 
     
     fig.savefig([flnum+'_inst_flx.png'])
     
-    return rec_flux_pos_inst, rec_flux_neg_inst, pos_pix_inst, neg_pix_inst
+    return rec_flux_pos_inst, rec_flux_neg_inst, pos_pix_inst, neg_pix_inst, ds2
     
 def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
                        hmi, dt1600):
@@ -1161,21 +1163,138 @@ def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
     
     fig.savefig([flnum+'_cumul_flx.png'])
     
-    return rec_flux_pos, rec_flux_neg, pos_pix, neg_pix
+    return rec_flux_pos, rec_flux_neg, pos_pix, neg_pix, pos_area_pix, neg_area_pix
 
-def exp_curve_fit(rise_pos_flx, rise_neg_flx, exp_ind, pos_pix, neg_pix):
+def exp_curve_fit(rise_pos_flx, rise_neg_flx, exp_ind, pos_pix, neg_pix, exponential, exponential_neg, pos_area, neg_area):
     rise_pos_flx = pos_pix[0:exp_ind]
     rise_neg_flx = neg_pix[0:exp_ind]
-    
+    rise_pos_area = pos_area[0:exp_ind]
+    rise_neg_area = neg_area[0:exp_ind]
+
     poptposflx, pcovposflx = scipy.optimize.curve_fit(exponential,range(0,len(rise_pos_flx)),rise_pos_flx)
     poptnegflx, pcovnegflx = scipy.optimize.curve_fit(exponential_neg,range(0,len(rise_neg_flx)),rise_neg_flx)
+    poptpos, pcovpos = scipy.optimize.curve_fit(exponential,range(0,len(rise_pos_area)),rise_pos_area)
+    poptneg, pcovneg = scipy.optimize.curve_fit(exponential,range(0,len(rise_neg_area)),rise_neg_area)
     
-    return poptposflx, pcovposflx, poptnegflx, pcovnegflx
+    return poptposflx, pcovposflx, poptnegflx, pcovnegflx, poptpos, poptneg, pcovpos, pcovneg, rise_pos_flx, rise_neg_flx
 
-#def exp_curve_plt(dt1600, rec_flux,_pos, rec_flux_neg, peak_pos, peak_neg)
+def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx, rise_neg_flx,
+                  peak_pos, peak_neg, exp_ind, ds2, exponential, exponential_neg,
+                  poptposflx, poptnegflx, flnum):
+  
+    rise_pos_time = dt1600[0:exp_ind]
+    rise_neg_time = dt1600[0:exp_ind]
+    
+    fig,ax = plt.subplots(figsize=(10,10))
+    ax.scatter(dt1600,rec_flux_pos,c='red',label='+')
+    ax.scatter(dt1600,rec_flux_neg,c='blue',label='-')
+    ax.grid()
+    ax.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    ax.axvline(peak_pos,c='red',linestyle=':')
+    ax.axvline(peak_neg,c='blue',linestyle = '-.')
+    ax.set_ylabel('Reconnection Flux [Mx]',font='Times New Roman',fontsize=20)
+    ax.set_title('Reconnection Flux',font='Times New Roman',fontsize=25)
+    ax.plot(rise_pos_time,ds2*exponential(range(0,len(rise_pos_flx)), *poptposflx), 'r-',label='Exponential Model, +')
+    ax.plot(rise_neg_time,ds2*exponential_neg(range(0,len(rise_neg_flx)), *poptnegflx), 'b-',label='Exponential Model, -')
+    ax.axvline(dt1600[29])
+    ax.legend()
+    
+    fig.savefig([flnum+'_recflux_model.png'])
+    
+    # now plot log-log of just the impulsive phase
+    
+    fig2,[ax1,ax2] = plt.subplots(2,1,figsize=(10,20))
+    ax1.scatter((dt1600),np.log(rec_flux_pos),c='red')
+    ax2.scatter((dt1600),-np.log(-rec_flux_neg),c='blue')
+    ax1.grid()
+    ax2.grid()
+    ax1.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    ax2.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    #ax.axvline(peak_pos,c='red',linestyle=':')
+    #ax.axvline(peak_neg,c='blue',linestyle = '-.')
+    ax1.plot((rise_pos_time),np.log(ds2*exponential(range(0,len(rise_pos_flx)), *poptposflx)), 'r-',label='Exponential Model, +')#, label='fit: a = %5.3f, b = %5.3f, c = %5.3f', % tuple(popt))
+    ax2.plot((rise_neg_time),-np.log(-ds2*exponential_neg(range(0,len(rise_neg_flx)), *poptnegflx)), 'b-',label='Exponential Model, -')#, label='fit: a = %5.3f, b = %5.3f, c = %5.3f', % tuple(popt))
+    
+    ax1.set_ylabel(r'Rec. Flx [Mx]',font='Times New Roman',fontsize=20)
+    ax1.set_title('Reconnection Flux, Impulsive Phase',font='Times New Roman',fontsize=25)
+    ax1.set_xlim(dt1600[0],dt1600[exp_ind])
+    ax1.legend(fontsize=15)
+    ax2.set_ylabel(r'Rec. Flx [Mx]',font='Times New Roman',fontsize=20)
+    ax2.set_title('Reconnection Flux, Impulsive Phase',font='Times New Roman',fontsize=25)
+    ax2.set_xlim(dt1600[0],dt1600[exp_ind])
+    ax2.legend(fontsize=15)
+    
+    fig2.savefig([flnum+'_rec_impphase_model.png'])
+    ## STILL TO DO
+    
+    return None
 
+def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix, peak_pos, peak_neg, exp_ind, exponentialimpdiff = 'no'):
+    # cumulative
+    pos_area = pos_area_pix
+    neg_area = neg_area_pix
+    rise_pos_area = pos_area[0:exp_ind]
+    rise_neg_area = neg_area[0:exp_ind]
+    # plot just the ribbon areas, c = 8
+    fig,ax = plt.subplots(figsize=(10,10))
+    ax.scatter(dt1600,pos_area,c='red',label='+')
+    ax.scatter(dt1600,neg_area,c='blue',label='-')
+    rise_pos_time = dt1600[0:exp_ind]
+    rise_neg_time = dt1600[0:exp_ind]
+    ax.grid()
+    ax.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    ax.axvline(peak_pos,c='red',linestyle=':')
+    ax.axvline(peak_neg,c='blue',linestyle = '-.')
+    ax.plot(rise_pos_time,exponential(range(0,len(rise_pos_area)), *poptpos), 'r-',label='Exponential Model, +')#, label='fit: a = %5.3f, b = %5.3f, c = %5.3f', % tuple(popt))
+    ax.plot(rise_neg_time,exponential(range(0,len(rise_neg_area)), *poptneg), 'b-',label='Exponential Model, -')#, label='fit: a = %5.3f, b = %5.3f, c = %5.3f', % tuple(popt))
+    ax.set_ylabel(r'Ribbon Area [$cm^2$]',font='Times New Roman',fontsize=20)
+    ax.set_title('Ribbon Area',font='Times New Roman',fontsize=25)
+    #if end of modeling region is before end of impulsive phase
+    ax.axvline(dt1600[exp_ind])
+    ax.legend()
+    
+    fig.savefig([flnum+'_ribarea_model.png'])
+    
+    #just impulsive region, with log-log
+    fig2,[ax1,ax2] = plt.subplots(2,1,figsize=(10,20))
+    ax1.scatter((dt1600),np.log(pos_area),c='red')
+    ax2.scatter((dt1600),np.log(neg_area),c='blue')
+    ax1.grid()
+    ax2.grid()
+    ax1.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    ax2.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    ax1.plot((rise_pos_time),np.log(exponential(range(0,len(rise_pos_area)), *poptpos)), 'r-',label='Exponential Model, +')#, label='fit: a = %5.3f, b = %5.3f, c = %5.3f', % tuple(popt))
+    ax2.plot((rise_neg_time),np.log(exponential(range(0,len(rise_neg_area)), *poptneg)), 'b-',label='Exponential Model, -')#, label='fit: a = %5.3f, b = %5.3f, c = %5.3f', % tuple(popt))
+    
+    ax1.set_ylabel(r'Ribbon Area [$cm^2$]',font='Times New Roman',fontsize=20)
+    ax1.set_title('Ribbon Area, Impulsive Phase',font='Times New Roman',fontsize=25)
+    ax1.set_xlim(dt1600[0],dt1600[exp_ind])
+    ax1.legend(fontsize=15)
+    ax2.set_ylabel(r'Ribbon Area [$cm^2$]',font='Times New Roman',fontsize=20)
+    ax2.set_title('Ribbon Area, Impulsive Phase',font='Times New Roman',fontsize=25)
+    ax2.set_xlim(dt1600[0],dt1600[exp_ind])
+    ax2.legend(fontsize=15)
+    
+    fig2.savefig([flnum+'_impphase_model.png'])
+    
+    return None
 
+# Reconnection rate
+def rec_rate(rec_flux_pos, rec_flux_neg, dn1600, dt1600, peak_pos, peak_neg, flnum):
+    rec_rate_pos = (np.diff(rec_flux_pos)/(dn1600[1]-dn1600[0]))/3600/24 # Mx/s
+    rec_rate_neg = (np.diff(rec_flux_neg)/(dn1600[1]-dn1600[0]))/3600/24 # Mx/s
 
-
+    fig,ax = plt.subplots(figsize=(10,10))
+    ax.scatter(dt1600[1:],rec_rate_pos,c='red',label='+')
+    ax.scatter(dt1600[1:],rec_rate_neg,c='blue',label='-')
+    ax.grid()
+    ax.set_xlabel('Time',font='Times New Roman',fontsize=20)
+    ax.axvline(peak_pos,c='red',linestyle=':')
+    ax.axvline(peak_neg,c='blue',linestyle = '-.')
+    ax.set_ylabel('Reconnection Rate [Mx/s]',font='Times New Roman',fontsize=20)
+    ax.set_title('Reconnection Rate',font='Times New Roman',fontsize=25)
+    
+    fig.savefig([flnum+'_recrate.png'])
+    return rec_rate_pos, rec_rate_neg
 
     

@@ -157,4 +157,9 @@ indstrt = 25
 fl_funcs.sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
                     sepperiod_start_pos, sepperiod_end_pos, sepperiod_start_neg,
                     sepperiod_end_neg, indstrt)
+
+print("Processing data for reconnection flux model.")
+
+hmi, aia8_pos, aia8_neg, aia8_inst_pos, aia8_inst_neg, peak_pos, \
+    peak_neg = fl_funcs.flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600)
     
