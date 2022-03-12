@@ -334,6 +334,31 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
 
 def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
                      pt_range=[-2,-1,1,2]):
+    """
+    Spur removal in ribbon masks for the perpendicular motion identification.
+    Removes regions where both negative and positive pixels exist.
+
+    Parameters
+    ----------
+    hmi_neg_mask_c : arr
+        Single-frame mask for negative HMI magnetic field, populated with -1. 
+    hmi_pos_mask_c : arr
+        Single-frame mask for negative HMI magnetic field, populated with 1. 
+    pos_crit : int, optional
+        Number of points around which. The default is 3.
+    neg_crit : TYPE, optional
+        DESCRIPTION. The default is 3.
+    pt_range : TYPE, optional
+        DESCRIPTION. The default is [-2,-1,1,2].
+
+    Returns
+    -------
+    neg_rem : TYPE
+        DESCRIPTION.
+    pos_rem : TYPE
+        DESCRIPTION.
+
+    """
     neg_rem = np.zeros(np.shape(hmi_neg_mask_c))
     pos_rem = np.zeros(np.shape(hmi_pos_mask_c))
 
