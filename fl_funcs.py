@@ -11,6 +11,23 @@ import matplotlib.dates as mdates
 from astropy.convolution import convolve, Gaussian2DKernel
 
 def conv_facts():
+    """
+    Conversion factors for images.
+
+    Returns
+    -------
+    X : ARR
+        Meshgrid of x values for image coordinates.
+    Y : TYPE
+        Meshgrid of y values for image coordinates.
+    conv_f : TYPE
+        Conversion factor between pixels and megameters.
+    xarr_Mm : TYPE
+        x-coordinates, in megameters.
+    yarr_Mm : TYPE
+        y-coordinates, in megameters.
+
+    """
     pix_to_arcsec = 0.6
     arcsec_to_radians = 1/206265
     radians_to_Mm = 149598
@@ -19,6 +36,7 @@ def conv_facts():
     
     xarr_Mm = np.zeros(800)
     yarr_Mm = np.zeros(800)
+    
     for i in range(800):
         xarr_Mm[i] = (i-400)*conv_f
         yarr_Mm[i] = (i-400)*conv_f
@@ -28,9 +46,45 @@ def conv_facts():
     return X, Y, conv_f, xarr_Mm, yarr_Mm
     
 def exponential(x,a,b):
+    """
+    Defines exponential function.
+
+    Parameters
+    ----------
+    x : float
+        Input x value for function.
+    a : TYPE
+        Amplitude of exponential function.
+    b : TYPE
+        Second parameter of exponential function.
+
+    Returns
+    -------
+    float
+        Output of exponential function.
+
+    """
     return a * np.exp(b * x )
 
 def exponential_neg(x,a,b):
+    """
+    Negative amplitude exponential function.
+
+    Parameters
+    ----------
+    x : float
+        Input x value for function.
+    a : TYPE
+        Amplitude of exponential function.
+    b : TYPE
+        Second parameter of exponential function.
+
+    Returns
+    -------
+    float
+        Output of exponential function.
+
+    """
     return -a * np.exp(b * x)
 
 def curve_length(curve):
@@ -44,28 +98,133 @@ def datenum_to_datetime(datenum):
     :return:        Datetime object corresponding to datenum.
     """
     days = datenum % 1
-    return datetime.datetime.fromordinal(int(datenum)) + datetime.timedelta(days=days) - datetime.timedelta(days=366)
+    ret = datetime.datetime.fromordinal(int(datenum)) + \
+        datetime.timedelta(days=days) - datetime.timedelta(days=366)
+
+    return ret
 
 def datenum(d):
+    """
+    Convert from ordinal to datenum.
+    """
     return 366 + d.toordinal() + (d - datetime.datetime.fromordinal(d.toordinal())).total_seconds()/(24*60*60)
 
 def find_nearest(array, value):
+    """
+    Find nearest value in array to a value.
+
+    Parameters
+    ----------
+    array : arr
+        Array of values to search through.
+    value : float
+        Value to find the nearest element in array closest to.
+
+    Returns
+    -------
+    float
+        Nearest value in array to "value"
+
+    """
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx]
 
 def format_time():
+    """
+    Time formatter.
+
+    Returns
+    -------
+    string
+        Formating for times.
+
+    """
     t = datetime.datetime.now()
     s = t.strftime('%Y-%m-%d %H:%M:%S.%f')
     return s[:-3]
 
 def find_nearest_ind(array, value):
+    """
+    Find index of element in array closest to value.
+
+    Parameters
+    ----------
+    array : arr
+        Array of values to search through.
+    value : float
+        Value to find the nearest element in array closest to.
+
+    Returns
+    -------
+    idx: int
+        Index of nearest value in array to "value"
+    """
+        
     array = np.asarray(array)
     idx = np.nanargmin(np.abs(array - value))
     return idx
 
-def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum, xcl):
+def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
+                   xcl):
+    """
+    Load variables from HMI and AIA files.
 
+    Parameters
+    ----------
+    bestflarefile : string
+        Path to file containing information about the best-performing flares.
+    year : int
+        Year of event.
+    mo : TYPE
+        Month of event.
+    day : TYPE
+        Day of event.
+    sthr : TYPE
+        Hour of event start
+    stmin : TYPE
+        Minute of event start.
+    arnum : TYPE
+        Active region number.
+    xclnum : TYPE
+        X-ray class number.
+    xcl : TYPE
+        X-ray class.
+
+    Returns
+    -------
+    sav_data_aia : AttrDict
+        Dictionary containing all of the saved parameters in the AIA file.
+    sav_data : AttrDict
+        Dictionary containing all of the saved parameters in the HMI file.
+    best304 : dict
+        Dictionary containing the SDO/EVE 304 Angstrom data of the 
+        best-performing flares in ribbonDB.
+    start304 : arr
+        Array containing the start times for the flares in best304.
+    peak304 : arr
+        Array containing the peak times for the flares in best304.
+    end304 : arr
+        Array containing the end times for the flares in best304.
+    eventindices : arr
+        Indices of best flares in best304.
+    times304 : arr
+        Time points for all flares in best304.
+    curves304 : arr
+        Light curves for all flares in best304.
+    aia_cumul8 : arr
+        Cumulative ribbon masks from AIA.
+    aia_step8 : arr
+        Instantaneous ribbon masks from AIA
+    last_cumul8 : arr
+        The last image in the cumulative mask array.
+    hmi_dat : arr
+        HMI image prior to the flare, assumed to be the same configuration 
+        throughout the flare.
+    last_mask : arr
+        The last ribbon mask, multiplied by the HMI image for polarity.
+
+    """
     data_dir=pjoin(dirname(sio.__file__),'tests','data')
     #load matlab file, get 304 light curves and start/peak/end times for flare
     best304 = sio.loadmat(bestflarefile)
@@ -89,9 +248,40 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum, xcl
 
     aia_step8 = sav_data.inst_pos8
 
-    return sav_data_aia, sav_data, best304, start304, peak304, end304, eventindices, times304, curves304, aia_cumul8, aia_step8, last_cumul8, hmi_dat, last_mask
+    return sav_data_aia, sav_data, best304, start304, peak304, end304, \
+            eventindices, times304, curves304, aia_cumul8, aia_step8, \
+            last_cumul8, hmi_dat, last_mask
 
 def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
+    """
+    Masking of positive and negative ribbons according to HMI polarity.
+
+    Parameters
+    ----------
+    aia_cumul8 : arr
+        Cumulative ribbon masks.
+    aia_step8 : arr
+        Instantaneous ribbon masks.
+    hmi_dat : arr
+        HMI image prior to the flare, assumed to be the same configuration 
+        throughout the flare.        
+    last_mask : arr
+        The last ribbon mask, multiplied by the HMI image for polarity.
+
+    Returns
+    -------
+    hmi_cumul_mask1 : arr
+        Cumulative magnetic field strength masking estimates for all flare
+        images.
+    hmi_step_mask1 : arr
+        Instantaneous magnetic field strength masking estimates for all flare
+        images.
+    hmi_pos_mask_c : arr
+        Single-frame mask for negative HMI magnetic field, populated with 1. 
+    hmi_neg_mask_c : arr
+        Single-frame mask for negative HMI magnetic field, populated with -1. 
+
+    """
     hmi_cumul_mask = np.zeros(np.shape(aia_cumul8))
     hmi_cumul_mask1 = np.zeros(np.shape(aia_cumul8))
     for i in range(len(aia_cumul8)):
@@ -142,7 +332,8 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
     
     return hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c
 
-def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3, pt_range=[-2,-1,1,2]):
+def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
+                     pt_range=[-2,-1,1,2]):
     neg_rem = np.zeros(np.shape(hmi_neg_mask_c))
     pos_rem = np.zeros(np.shape(hmi_pos_mask_c))
 
