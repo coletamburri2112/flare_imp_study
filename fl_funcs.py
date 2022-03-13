@@ -16,15 +16,15 @@ def conv_facts():
 
     Returns
     -------
-    X : ARR
+    X : list
         Meshgrid of x values for image coordinates.
-    Y : TYPE
+    Y : list
         Meshgrid of y values for image coordinates.
-    conv_f : TYPE
+    conv_f : float
         Conversion factor between pixels and megameters.
-    xarr_Mm : TYPE
+    xarr_Mm : list
         x-coordinates, in megameters.
-    yarr_Mm : TYPE
+    yarr_Mm : list
         y-coordinates, in megameters.
 
     """
@@ -53,9 +53,9 @@ def exponential(x,a,b):
     ----------
     x : float
         Input x value for function.
-    a : TYPE
+    a : float
         Amplitude of exponential function.
-    b : TYPE
+    b : float
         Second parameter of exponential function.
 
     Returns
@@ -74,9 +74,9 @@ def exponential_neg(x,a,b):
     ----------
     x : float
         Input x value for function.
-    a : TYPE
+    a : float
         Amplitude of exponential function.
-    b : TYPE
+    b : float
         Second parameter of exponential function.
 
     Returns
@@ -115,7 +115,7 @@ def find_nearest(array, value):
 
     Parameters
     ----------
-    array : arr
+    array : list
         Array of values to search through.
     value : float
         Value to find the nearest element in array closest to.
@@ -150,7 +150,7 @@ def find_nearest_ind(array, value):
 
     Parameters
     ----------
-    array : arr
+    array : list
         Array of values to search through.
     value : float
         Value to find the nearest element in array closest to.
@@ -176,19 +176,19 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
         Path to file containing information about the best-performing flares.
     year : int
         Year of event.
-    mo : TYPE
+    mo : int
         Month of event.
-    day : TYPE
+    day : int
         Day of event.
-    sthr : TYPE
+    sthr : int
         Hour of event start
-    stmin : TYPE
+    stmin : int
         Minute of event start.
-    arnum : TYPE
+    arnum : int
         Active region number.
-    xclnum : TYPE
+    xclnum : int
         X-ray class number.
-    xcl : TYPE
+    xcl : str
         X-ray class.
 
     Returns
@@ -200,28 +200,28 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
     best304 : dict
         Dictionary containing the SDO/EVE 304 Angstrom data of the 
         best-performing flares in ribbonDB.
-    start304 : arr
+    start304 : list
         Array containing the start times for the flares in best304.
-    peak304 : arr
+    peak304 : list
         Array containing the peak times for the flares in best304.
-    end304 : arr
+    end304 : list
         Array containing the end times for the flares in best304.
-    eventindices : arr
+    eventindices : list
         Indices of best flares in best304.
-    times304 : arr
+    times304 : list
         Time points for all flares in best304.
-    curves304 : arr
+    curves304 : list
         Light curves for all flares in best304.
-    aia_cumul8 : arr
+    aia_cumul8 : list
         Cumulative ribbon masks from AIA.
-    aia_step8 : arr
+    aia_step8 : list
         Instantaneous ribbon masks from AIA
-    last_cumul8 : arr
+    last_cumul8 : list
         The last image in the cumulative mask array.
-    hmi_dat : arr
+    hmi_dat : list
         HMI image prior to the flare, assumed to be the same configuration 
         throughout the flare.
-    last_mask : arr
+    last_mask : list
         The last ribbon mask, multiplied by the HMI image for polarity.
 
     """
@@ -258,27 +258,27 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
 
     Parameters
     ----------
-    aia_cumul8 : arr
+    aia_cumul8 : list
         Cumulative ribbon masks.
-    aia_step8 : arr
+    aia_step8 : list
         Instantaneous ribbon masks.
-    hmi_dat : arr
+    hmi_dat : list
         HMI image prior to the flare, assumed to be the same configuration 
         throughout the flare.        
-    last_mask : arr
+    last_mask : list
         The last ribbon mask, multiplied by the HMI image for polarity.
 
     Returns
     -------
-    hmi_cumul_mask1 : arr
+    hmi_cumul_mask1 : list
         Cumulative magnetic field strength masking estimates for all flare
         images.
-    hmi_step_mask1 : arr
+    hmi_step_mask1 : list
         Instantaneous magnetic field strength masking estimates for all flare
         images.
-    hmi_pos_mask_c : arr
+    hmi_pos_mask_c : list
         Single-frame mask for negative HMI magnetic field, populated with 1. 
-    hmi_neg_mask_c : arr
+    hmi_neg_mask_c : list
         Single-frame mask for negative HMI magnetic field, populated with -1. 
 
     """
@@ -340,23 +340,26 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
 
     Parameters
     ----------
-    hmi_neg_mask_c : arr
+    hmi_neg_mask_c : list
         Single-frame mask for negative HMI magnetic field, populated with -1. 
-    hmi_pos_mask_c : arr
+    hmi_pos_mask_c : list
         Single-frame mask for negative HMI magnetic field, populated with 1. 
     pos_crit : int, optional
-        Number of points around which. The default is 3.
-    neg_crit : TYPE, optional
-        DESCRIPTION. The default is 3.
-    pt_range : TYPE, optional
-        DESCRIPTION. The default is [-2,-1,1,2].
+        Number of positive points surrounding a negative pixel for which the 
+        negative pixel should be removed. The default is 3.
+    neg_crit : int, optional
+        Number of positive points surrounding a negative pixel for which the 
+        negative pixel should be removed. The default is 3.
+    pt_range : list, optional
+        Pixels to search around each pixel for opposite polarity. The default 
+        is [-2,-1,1,2].
 
     Returns
     -------
-    neg_rem : TYPE
-        DESCRIPTION.
-    pos_rem : TYPE
-        DESCRIPTION.
+    neg_rem : list
+        The negative polarity HMI image, with spurs removed.
+    pos_rem : list
+        The positive polarity HMI image, with spurs removed.
 
     """
     neg_rem = np.zeros(np.shape(hmi_neg_mask_c))
@@ -395,7 +398,28 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
     return neg_rem, pos_rem
 
 def gauss_conv(pos_rem, neg_rem, sigma = 10):
-    
+    """
+    Convolve HMI images with a Gaussian of specified width.
+
+    Parameters
+    ----------
+    neg_rem : list
+        The negative polarity HMI image, with spurs removed.
+    pos_rem : list
+        The positive polarity HMI image, with spurs removed.
+    sigma : int, optional
+        Width of the Gaussian to convolve with images. The default is 10.
+
+    Returns
+    -------
+    hmi_con_pos_c : list
+        Positive HMI, convolved with Gaussian.
+    hmi_con_neg_c : list
+        Negative HMI, convolved with Gaussian.
+    pil_mask_c : list
+        PIL mask found by multiplying positive and negative polarity PIL masks.
+
+    """
     gauss_kernel = Gaussian2DKernel(sigma)
     hmi_con_pos_c = convolve(pos_rem, gauss_kernel)
     hmi_con_neg_c = convolve(neg_rem, gauss_kernel)
@@ -404,6 +428,32 @@ def gauss_conv(pos_rem, neg_rem, sigma = 10):
     return hmi_con_pos_c, hmi_con_neg_c, pil_mask_c
 
 def pil_gen(pil_mask_c, hmi_dat, lx=800, ly=800):
+    """
+    Generate PIL polynomial.
+
+    Parameters
+    ----------
+    pil_mask_c : list
+        PIL mask.
+    hmi_dat : list
+        Array of HMI values associated with the flare.
+    lx : int, optional
+        Length of array in x direction. The default is 800.
+    ly : list, optional
+        Length of array in y direction. The default is 800.
+
+    Returns
+    -------
+    pil_mask_c : list
+        PIL mask.
+    ivs : list
+        x-values for PIL polynomial.
+    dvs : list
+        y-values for PIL polynomial.
+    hmik : list
+        HMI image, divided by 1000 for unit conversion.
+
+    """
     pil_mask_c = -1.0*pil_mask_c
     thresh = 0.05*np.amax(pil_mask_c)
     xc, yc = np.where(pil_mask_c > thresh)
@@ -421,6 +471,25 @@ def pil_gen(pil_mask_c, hmi_dat, lx=800, ly=800):
     return pil_mask_c, ivs, dvs, hmik
 
 def mask_sep(aia_step8, hmi_dat):
+    """
+    Masking of each image for each time step, for use in separation value 
+    determination.
+
+    Parameters
+    ----------
+    aia_step8 : list
+        Instantaneous AIA ribbon masks, c = 8.
+    hmi_dat : list
+        SDO/HMI magnetic field data for flare.
+
+    Returns
+    -------
+    aia8_pos : list
+        Contains only the positive ribbon masks for each time step.
+    aia8_neg : list
+        Contains only the negative ribbon masks for each time step.
+
+    """
     aia8 = aia_step8
     aia8_pos = np.zeros(np.shape(aia8))
     aia8_neg = np.zeros(np.shape(aia8))
@@ -436,6 +505,39 @@ def mask_sep(aia_step8, hmi_dat):
     return aia8_pos, aia8_neg
 
 def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
+    """
+    Algorithm for determination of parallel motion for positive and negative 
+    ribbons.
+
+    Parameters
+    ----------
+    aia_step8 : list
+        Instantaneous AIA ribbon masks, c = 8.
+    ivs : list
+        x-values for PIL polynomial.
+    dvs : list
+        y-values for PIL polynomial.
+    aia8_pos : list
+        Contains only the positive ribbon masks for each time step.
+    aia8_neg : list
+        Contains only the negative ribbon masks for each time step.
+
+    Returns
+    -------
+    distpos_med : list
+        Parallel distance of positive ribbon from PIL, median of all pixel
+        distances.
+    distpos_mean : list
+        Parallel distance of positive ribbon from PIL, mean of all pixel
+        distances.
+    distneg_med : list
+        Parallel distance of negative ribbon from PIL, median of all pixel
+        distances.
+    distpos_mean : list
+        Parallel distance of negative ribbon from PIL, mean of all pixel
+        distances.
+
+    """
     pil = list(zip(ivs,dvs))
 
     distpos_med = np.zeros(len(aia_step8))
@@ -465,6 +567,24 @@ def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
     return distpos_med, distpos_mean, distneg_med, distpos_mean
 
 def mask_elon(aia_cumul8, hmi_dat):
+    """
+    Masking for elongation algorithm.
+
+    Parameters
+    ----------
+    aia_cumul8 : list
+        Cumulative ribbon masks, c = 8.
+    hmi_dat : list
+        SDO/HMI image data for flare.
+
+    Returns
+    -------
+    aia8_pos_2 : list
+        Contains only the positive cumulative ribbon masks for each time step.
+    aia8_neg_2 : list
+        Contains only the negative cumulative ribbon masks for each time step.
+
+    """
     aia8_a = aia_cumul8
     aia8_pos_2 = np.zeros(np.shape(aia8_a))
     aia8_neg_2 = np.zeros(np.shape(aia8_a))
@@ -477,7 +597,35 @@ def mask_elon(aia_cumul8, hmi_dat):
                 
     return aia8_pos_2, aia8_neg_2
 
-def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3, pt_range=[-2,-1,1,2]):
+def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3, 
+                      pt_range=[-2,-1,1,2]):
+    """
+    Removal of isolated regions of very few pixels in all time step images.
+
+    Parameters
+    ----------
+    aia8_pos_2 : list
+        Contains only the positive cumulative ribbon masks for each time step.
+    aia8_neg_2 : list
+        Contains only the negative cumulative ribbon masks for each time step.
+    pos_crit : list, optional
+        The number of pixels in positive ribbon within a region above which the
+        point is allowed to remain in the image. The default is 3.
+    neg_crit : list, optional
+        The number of pixels in negative ribbon within a region above which the
+        point is allowed to remain in the image. The default is 3.
+    pt_range : list, optional
+        Pixels to search around each pixel for the same polarity. The default 
+        is [-2,-1,1,2].
+
+    Returns
+    -------
+    neg_rem1 : list
+        Vetted positive ribbon with the above criteria for each pixel.
+    pos_rem1 : list
+        Vetted negative ribbon with the above criteria for each pixel.
+
+    """
     neg_rem1 = np.zeros(np.shape(aia8_pos_2))
     pos_rem1 = np.zeros(np.shape(aia8_neg_2))
 
@@ -516,6 +664,29 @@ def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3, pt_range=[
     return neg_rem1, pos_rem1
 
 def lim_pil(ivs, dvs):
+    """
+    Limt of the inversion line within a certain number of pixels from the
+    median image value.
+
+    Parameters
+    ----------
+    ivs : list
+        x-values for PIL polynomial.
+    dvs : list
+        y-values for PIL polynomial.
+
+    Returns
+    -------
+    ivs_lim : list
+        Vetted x-values for PIL polynomial.
+    dvs_lim : list
+        Vetted y-values for PIL polynomial.
+    med_x : int
+        Median x pixel in image.
+    med_y : int
+        Median y pixel in image.
+
+    """
     med_x = np.median(ivs)
     med_y = np.median(dvs)
     
@@ -529,7 +700,51 @@ def lim_pil(ivs, dvs):
             
     return ivs_lim, dvs_lim, med_x, med_y
 
-def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y, ylim0_pos, ylim1_pos, ylim0_neg, ylim1_neg, xlim0_pos, xlim1_pos, xlim0_neg, xlim1_neg):
+def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y, 
+                 ylim0_pos, ylim1_pos, ylim0_neg, ylim1_neg, xlim0_pos, 
+                 xlim1_pos, xlim0_neg, xlim1_neg):
+    """
+    Limiting of ribbons for processing with elongation algorithm.
+
+    Parameters
+    ----------
+    aia8_pos_2 : list
+        Contains only the positive cumulative ribbon masks for each time step.
+    aia8_neg_2 : list
+        Contains only the negative cumulative ribbon masks for each time step.
+    neg_rem1 : list
+        Vetted positive ribbon with the above criteria for each pixel.
+    pos_rem1 : list
+        Vetted negative ribbon with the above criteria for each pixel.
+    med_x : int
+        Median x pixel in image.
+    med_y : int
+        Median y pixel in image.
+    ylim0_pos : int
+        Lower y-limit for positive ribbon.
+    ylim1_pos : int
+        Upper y-limit for positive ribbon
+    ylim0_neg : int
+        Lower y-limit for negative ribbon
+    ylim1_neg : int
+        Upper y-limit for negative ribbon.
+    xlim0_pos : int
+        Lower x-limit for positive ribbon
+    xlim1_pos : int
+        Upper x-limit for positive ribbon
+    xlim0_neg : int
+        Lower x-limit for negative ribbon
+    xlim1_neg : int
+        Upper x-limit for negative ribbon
+
+    Returns
+    -------
+    aia_pos_rem : list
+        Isolated positive ribbon masks.
+    aia_neg_rem : list
+        Isolated negative ribbon masks.
+
+    """
     aia_pos_rem = np.zeros(np.shape(aia8_pos_2))
     aia_neg_rem = np.zeros(np.shape(aia8_neg_2))
     
@@ -548,6 +763,24 @@ def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y, ylim0
     return aia_pos_rem, aia_neg_rem
 
 def find_rib_coordinates(aia_pos_rem, aia_neg_rem):
+    """
+    Find coordinates of extreme limits of positive and negative ribbons.
+
+    Parameters
+    ----------
+    aia_pos_rem : list
+        Isolated positive ribbon masks.
+    aia_neg_rem : list
+        Isolated negative ribbon masks.
+
+    Returns
+    -------
+    lr_coord_neg : list
+        Extreme limits of negative ribbon for each time step.
+    lr_coord_pos : list
+        Extreme limits of positive ribbon for each time step.
+
+    """
     lr_coord_pos = np.zeros([len(aia_pos_rem),4])        
     lr_coord_neg = np.zeros([len(aia_neg_rem),4])
 
@@ -601,6 +834,26 @@ def find_rib_coordinates(aia_pos_rem, aia_neg_rem):
     return lr_coord_neg, lr_coord_pos
 
 def sort_pil(ivs_lim, dvs_lim):
+    """
+    Sort PIL coordinates in ascending order.
+
+    Parameters
+    ----------
+    ivs_lim : list
+        Vetted x-values for PIL polynomial.
+    dvs_lim : list
+        Vetted y-values for PIL polynomial.
+
+    Returns
+    -------
+    ivs_sort : list
+        Sorted x-values for PIL polynomial.
+    dvs_sort : list
+        Sorted y-values for PIL polynomial.
+    sortedpil : list
+        Sorted ordered pairs for PIL polynomial.
+
+    """
     pil_sort = np.vstack((ivs_lim, dvs_lim)).T
     sortedpil = pil_sort[pil_sort[:,0].argsort()]
     ivs_sort = sortedpil[:,0]
@@ -610,6 +863,41 @@ def sort_pil(ivs_lim, dvs_lim):
 
 
 def elon_dist_arrays(lr_coord_pos, lr_coord_neg, ivs_lim, dvs_lim, ivs_sort, dvs_sort):
+    """
+    Create array for distances of limits of ribbon masks from PIL for each 
+    time step.
+
+    Parameters
+    ----------
+    lr_coord_neg : list
+        Extreme limits of negative ribbon for each time step.
+    lr_coord_pos : list
+        Extreme limits of positive ribbon for each time step.
+    ivs_lim : list
+        Vetted x-values for PIL polynomial.
+    dvs_lim : list
+        Vetted y-values for PIL polynomial.
+    ivs_sort : list
+        Sorted x-values for PIL polynomial.
+    dvs_sort : list
+        Sorted y-values for PIL polynomial.
+
+    Returns
+    -------
+    pil_right_near_pos : list
+        Closest PIL point to the "right" edge of positive ribbon for each time
+        step.
+    pil_left_near_pos : list
+        Closest PIL point to the "left" edge of positive ribbon for each time
+        step.
+    pil_right_near_neg : list
+        Closest PIL point to the "right" edge of negative ribbon for each time
+        step.
+    pil_left_near_neg : list
+        Closest PIL point to the "left" edge of negative ribbon for each time
+        step.
+
+    """
     left_pil_dist_pos = np.zeros([len(lr_coord_pos),len(ivs_sort)])
     right_pil_dist_pos = np.zeros([len(lr_coord_pos),len(ivs_sort)])
     left_pil_dist_neg = np.zeros([len(lr_coord_neg),len(ivs_sort)])
@@ -650,7 +938,37 @@ def elon_dist_arrays(lr_coord_pos, lr_coord_neg, ivs_lim, dvs_lim, ivs_sort, dvs
         
     return pil_right_near_pos, pil_left_near_pos, pil_right_near_neg, pil_left_near_neg
 
-def elongation(pil_right_near_pos, pil_left_near_pos, pil_right_near_neg, pil_left_near_neg, sortedpil):
+def elongation(pil_right_near_pos, pil_left_near_pos, pil_right_near_neg, 
+               pil_left_near_neg, sortedpil):
+    """
+    Script determining the perpendicular extent of positive and negative
+    ribbons for each time step.
+
+    Parameters
+    ----------
+    pil_right_near_pos : list
+        Closest PIL point to the "right" edge of positive ribbon for each time
+        step.
+    pil_left_near_pos : list
+        Closest PIL point to the "left" edge of positive ribbon for each time
+        step.
+    pil_right_near_neg : list
+        Closest PIL point to the "right" edge of negative ribbon for each time
+        step.
+    pil_left_near_neg : list
+        Closest PIL point to the "left" edge of negative ribbon for each time
+        step.
+    sortedpil : list
+        Sorted ordered pairs for PIL polynomial.
+
+    Returns
+    -------
+    lens_pos : list
+        Perpendicular extent of positive ribbon for each time step.
+    lens_neg : list
+        Perpendicular extent of negative ribbon for each time step.
+
+    """
     lens_pos = []
     lens_neg = []
     
