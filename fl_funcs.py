@@ -1594,7 +1594,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
             neg1600,lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm, aiadat, \
             hmi_cumul_mask1,dt304, timelab, conv_f, ivs, dvs, year, mo, day, \
             arnum, xcl, xclnum, X, Y, xarr_Mm, yarr_Mm, dt1600, flag = 1, \
-            ststep = 25):
+            stsep = 25, stelon = 1):
     """
     Animation plotting, with 1600 Angstrom, 304 Angstrom, and HMI data.
 
@@ -1668,8 +1668,10 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
     flag : int, optional
         0 (plot only first five frames) or 1 (plot all frames). The default is 
         1.
-    ststep: int, optional
+    stsep: int, optional
         Start index for separation curve.  Default is 25.
+    stelon: int, optional
+        Start index for elongation curve.  Default is 1.
 
     Returns
     -------
@@ -1714,18 +1716,18 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
     ax0 = fig.add_subplot(gs[5:, 0:4])
     
     # Elongation plots
-    lns1 = ax0.plot(dn1600[1:],lens_pos_Mm[1:],'-+',c='red',markersize=10,\
+    lns1 = ax0.plot(dn1600[stelon:],lens_pos_Mm[stelon:],'-+',c='red',markersize=10,\
                     label='Pos. Elongation')
-    lns2 = ax0.plot(dn1600[1:],lens_neg_Mm[1:],'-+',c='blue',markersize=10,\
+    lns2 = ax0.plot(dn1600[stelon:],lens_neg_Mm[stelon:],'-+',c='blue',markersize=10,\
                     label='Neg. Elongation')
     ax5 = ax0.twinx()
     ax5.cla()
     lns4 = ax5
     
     # Separation plots
-    lns5 = ax0.plot(dt1600[ststep:],distpos_Mm[ststep:],'-.',c='red',\
+    lns5 = ax0.plot(dt1600[stsep:],distpos_Mm[stsep:],'-.',c='red',\
                     markersize=10,label='Pos. Separation')
-    ax0.plot(dt1600[ststep:],distneg_Mm[ststep:],'-.',c='blue',markersize=10,\
+    ax0.plot(dt1600[stsep:],distneg_Mm[stsep:],'-.',c='blue',markersize=10,\
              label='Neg. Separation')
     
     # Plot 1600 Angstrom pcolormesh images, as well as HMI images
@@ -1754,19 +1756,9 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
     ax0.grid()
     ax2.set_xlim([dn1600[0],dn1600[-1]])
     ax3.set_xlim([dn1600[0],dn1600[-1]])
-    ax2.set_xticks([dn1600[0],dn1600[30],dn1600[60],dn1600[90],dn1600[120]])
-    ax2.set_xticklabels([timelab[0],timelab[30],timelab[60],timelab[90],\
-                         timelab[120]])
-    ax3.set_xticks([dn1600[0],dn1600[30],dn1600[60],dn1600[90],dn1600[120]])
-    ax3.set_xticklabels([timelab[0],timelab[30],timelab[60],timelab[90],\
-                         timelab[120]])
-    ax0.set_xticks([timelab[0],timelab[30],timelab[60],timelab[90],\
-                    timelab[120]])
-    ax0.set_xticklabels([timelab[0],timelab[30],timelab[60],timelab[90],\
-                         timelab[120]])
     ax0.set_xlim([timelab[0],timelab[-1]])
     
-    # Plot PIL
+    # Plot PIL on 1600 Angstrom and HMI panel
     ax1.scatter(ivs, dvs, color = 'k', s = 1)
     lines, labels = ax0.get_legend_handles_labels()
     lines2, labels2 = ax5.get_legend_handles_labels()
@@ -1780,30 +1772,43 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
         ax0.cla()
         ax5 = ax0.twinx()
         ax5.cla()
+        
+        # Plot 1600 Angstrom image
         col1 = ax1.pcolormesh(X,Y,np.log10(aiadat[t,:,:]),cmap='pink',\
                               shading='auto')
+            
+        # HMI contour over 1600 Angstrom image
         col2 = ax1.contour(X,Y,hmi_cumul_mask1[t,:,:],cmap = 'seismic')
         ax1.set_xlabel('Horizontal Distance from Image Center [Mm]',\
                        fontsize=15)
         ax1.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=15)
-        sep = ax0.plot(dt1600[25:],distpos_Mm[25:],'-.',c='red',markersize=10,\
+        
+        # Separation curves
+        sep = ax0.plot(dt1600[stsep:],distpos_Mm[stsep:],'-.',c='red',markersize=10,\
                        label='Pos. Separation')
-        sep2 = ax0.plot(dt1600[25:],distneg_Mm[25:],'-.',c='blue',\
+        sep2 = ax0.plot(dt1600[stsep:],distneg_Mm[stsep:],'-.',c='blue',\
                         markersize=10,label='Neg. Separation')
         ax1.scatter((ivs-400)*conv_f,(dvs-400)*conv_f, color = 'k', s = 1)
-        elon = ax5.plot(dt1600[1:],lens_pos_Mm[1:],'-+',c='red',markersize=10,\
+        
+        # Elongation curves
+        elon = ax5.plot(dt1600[stelon:],lens_pos_Mm[stelon:],'-+',c='red',markersize=10,\
                         label='Pos. Elongation')
-        elon2 = ax5.plot(dt1600[1:],lens_neg_Mm[1:],'-+',c='blue',\
+        elon2 = ax5.plot(dt1600[stelon:],lens_neg_Mm[stelon:],'-+',c='blue',\
                          markersize=10,label='Neg. Elongation')
         ax1.set_xlim([-250*conv_f,250*conv_f])
         ax1.set_ylim([-250*conv_f,250*conv_f])
+        
+        # 304 Angstrom light curve
         lc304=ax2.plot(dt304,norm304,'-x',color='black',linewidth=1,\
                        label='304$\AA$')
         ax3=ax2.twinx()
+        
+        # 1600 Angstrom light curve
         lc1600=ax3.plot(dt1600,normpos1600,linewidth=3,color='red',\
                         label='1600$\AA$, +')
         lc1600=ax3.plot(dt1600,normneg1600,linewidth=3,color='blue',\
                         label='1600$\AA$, -')
+
         ax2.set_xlim([dt1600[0],dt1600[-1]])
         ax2.set_ylim([-0.05,1.05])
         ax3.set_ylim([-0.05,1.05])
@@ -1855,6 +1860,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
         ax5.set_ylim([0,140*conv_f])
         return col1, col2, lc304, lc1600, sep, sep2, elon, elon2
     
+    # Option to only include first few frames for debugging purposes
     if flag == 1:
         ani = animat.FuncAnimation(fig, animate, frames=np.shape(aiadat)[0], \
                                    interval=20, repeat_delay=0)
@@ -1893,6 +1899,8 @@ def mask_plotting(X, Y, pos_rem, neg_rem, xarr_Mm, yarr_Mm, flnum):
 
     """
     fig1,ax1 = plt.subplots(figsize=(6,6))
+    
+    # Plot positive mask, with pixel vetting
     ax1.pcolormesh(X,Y,pos_rem,cmap='bwr',vmin=-1, vmax=1)
     ax1.set_title('Positive Mask',font="Times New Roman",fontsize=22,\
                   fontweight='bold')
@@ -1905,6 +1913,8 @@ def mask_plotting(X, Y, pos_rem, neg_rem, xarr_Mm, yarr_Mm, flnum):
     ax1.tick_params(labelsize=15)
     
     fig2,ax2 = plt.subplots(figsize=(6,6))
+    
+    # Plot negative mask, with pixel vetting
     ax2.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
     ax2.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
     ax2.tick_params(labelsize=15)
@@ -2053,6 +2063,7 @@ def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm,
     ax.set_title('PIL Mask and Polynomial',font='Times New Roman',fontsize=25,\
                  fontweight='bold')
     fig.savefig(str(flnum)+'_pilpolyplot.png')
+
     return None
 
 def ribbon_sep_plot(dist_pos,dist_neg,times,flnum,pltstrt):
@@ -2079,6 +2090,8 @@ def ribbon_sep_plot(dist_pos,dist_neg,times,flnum,pltstrt):
     """
     timelab = range(0,24*len(times),24)
     fig,[ax1,ax2] = plt.subplots(2,1,figsize=(13,15))
+    
+    # Plot separation, positive ribbon
     ax1.plot(timelab[pltstrt:],dist_pos[pltstrt:],'-+',c='red',markersize=10,\
              label='median')
     ax1.legend(fontsize=15)
@@ -2091,6 +2104,7 @@ def ribbon_sep_plot(dist_pos,dist_neg,times,flnum,pltstrt):
     ax1.set_title('Positive Ribbon Separation',font='Times New Roman',\
                   fontsize=25)
     
+    # Plot separation, negative ribbon
     ax2.plot(timelab[pltstrt:],dist_neg[pltstrt:],'-+',c='red',markersize=10,\
              label='median')
     ax2.legend(fontsize=15)
@@ -2131,8 +2145,12 @@ def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
     timelab = range(0,24*len(times),24)
     
     fig,ax1 = plt.subplots(figsize=(13,7))
+    
+    # Plot elongation, positive ribbon
     ax1.plot(timelab[pltstrt:],lens_pos[pltstrt:],'-+',c='red',markersize=10,\
              label='+ Ribbon')
+        
+    # Plot elongation, negative ribbon
     ax1.plot(timelab[pltstrt:],lens_neg[pltstrt:],'-+',c='blue',markersize=10,\
              label='- Ribbon')
     ax1.legend(fontsize=15)
@@ -2193,7 +2211,9 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
              label='- Ribbon')
     ax3.legend(fontsize=15)
     ax3.grid()
+    
     s = str(times1600[0])
+    
     ax3.set_xlabel('Time [s since '+s[2:13]+', '+s[13:-5]+']',\
                    font='Times New Roman',fontsize=17)
     ax3.set_ylabel('Elongation Rate [Mm/sec]',font='Times New Roman',\
@@ -2205,6 +2225,7 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
              label='mean')
     ax2.plot(timelab[1:-1],lens_neg_Mm[1:-1],'-o',c='blue',markersize=6,\
              label='mean')
+        
     ax1.grid()
     ax1.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
     ax1.set_title('Ribbon Elongation, Positive Ribbon',font='Times New Roman',\
@@ -2213,6 +2234,7 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
     ax2.set_title('Ribbon Elongation, Negative Ribbon',font='Times New Roman',\
                   fontsize=25,)
     ax2.grid()
+    
     for i,j,k,l in zip(elonperiod_start_pos,elonperiod_end_pos,\
                        elonperiod_start_neg,elonperiod_end_neg):
         print(i,j,k,l)
@@ -2264,6 +2286,7 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
 
     """
     timelab = range(0,24*len(times),24)
+    
     fig,[ax1,ax2,ax3] = plt.subplots(3,1,figsize=(13,20))
     ax3.plot(timelab[indstrt:-1],scipy.signal.medfilt(dpos_dist[indstrt:],\
                                                       kernel_size=3),'-+',\
@@ -2273,7 +2296,9 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
              c='blue',markersize=10,label='- Ribbon')
     ax3.legend(fontsize=15)
     ax3.grid()
+    
     s = str(times[0])
+    
     ax3.set_xlabel('Time [s since '+s[2:12]+ ', '+s[13:-5]+']',\
                    font='Times New Roman',fontsize=17)
     ax3.set_ylabel('Separation Rate [Mm/sec]',font='Times New Roman',\
@@ -2287,15 +2312,14 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
     ax2.plot(timelab[indstrt:-1],distneg_Mm[indstrt:-1],'-o',c='blue',\
              markersize=6,label='mean')
     ax1.grid()
-
     ax1.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
     ax1.set_title('Ribbon Separation, Positive Ribbon',font='Times New Roman',\
                   fontsize=25,)
-
     ax2.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
     ax2.set_title('Ribbon Separation, Negative Ribbon',font='Times New Roman',\
                   fontsize=25,)
     ax2.grid()
+    
     for i,j,k,l in zip(sepperiod_start_pos,sepperiod_end_pos,\
                        sepperiod_start_neg,sepperiod_end_neg):
         ax1.axvline(timelab[i],c='green')
@@ -2342,7 +2366,7 @@ def flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600):
         Time of peak counts from 1600 Angstrom data in negative ribbon.
 
     """
-    # process data for reconnection flux, reconnection rate, 
+    # Process data for reconnection flux, reconnection rate, 
     # rise phase exponential modeling
     hmi = sav_data.hmi
     aia8 = sav_data.pos8
@@ -2584,11 +2608,15 @@ def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential,
         Rise phase reconnection flux, negative ribbon.
 
     """
+    
+    # Fit only from start to specified exp_ind; usually the index corresponding
+    # to the peak of the light curve, but sometimes not.
     rise_pos_flx = rec_flux_pos[0:exp_ind]
     rise_neg_flx = rec_flux_neg[0:exp_ind]
     rise_pos_area = pos_area[0:exp_ind]
     rise_neg_area = neg_area[0:exp_ind]
 
+    # Fitting to exponential and negative exponential models
     poptposflx, pcovposflx = \
         scipy.optimize.curve_fit(exponential,range(0,len(rise_pos_flx)),\
                                  rise_pos_flx)
@@ -2609,7 +2637,7 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
                   rise_neg_flx, peak_pos, peak_neg, exp_ind, ds2, exponential, 
                   exponential_neg, poptposflx, poptnegflx, flnum):
     """
-    Plottin of exponential curve with fit.
+    Plotting of exponential curve with fit.
 
     Parameters
     ----------
@@ -2671,7 +2699,7 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
     
     fig.savefig(str(flnum)+'_recflux_model.png')
     
-    # now plot log-log of just the impulsive phase
+    # Now plot log-log of just the impulsive phase
     
     fig2,[ax1,ax2] = plt.subplots(2,1,figsize=(10,20))
     ax1.scatter((dt1600),np.log(rec_flux_pos),c='red')
@@ -2680,8 +2708,7 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
     ax2.grid()
     ax1.set_xlabel('Time',font='Times New Roman',fontsize=20)
     ax2.set_xlabel('Time',font='Times New Roman',fontsize=20)
-    #ax.axvline(peak_pos,c='red',linestyle=':')
-    #ax.axvline(peak_neg,c='blue',linestyle = '-.')
+
     ax1.plot((rise_pos_time),\
              np.log(ds2*exponential(range(0,len(rise_pos_flx)),\
                                     *poptposflx)), 'r-',\
@@ -2705,7 +2732,6 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
     
     fig2.savefig(str(flnum)+'_rec_impphase_model.png')
 
-    
     return None
 
 def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix, \
@@ -2739,12 +2765,13 @@ def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix, \
     None.
 
     """
-    # cumulative
+    # Cumulative
     pos_area = pos_area_pix
     neg_area = neg_area_pix
     rise_pos_area = pos_area[0:exp_ind]
     rise_neg_area = neg_area[0:exp_ind]
-    # plot just the ribbon areas, c = 8
+
+    # Plot just the ribbon areas, c = 8
     fig,ax = plt.subplots(figsize=(10,10))
     ax.scatter(dt1600,pos_area,c='red',label='+')
     ax.scatter(dt1600,neg_area,c='blue',label='-')
@@ -2760,13 +2787,14 @@ def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix, \
             'b-',label='Exponential Model, -')
     ax.set_ylabel('Ribbon Area [cm^2]',font='Times New Roman',fontsize=20)
     ax.set_title('Ribbon Area',font='Times New Roman',fontsize=25)
-    #if end of modeling region is before end of impulsive phase
+
+    # If end of modeling region is before end of impulsive phase
     ax.axvline(dt1600[exp_ind])
     ax.legend()
     
     fig.savefig(str(flnum)+'_ribarea_model.png')
     
-    #just impulsive region, with log-log
+    # Just impulsive region, with log-log
     fig2,[ax1,ax2] = plt.subplots(2,1,figsize=(10,20))
     ax1.scatter((dt1600),np.log(pos_area),c='red')
     ax2.scatter((dt1600),np.log(neg_area),c='blue')
@@ -2796,7 +2824,6 @@ def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix, \
     
     return None
 
-# Reconnection rate
 def rec_rate(rec_flux_pos, rec_flux_neg, dn1600, dt1600, peak_pos, peak_neg, \
              flnum):
     """
