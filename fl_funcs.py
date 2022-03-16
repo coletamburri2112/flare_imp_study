@@ -1,40 +1,36 @@
-###############################################################################
+# Most recent version: 14 March 2022 by Cole Tamburri
+# University of Colorado Boulder
+# Advisors: Maria D. Kazachenko and Adam F. Kowalski
 
-## Most recent version: 14 March 2022 by Cole Tamburri
-## University of Colorado Boulder
-## Advisors: Maria D. Kazachenko and Adam F. Kowalski
+# Major working functions for analysis of SDO/EVE 304 Angstrom light curves,
+# SDO/AIA 1600 Angstrom images and ribbon masks, and SDO/HMI magnetograms.
+# Includes algorithm for determination of separation and elongation of both
+# ribbons relative to the polarity inversion line. Flares able to beanalyzed
+# are contained in the RibbonDB database (Kazachenko et al. 2017).  Prior to
+# running this script, the user should obtain flare light curves and times
+# corresponding to the modeled flares in this database, for which the
+# impulsiveness index has been determined previously.
 
-## Major working functions for analysis of SDO/EVE 304 Angstrom light curves, 
-## SDO/AIA 1600 Angstrom images and ribbon masks, and SDO/HMI magnetograms.  
-## Includes algorithm for determination of separation and elongation of both
-## ribbons relative to the polarity inversion line. Flares able to beanalyzed 
-## are contained in the RibbonDB database (Kazachenko et al. 2017).  Prior to 
-## running this script, the user should obtain flare light curves and times 
-## corresponding to the modeled flares in this database, for which the 
-## impulsiveness index has been determined previously.  
+# The polarity inversion line is determined by convolving the HMI masks
+# associated for each flare with a Gaussian of predetermined length, then
+# finding the major region of intersection between these and using the
+# resulting heatmap to fit a fourth-order polynomial.  Details of separation
+# and elongation methods relative to the PIL are included below.
 
-## The polarity inversion line is determined by convolving the HMI masks
-## associated for each flare with a Gaussian of predetermined length, then 
-## finding the major region of intersection between these and using the 
-## resulting heatmap to fit a fourth-order polynomial.  Details of separation
-## and elongation methods relative to the PIL are included below.
+# Reconnection rates and ribbon areas for both positive and negative ribbons
+# are determined, and the values corresponding to the rise phase of the flare
+# (with some flare-specific variation) are fit to an exponential model, in
+# order to prepare for modeling efforts of flare heating particularly in the
+# rise phase.
 
-## Reconnection rates and ribbon areas for both positive and negative ribbons 
-## are determined, and the values corresponding to the rise phase of the flare
-## (with some flare-specific variation) are fit to an exponential model, in
-## order to prepare for modeling efforts of flare heating particularly in the 
-## rise phase.
+# Separation and elongation values (perpendicular and parallel PIL-relative
+# motion, respectively) are used to find separation and elongation rates,
+# through which significant periods of these two phases of ribbon motion can
+# be identified.
 
-## Separation and elongation values (perpendicular and parallel PIL-relative
-## motion, respectively) are used to find separation and elongation rates, 
-## through which significant periods of these two phases of ribbon motion can 
-## be identified.
-
-## Plotting and data presentation routines are also below, which includes an
-## animation showing the timing of separation, elongation, and chromospheric 
-## line light curves.  
-
-###############################################################################
+# Plotting and data presentation routines are also below, which includes an
+# animation showing the timing of separation, elongation, and chromospheric
+# line light curves.
 
 from os.path import dirname, join as pjoin
 import scipy.io as sio
@@ -47,6 +43,7 @@ from scipy.spatial.distance import cdist
 import scipy.signal
 import matplotlib.dates as mdates
 from astropy.convolution import convolve, Gaussian2DKernel
+
 
 def conv_facts():
     """
@@ -66,24 +63,25 @@ def conv_facts():
         y-coordinates, in megameters.
 
     """
-    pix_to_arcsec = 0.6 # asec/pix
-    arcsec_to_radians = 1/206265 # rad/asec
-    radians_to_Mm = 149598 # Mm/rad
-    
-    conv_f = pix_to_arcsec * arcsec_to_radians * radians_to_Mm # Mm/pix
-    
+    pix_to_arcsec = 0.6  # asec/pix
+    arcsec_to_radians = 1/206265  # rad/asec
+    radians_to_Mm = 149598  # Mm/rad
+
+    conv_f = pix_to_arcsec * arcsec_to_radians * radians_to_Mm  # Mm/pix
+
     xarr_Mm = np.zeros(800)
     yarr_Mm = np.zeros(800)
-    
+
     for i in range(800):
         xarr_Mm[i] = (i-400)*conv_f
         yarr_Mm[i] = (i-400)*conv_f
-        
-    X,Y = np.meshgrid(xarr_Mm,yarr_Mm)
-        
+
+    X, Y = np.meshgrid(xarr_Mm, yarr_Mm)
+
     return X, Y, conv_f, xarr_Mm, yarr_Mm
-    
-def exponential(x,a,b):
+
+
+def exponential(x, a, b):
     """
     Defines exponential function.
 
@@ -102,9 +100,10 @@ def exponential(x,a,b):
         Output of exponential function.
 
     """
-    return a * np.exp(b * x )
+    return a * np.exp(b * x)
 
-def exponential_neg(x,a,b):
+
+def exponential_neg(x, a, b):
     """
     Negative amplitude exponential function.
 
@@ -125,11 +124,13 @@ def exponential_neg(x,a,b):
     """
     return -a * np.exp(b * x)
 
+
 def curve_length(curve):
-    """ 
-    Sum of Euclidean distances between points 
+    """
+    Sum of Euclidean distances between points
     """
     return np.sum(np.sqrt(np.sum((curve[:-1] - curve[1:])**2,axis=1)))
+
 
 def datenum_to_datetime(datenum):
     """
@@ -146,11 +147,12 @@ def datenum_to_datetime(datenum):
         Converted datetime value.
 
     """
-    days = datenum % 1 
+    days = datenum % 1
     ret = datetime.datetime.fromordinal(int(datenum)) + \
         datetime.timedelta(days=days) - datetime.timedelta(days=366)
 
     return ret
+
 
 def datenum(d):
     """
@@ -159,6 +161,7 @@ def datenum(d):
     return 366 + d.toordinal() + (d - datetime.datetime.\
                                   fromordinal(d.toordinal())).\
         total_seconds()/(24*60*60)
+
 
 def find_nearest(array, value):
     """
@@ -181,6 +184,7 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return array[idx]
 
+
 def format_time():
     """
     Time formatter.
@@ -194,6 +198,7 @@ def format_time():
     t = datetime.datetime.now()
     s = t.strftime('%Y-%m-%d %H:%M:%S.%f')
     return s[:-3]
+
 
 def find_nearest_ind(array, value):
     """
@@ -211,10 +216,11 @@ def find_nearest_ind(array, value):
     idx: int
         Index of nearest value in array to "value"
     """
-        
+
     array = np.asarray(array)
     idx = np.nanargmin(np.abs(array - value))
     return idx
+
 
 def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
                    xcl):
@@ -249,7 +255,7 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
     sav_data : AttrDict
         Dictionary containing all of the saved parameters in the HMI file.
     best304 : dict
-        Dictionary containing the SDO/EVE 304 Angstrom data of the 
+        Dictionary containing the SDO/EVE 304 Angstrom data of the
         best-performing flares in ribbonDB.
     start304 : list
         Array containing the start times for the flares in best304.
@@ -270,22 +276,23 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
     last_cumul8 : list
         The last image in the cumulative mask array.
     hmi_dat : list
-        HMI image prior to the flare, assumed to be the same configuration 
+        HMI image prior to the flare, assumed to be the same configuration
         throughout the flare.
     last_mask : list
         The last ribbon mask, multiplied by the HMI image for polarity.
 
     """
-    data_dir=pjoin(dirname(sio.__file__),'tests','data')
-    #load matlab file, get 304 light curves and start/peak/end times for flare
+    data_dir=pjoin(dirname(sio.__file__), 'tests', 'data')
+
+    # Load matlab file, get 304 light curves and start/peak/end times for flare
     best304 = sio.loadmat(bestflarefile)
 
     start304 = best304['starttimes_corr_more'][:,0]
     peak304 = best304['maxtimes_corr_more'][:,0]
     end304 = best304['endtimes_corr_more'][:,0]
-    eventindices = best304['starttimes_corr_more'][:,1] 
-    times304 = best304['event_times_more'] 
-    curves304 = best304['event_curves_more'] 
+    eventindices = best304['starttimes_corr_more'][:,1]
+    times304 = best304['event_times_more']
+    curves304 = best304['event_curves_more']
     sav_fname_aia=pjoin(data_dir,"/Users/owner/Desktop/Final_Selection/"\
                         "AIA_Files/aia1600blos"+str(year).zfill(4)+\
                             str(mo).zfill(2)+str(day).zfill(2)+"_"+\
@@ -299,9 +306,9 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
                        str(arnum).zfill(5)+"_"+xcl+str(xclnum)+\
                            "_cut08_sat5000.00_brad.sav")
     sav_data = readsav(sav_fname)
-    
+
     aia_cumul8 = sav_data.pos8
-    last_cumul8 = aia_cumul8[-1,:,:] # Last frame
+    last_cumul8 = aia_cumul8[-1, :, :] # Last frame
     hmi_dat = sav_data.hmi
     last_mask = last_cumul8*hmi_dat
 
@@ -322,8 +329,8 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
     aia_step8 : list
         Instantaneous ribbon masks.
     hmi_dat : list
-        HMI image prior to the flare, assumed to be the same configuration 
-        throughout the flare.        
+        HMI image prior to the flare, assumed to be the same configuration
+        throughout the flare.
     last_mask : list
         The last ribbon mask, multiplied by the HMI image for polarity.
 
@@ -336,18 +343,18 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
         Instantaneous magnetic field strength masking estimates for all flare
         images.
     hmi_pos_mask_c : list
-        Single-frame mask for negative HMI magnetic field, populated with 1. 
+        Single-frame mask for negative HMI magnetic field, populated with 1.
     hmi_neg_mask_c : list
-        Single-frame mask for negative HMI magnetic field, populated with -1. 
+        Single-frame mask for negative HMI magnetic field, populated with -1.
 
     """
     hmi_cumul_mask = np.zeros(np.shape(aia_cumul8))
     hmi_cumul_mask1 = np.zeros(np.shape(aia_cumul8))
-    
+
     # Find HMI masks for all frames - cumulative
     for i in range(len(aia_cumul8)):
-        frame = np.squeeze(aia_cumul8[i,:,:])
-        hmi_cumul_mask[i,:,:] = frame*hmi_dat
+        frame = np.squeeze(aia_cumul8[i, :, :])
+        hmi_cumul_mask[i, :, :] = frame*hmi_dat
 
     # Convert to positive and negative polarities
     for i in range(len(hmi_cumul_mask)):
@@ -359,14 +366,14 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
                     hmi_cumul_mask1[i,j,k] = -1
                 else:
                     hmi_cumul_mask1[i,j,k] = 0
-   
+
     hmi_step_mask = np.zeros(np.shape(aia_step8))
     hmi_step_mask1 = np.zeros(np.shape(aia_step8))
 
-    # Find HMI masks for all frames - instantaneous    
+    # Find HMI masks for all frames - instantaneous
     for i in range(len(aia_step8)):
-        frame = np.squeeze(aia_step8[i,:,:])
-        hmi_step_mask[i,:,:] = frame*hmi_dat
+        frame = np.squeeze(aia_step8[i, :, :])
+        hmi_step_mask[i,  :,  :] = frame*hmi_dat
 
     # Convert to positive and negative polarities
     for i in range(len(hmi_step_mask)):
@@ -378,7 +385,7 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
                     hmi_step_mask1[i,j,k] = -1
                 else:
                     hmi_step_mask1[i,j,k] = 0
-    
+
     # Single-frame masks for positive and negative ribbons
     hmi_pos_mask_c = np.zeros(np.shape(hmi_dat))
     hmi_neg_mask_c = np.zeros(np.shape(hmi_dat))
@@ -394,7 +401,7 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
             else:
                 hmi_pos_mask_c[i,j] = 0
                 hmi_neg_mask_c[i,j] = 0
-    
+
     return hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c
 
 def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
@@ -406,17 +413,17 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
     Parameters
     ----------
     hmi_neg_mask_c : list
-        Single-frame mask for negative HMI magnetic field, populated with -1. 
+        Single-frame mask for negative HMI magnetic field, populated with -1.
     hmi_pos_mask_c : list
-        Single-frame mask for negative HMI magnetic field, populated with 1. 
+        Single-frame mask for negative HMI magnetic field, populated with 1.
     pos_crit : int, optional
-        Number of positive points surrounding a negative pixel for which the 
+        Number of positive points surrounding a negative pixel for which the
         negative pixel should be removed. The default is 3.
     neg_crit : int, optional
-        Number of positive points surrounding a negative pixel for which the 
+        Number of positive points surrounding a negative pixel for which the
         negative pixel should be removed. The default is 3.
     pt_range : list, optional
-        Pixels to search around each pixel for opposite polarity. The default 
+        Pixels to search around each pixel for opposite polarity. The default
         is [-2,-1,1,2].
 
     Returns
@@ -446,9 +453,9 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
                     neg_rem[i,j] = -1
             else:
                 neg_rem[i,j] = 0
-                
+
     # If > pos_crit negative pixels surround a positive pixel, remove positive
-    # pixel.            
+    # pixel.
     for i in range(len(pos_rem)):
         for j in range(len(pos_rem[0])):
             n = 0
@@ -462,8 +469,8 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
                 else:
                     pos_rem[i,j] = 1
             else:
-                pos_rem[i,j] = 0 
-    
+                pos_rem[i,j] = 0
+
     return neg_rem, pos_rem
 
 def gauss_conv(pos_rem, neg_rem, sigma = 10):
@@ -492,13 +499,13 @@ def gauss_conv(pos_rem, neg_rem, sigma = 10):
     gauss_kernel = Gaussian2DKernel(sigma)
     hmi_con_pos_c = convolve(pos_rem, gauss_kernel)
     hmi_con_neg_c = convolve(neg_rem, gauss_kernel)
-    
+
     # PIL mask is found by intersection of negative and positive HMI masks
     pil_mask_c = hmi_con_pos_c * hmi_con_neg_c
-    
+
     return hmi_con_pos_c, hmi_con_neg_c, pil_mask_c
 
-def pil_gen(pil_mask_c, hmi_dat, threshperc = 0.05, lx=800, ly=800):
+def pil_gen(pil_mask_c, hmi_dat, threshperc=0.05, lx=800, ly=800, polyor=4):
     """
     Generate PIL polynomial.
 
@@ -508,13 +515,15 @@ def pil_gen(pil_mask_c, hmi_dat, threshperc = 0.05, lx=800, ly=800):
         PIL mask.
     hmi_dat : list
         Array of HMI values associated with the flare.
-    threshperc: float
+    threshperc: float, optional
         Percentage of maximum PIL mask value to allow into the polynomial fit.
         The default is 0.05.
     lx : int, optional
         Length of array in x direction. The default is 800.
     ly : list, optional
         Length of array in y direction. The default is 800.
+    polyor : int, optional
+        Order of fitting polynomial.  The default is 4.
 
     Returns
     -------
@@ -528,33 +537,36 @@ def pil_gen(pil_mask_c, hmi_dat, threshperc = 0.05, lx=800, ly=800):
         HMI image, divided by 1000 for unit conversion.
 
     """
-    
+
     # Make PIL mask positive
     pil_mask_c = -1.0 * pil_mask_c
-    
+
     # Threshold for fitting of PIL polynomial
     thresh = threshperc * np.amax(pil_mask_c)
-    
+
     # Isolate pixels certainly within the mask
     xc, yc = np.where(pil_mask_c > thresh)
 
-    # Fitting of fourth-order polynomial to chosen pixels and generation of 
+    # Fitting of fourth-order polynomial to chosen pixels and generation of
     # PIL polynomial arrays
     x = np.linspace(0, lx, lx)
     y = np.linspace(0, ly, ly)
-    a, b, c, d, e = np.polyfit(y[yc],x[xc],4)
+    coeffs = np.polyfit(y[yc],x[xc],polyor)
 
     ivs = y[yc]
 
-    dvs = a*ivs**4 + b*ivs**3 + c*ivs**2 + d*ivs + e
-    
+    dvs = 0
+
+    for i in range(len(coeffs)):
+        dvs += coeffs[i]*ivs**(polyor-i)
+
     hmik = hmi_dat/1000
-    
+
     return pil_mask_c, ivs, dvs, hmik
 
 def mask_sep(aia_step8, hmi_dat):
     """
-    Masking of each image for each time step, for use in separation value 
+    Masking of each image for each time step, for use in separation value
     determination.
 
     Parameters
@@ -572,7 +584,7 @@ def mask_sep(aia_step8, hmi_dat):
         Contains only the negative ribbon masks for each time step.
 
     """
-    
+
     aia8 = aia_step8
     aia8_pos = np.zeros(np.shape(aia8))
     aia8_neg = np.zeros(np.shape(aia8))
@@ -585,12 +597,12 @@ def mask_sep(aia_step8, hmi_dat):
                     aia8_pos[i,j,k] = 1
                 elif aia8[i,j,k] == 1 and hmi_dat[j,k] < 0:
                     aia8_neg[i,j,k] = 1
-                    
+
     return aia8_pos, aia8_neg
 
 def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
     """
-    Algorithm for determination of parallel motion for positive and negative 
+    Algorithm for determination of parallel motion for positive and negative
     ribbons.
 
     Parameters
@@ -622,7 +634,7 @@ def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
         distances.
 
     """
-    
+
     # Create array of PIL mask values
     pil = list(zip(ivs,dvs))
 
@@ -630,11 +642,11 @@ def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
     distneg_med = np.zeros(len(aia_step8))
     distpos_mean = np.zeros(len(aia_step8))
     distneg_mean = np.zeros(len(aia_step8))
-    
+
     # Main working function for separation
     for i in range(len(aia_step8)):
-        posframe = aia8_pos[i,:,:]
-        negframe = aia8_neg[i,:,:]  
+        posframe = aia8_pos[i,  :,  :]
+        negframe = aia8_neg[i,  :,  :]
         xpos,ypos = np.where(posframe == 1)
         xneg,yneg = np.where(negframe == 1)
         pos_ops = list(zip(ypos,xpos))
@@ -653,7 +665,7 @@ def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
             allneg_min = np.amin(allneg,axis=1)
             distneg_med[i] = np.median(allneg_min)
             distneg_mean[i] = np.mean(allneg_min)
-            
+
     return distpos_med, distpos_mean, distneg_med, distpos_mean
 
 def mask_elon(aia_cumul8, hmi_dat):
@@ -675,11 +687,11 @@ def mask_elon(aia_cumul8, hmi_dat):
         Contains only the negative cumulative ribbon masks for each time step.
 
     """
-    
+
     aia8_a = aia_cumul8
     aia8_pos_2 = np.zeros(np.shape(aia8_a))
     aia8_neg_2 = np.zeros(np.shape(aia8_a))
-    
+
     # Separation of cumulative ribbon masks into separate arrays for opposite
     # polarity
     for i, j, k in np.ndindex(aia8_a.shape):
@@ -687,10 +699,10 @@ def mask_elon(aia_cumul8, hmi_dat):
                 aia8_pos_2[i,j,k] = 1
             elif aia8_a[i,j,k] == 1 and hmi_dat[j,k] < 0:
                 aia8_neg_2[i,j,k] = 1
-                
+
     return aia8_pos_2, aia8_neg_2
 
-def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3, 
+def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3,
                       pt_range=[-2,-1,1,2]):
     """
     Removal of isolated regions of very few pixels in all time step images.
@@ -708,7 +720,7 @@ def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3,
         The number of pixels in negative ribbon within a region above which the
         point is allowed to remain in the image. The default is 3.
     pt_range : list, optional
-        Pixels to search around each pixel for the same polarity. The default 
+        Pixels to search around each pixel for the same polarity. The default
         is [-2,-1,1,2].
 
     Returns
@@ -739,7 +751,7 @@ def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3,
                         neg_rem1[i,j,k] = 0
                 else:
                     neg_rem1[i,j,k] = 0
-            
+
     for i in range(len(pos_rem1)):
         for j in range(len(pos_rem1[0])-2):
             for k in range(len(pos_rem1[1])-2):
@@ -755,7 +767,7 @@ def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3,
                         pos_rem1[i,j,k] = 0
                 else:
                     pos_rem1[i,j,k] = 0
-    
+
     return neg_rem1, pos_rem1
 
 def lim_pil(ivs, dvs):
@@ -784,19 +796,19 @@ def lim_pil(ivs, dvs):
     """
     med_x = np.median(ivs)
     med_y = np.median(dvs)
-    
+
     ivs_lim = []
     dvs_lim = []
-    
+
     for i in range(len(ivs)):
         if not (ivs[i] < (med_x - 200)) and not (ivs[i] > (med_x + 200)):
             ivs_lim.append(ivs[i])
             dvs_lim.append(dvs[i])
-            
+
     return ivs_lim, dvs_lim, med_x, med_y
 
-def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y, 
-                 ylim0_pos, ylim1_pos, ylim0_neg, ylim1_neg, xlim0_pos, 
+def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y,
+                 ylim0_pos, ylim1_pos, ylim0_neg, ylim1_neg, xlim0_pos,
                  xlim1_pos, xlim0_neg, xlim1_neg):
     """
     Limiting of ribbons for processing with elongation algorithm.
@@ -842,21 +854,21 @@ def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y,
     """
     aia_pos_rem = np.zeros(np.shape(aia8_pos_2))
     aia_neg_rem = np.zeros(np.shape(aia8_neg_2))
-    
+
     # Limit the negative ribbon image to a certain region in the image
     for i in range(len(aia8_neg_2)):
         for j in range(ylim0_neg,ylim1_neg):
             for k in range(xlim0_neg,xlim1_neg):
                 if neg_rem1[i,j,k] > 0:
                     aia_neg_rem[i,j,k] = 1
-                        
+
     # Limit the positive ribbon image to a certain region in the image
     for i in range(len(aia8_pos_2)):
         for j in range(ylim0_pos,ylim1_pos):
             for k in range(xlim0_pos,xlim1_pos):
                 if pos_rem1[i,j,k] > 0:
                     aia_pos_rem[i,j,k] = 1
-                    
+
     return aia_pos_rem, aia_neg_rem
 
 def find_rib_coordinates(aia_pos_rem, aia_neg_rem):
@@ -878,7 +890,7 @@ def find_rib_coordinates(aia_pos_rem, aia_neg_rem):
         Extreme limits of positive ribbon for each time step.
 
     """
-    lr_coord_pos = np.zeros([len(aia_pos_rem),4])        
+    lr_coord_pos = np.zeros([len(aia_pos_rem),4])
     lr_coord_neg = np.zeros([len(aia_neg_rem),4])
 
 
@@ -931,7 +943,7 @@ def find_rib_coordinates(aia_pos_rem, aia_neg_rem):
             if right_x != 0:
                 break
         lr_coord_neg[i,:] = [left_x,left_y,right_x,right_y]
-        
+
     return lr_coord_neg, lr_coord_pos
 
 def sort_pil(ivs_lim, dvs_lim):
@@ -959,14 +971,14 @@ def sort_pil(ivs_lim, dvs_lim):
     sortedpil = pil_sort[pil_sort[:,0].argsort()]
     ivs_sort = sortedpil[:,0]
     dvs_sort = sortedpil[:,1]
-    
+
     return ivs_sort, dvs_sort, sortedpil
 
 
 def elon_dist_arrays(lr_coord_pos, lr_coord_neg, ivs_lim, dvs_lim, ivs_sort, \
                      dvs_sort):
     """
-    Create array for distances of limits of ribbon masks from PIL for each 
+    Create array for distances of limits of ribbon masks from PIL for each
     time step.
 
     Parameters
@@ -1008,7 +1020,7 @@ def elon_dist_arrays(lr_coord_pos, lr_coord_neg, ivs_lim, dvs_lim, ivs_sort, \
     pil_right_near_neg = np.zeros([len(right_pil_dist_neg),3])
     pil_left_near_pos = np.zeros([len(left_pil_dist_pos),3])
     pil_right_near_pos = np.zeros([len(right_pil_dist_pos),3])
-    
+
     # The following loops determine the distance from all limit pixels to all
     # pixels corresponding to the PIL and stores in arrays.  The first three
     # loops correspond to the positive ribbon, for all time steps.
@@ -1019,18 +1031,18 @@ def elon_dist_arrays(lr_coord_pos, lr_coord_neg, ivs_lim, dvs_lim, ivs_sort, \
                 np.sqrt((left_x-ivs_sort[j])**2+(left_y-dvs_sort[j])**2)
             right_pil_dist_pos[i,j] = \
                 np.sqrt((right_x-ivs_sort[j])**2+(right_y-dvs_sort[j])**2)
-    
+
     # The minimum of the distances to each of the extreme limits is found.
     for i in range(len(left_pil_dist_pos)):
         ind = np.where(left_pil_dist_pos[i]==np.min(left_pil_dist_pos[i]))
         pil_left_near_pos[i,:] \
             = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]
-    
+
     for j in range(len(right_pil_dist_pos)):
         ind = np.where(right_pil_dist_pos[j]==np.min(right_pil_dist_pos[j]))
         pil_right_near_pos[j,:] \
             = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]
-                    
+
     # Identical method as above, for the negative ribbon.
     for i in range(len(lr_coord_neg)):
         left_x,left_y,right_x,right_y = lr_coord_neg[i]
@@ -1039,21 +1051,21 @@ def elon_dist_arrays(lr_coord_pos, lr_coord_neg, ivs_lim, dvs_lim, ivs_sort, \
                 = np.sqrt((left_x-ivs_sort[j])**2+(left_y-dvs_sort[j])**2)
             right_pil_dist_neg[i,j] \
                 = np.sqrt((right_x-ivs_sort[j])**2+(right_y-dvs_sort[j])**2)
-    
+
     for i in range(len(left_pil_dist_neg)):
         ind = np.where(left_pil_dist_neg[i]==np.min(left_pil_dist_neg[i]))
         pil_left_near_neg[i,:] \
             = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]
-    
+
     for j in range(len(right_pil_dist_neg)):
         ind = np.where(right_pil_dist_neg[j]==np.min(right_pil_dist_neg[j]))
         pil_right_near_neg[j,:] \
-            = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]               
-        
+            = [ivs_lim[ind[0][0]],dvs_sort[ind[0][0]],ind[0][0]]
+
     return pil_right_near_pos, pil_left_near_pos, pil_right_near_neg, \
         pil_left_near_neg
 
-def elongation(pil_right_near_pos, pil_left_near_pos, pil_right_near_neg, 
+def elongation(pil_right_near_pos, pil_left_near_pos, pil_right_near_neg,
                pil_left_near_neg, sortedpil):
     """
     Script determining the perpendicular extent of positive and negative
@@ -1086,8 +1098,8 @@ def elongation(pil_right_near_pos, pil_left_near_pos, pil_right_near_neg,
     """
     lens_pos = []
     lens_neg = []
-    
-    # The curve length of the PIL between two points - the closest to each of 
+
+    # The curve length of the PIL between two points - the closest to each of
     # the limits of each of the ribbon - is used as the elongation value for
     # each time step.
     for i in range(len(pil_right_near_pos)):
@@ -1095,19 +1107,19 @@ def elongation(pil_right_near_pos, pil_left_near_pos, pil_right_near_neg,
         rightin = int(pil_right_near_pos[i,2])
         curvei = sortedpil[leftin:rightin,:]
         lens_pos.append(curve_length(curvei))
-    
+
     for i in range(len(pil_right_near_neg)):
         leftin = int(pil_left_near_neg[i,2])
         rightin = int(pil_right_near_neg[i,2])
         curvei = sortedpil[leftin:rightin,:]
         lens_neg.append(curve_length(curvei))
-        
+
     return lens_pos, lens_neg
 
 def convert_to_Mm(lens_pos, dist_pos, lens_neg, dist_neg, conv_f):
     """
-    Converts elongation and separation values, determined beforehand, to units 
-    of Mm.  Also determines time derivative (rate of change) of perpendicular 
+    Converts elongation and separation values, determined beforehand, to units
+    of Mm.  Also determines time derivative (rate of change) of perpendicular
     and parallel motion values.
 
     Parameters
@@ -1147,18 +1159,18 @@ def convert_to_Mm(lens_pos, dist_pos, lens_neg, dist_neg, conv_f):
     lens_neg_Mm = np.zeros(np.shape(lens_neg))
     distpos_Mm = np.zeros(np.shape(dist_pos))
     distneg_Mm = np.zeros(np.shape(dist_neg))
-    
+
     for i in range(len(lens_pos)):
         lens_pos_Mm[i] = lens_pos[i]*conv_f
         lens_neg_Mm[i] = lens_neg[i]*conv_f
         distpos_Mm[i] = dist_pos[i]*conv_f
         distneg_Mm[i] = dist_neg[i]*conv_f
-        
+
     dneg_len = np.diff(lens_neg_Mm)/24.
     dpos_len = np.diff(lens_pos_Mm)/24.
     dneg_dist = np.diff(distneg_Mm)/24.
     dpos_dist = np.diff(distpos_Mm)/24.
-    
+
     return lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm, dneg_len, \
         dpos_len, dneg_dist, dpos_dist
 
@@ -1207,7 +1219,7 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
         Nearest index in AIA data to end time of the flare from EUV 304 light
         curve.
     filter_304 : list
-        Smoothed 304 light curve using scipy's medfilt function, with kernel 
+        Smoothed 304 light curve using scipy's medfilt function, with kernel
         size of 5.
     med304 : float
         Median of 304 Angstrom light curve.
@@ -1234,13 +1246,13 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
 
     aiadat = sav_data_aia.aia1600
     time = sav_data.tim
-    
+
     nt = len(time)
     nx = aiadat.shape[1]
     ny = aiadat.shape[2]
     t1 = str(sav_data.tim[0])
     t2 = str(sav_data.tim[-1])
-    
+
     # Conversion of string times into usable floats
     tst = float(t1[14:15:1])+(float(t1[17:18:1])/60)+(float(t1[20:24:1])/3600)
     tend = float(t2[14:15:1])+(float(t2[17:18:1])/60)+(float(t2[20:24:1])/3600)
@@ -1249,42 +1261,42 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
     x = np.linspace(xlo,xhi,nx)
     y = np.linspace(ylo,yhi,ny)
     x,y = np.meshgrid(x,y)
-    
+
     times1600 = np.empty(nt,dtype = datetime.datetime)
     sum1600 = np.empty(nt)
     dn1600 = np.empty(nt)
-    
+
     for i in range(nt):
         timechoi = str(sav_data.tim[i])
         times1600[i] = datetime.datetime.strptime(timechoi[2:21], \
                                                   '20%y-%m-%dT%H:%M:%S')
         dn1600[i] = datenum(times1600[i])
-        timestep = aiadat[i,:,:]
+        timestep = aiadat[i, :, :]
         sum1600[i] = timestep.sum()
-        
+
     # Find index of nearest index to flare number in 304 flares array
     ind = (np.isclose(eventindices,flnum))
     index = np.where(ind)[0][0]
-    
+
     # Light curve for selected flare
     curve304 = curves304[index]
     time304 = times304[index]
-    
+
     # Integrate over all pixels in 1600A line
     for i in range(nt):
-        timestep=aiadat[i,:,:]
+        timestep=aiadat[i, :, :]
         sum1600[i]=timestep.sum()
-        
+
     # Time indices for 1600A data - time series not identical
     startin = np.where(dn1600==find_nearest(dn1600,start304[ind][0]))
     peakin = np.where(dn1600==find_nearest(dn1600,peak304[ind][0]))
     endin = np.where(dn1600==find_nearest(dn1600,end304[ind][0]))
-    
+
     for i in range(nt):
         timechoi = str(sav_data.tim[i])
-        times1600[i] = datetime.datetime.strptime(timechoi[2:21], 
+        times1600[i] = datetime.datetime.strptime(timechoi[2:21],
                                                   '20%y-%m-%dT%H:%M:%S')
-        
+
     # Time indices for 304 - nearest to dn1600 points found
     s304 = find_nearest_ind(time304,min(dn1600))
     e304 = find_nearest_ind(time304,max(dn1600))
@@ -1292,27 +1304,27 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
 
     med304 = np.median(curve304)
     std304 = np.std(curve304)
-    
+
     # Remove 304 Angstrom pixels below a threshold - these will be outliers.
     # Only applies to one flare studied as of 14 March 2022
     for i in range(len(curve304)):
         if curve304[i] < 0.54:
             curve304[i]='NaN'
-        
+
     timelab = np.empty(nt)
-    
-    timelabs = range(0,24*len(times),24)
-    
+
+    timelabs = range(0, 24*len(times), 24)
+
     for i in range(len(timelabs)):
         timelab[i] = timelabs[i]/60
-            
+
     return startin, peakin, endin, times, s304, e304, filter_304, med304, \
         std304, timelab, aiadat, nt, dn1600, time304, times1600
-    
-    
+
+
 def img_mask(aia8_pos, aia8_neg, aiadat, nt):
     """
-    Mapping of positive and negative masks onto AIA data and sum of pixel 
+    Mapping of positive and negative masks onto AIA data and sum of pixel
     numbers for each ribbon for each time step.
 
     Parameters
@@ -1338,28 +1350,28 @@ def img_mask(aia8_pos, aia8_neg, aiadat, nt):
         Summed pixel numbers in negative ribbon for each time step.
 
     """
-    
+
     posrib = np.zeros(np.shape(aia8_pos))
     negrib = np.zeros(np.shape(aia8_neg))
-    
+
     # Positive ribbon masks - actual values from AIA, not 0/1
     for i in range(len(aia8_pos)):
-        posrib[i,:,:] = aia8_pos[i,:,:]*aiadat[i,:,:]
-        
+        posrib[i, :, :] = aia8_pos[i, :, :]*aiadat[i, :, :]
+
     # Negative
     for j in range(len(aia8_neg)):
-        negrib[j,:,:] = aia8_neg[j,:,:]*aiadat[j,:,:]
-        
+        negrib[j, :, :] = aia8_neg[j, :, :]*aiadat[j, :, :]
+
     pos1600 = np.empty(nt)
     neg1600 = np.empty(nt)
-    
+
     for i in range(nt):
-        timesteppos = posrib[i,:,:]
+        timesteppos = posrib[i, :, :]
         pos1600[i]=timesteppos.sum()
-        timestepneg = negrib[i,:,:]
+        timestepneg = negrib[i, :, :]
         neg1600[i]=timestepneg.sum()
-        
-        
+
+
     return posrib, negrib, pos1600, neg1600
 
 def load_from_file(flnum, pick = True):
@@ -1399,7 +1411,7 @@ def load_from_file(flnum, pick = True):
         y-coordinates for PIL polynomial.
 
     """
-    
+
     # Pickle is not ideal, but all data in these files are only variables saved
     # by Cole Tamburri, Spring 2022
     ev = np.load(flnum,allow_pickle=pick)
@@ -1415,11 +1427,12 @@ def load_from_file(flnum, pick = True):
     lens_neg_Mm = ev['lens_neg_Mm']
     ivs = ev['ivs']
     dvs = ev['dvs']
-        
+
     return dt1600, pos1600, neg1600, time304, filter_304, distpos_Mm, \
         distneg_Mm, lens_pos_Mm, lens_neg_Mm, ivs, dvs
 
-def elon_periods(dpos_len, dneg_len):
+def elon_periods(dpos_len, dneg_len, pos_crit=1, neg_crit=1, zer_pos_c=2,
+                 zer_neg_c=2):
     """
     Determination of periods of elongation for positive and negative ribbons
     from time series.
@@ -1430,7 +1443,18 @@ def elon_periods(dpos_len, dneg_len):
         Time derivative of positive ribbon elongation.
     dneg_len : list
         Time derivative of negative ribbon elongation.
-
+    pos_crit : int, optional
+        Number of points beyond which an "extended period" of elongation is
+        defined, positive ribbon. The default is 1.
+    neg_crit : int, optional
+        Number of points beyond which an "extended period" of elongation is
+        defined, negative ribbon. The default is 1.
+    zer_pos_c : int, optional
+        Number of zero-derivative points beyond which an "extended period" of
+        elongation is said to end, positive ribbon. The default is 2.
+    neg_crit : int, optional
+        Number of points beyond which an "extended period" of elongation is
+        defined, negative ribbon. The default is 1.
     Returns
     -------
     elonperiod_start_pos : list
@@ -1453,63 +1477,64 @@ def elon_periods(dpos_len, dneg_len):
     m = 0
     zer_n = 0
     zer_m = 0
-    
+
     for i in range(len(elonfiltpos)):
         if elonfiltpos[i] > 0:
             n += 1
             if n == 1:
                 time = i
             # Tripped if extended period of elongation, not already recorded
-            if n > 1 and time not in elonperiod_start_pos:
+            if n > pos_crit and time not in elonperiod_start_pos:
                 elonperiod_start_pos.append(time)
         elif elonfiltpos[i] <= 0:
             if n > 1:
                 zer_n += 1
                 # If rate of change returns to 0 for several points
-                if zer_n > 2:
+                if zer_n > zer_pos_c:
                     elonperiod_end_pos.append(i)
                     n = 0
                     zer_n = 0
             else:
                 n = 0
                 continue
-                
+
     # Comments identical to above method
     for j in range(len(elonfiltneg)):
         if elonfiltneg[j] > 0:
             m += 1
             if m == 1:
                 time = j
-            if m > 1 and time not in elonperiod_start_neg:
+            if m > neg_crit and time not in elonperiod_start_neg:
                 elonperiod_start_neg.append(time)
         elif elonfiltneg[j] <= 0:
             if m > 1:
                 zer_m += 1
-                if zer_m > 2:
+                if zer_m > zer_neg_c:
                     elonperiod_end_neg.append(j)
                     m = 0
                     zer_m = 0
             elif zer_m > 1:
                 m = 0
                 continue
-    
+
     # Remove repeated values
     elonperiod_start_pos = list(set(elonperiod_start_pos))
     elonperiod_end_pos = list(set(elonperiod_end_pos))
     elonperiod_start_neg = list(set(elonperiod_start_neg))
     elonperiod_end_neg = list(set(elonperiod_end_neg))
-    
+
     elonperiod_start_pos.sort()
     elonperiod_end_pos.sort()
     elonperiod_start_neg.sort()
     elonperiod_end_neg.sort()
-    
+
     return elonperiod_start_pos, elonperiod_end_pos, elonperiod_start_neg, \
         elonperiod_end_neg
 
-def sep_periods(dpos_dist, dneg_dist, start=20, kernel_size=3):
+def sep_periods(dpos_dist, dneg_dist, start=20, kernel_size=3, pos_crit=3,
+                neg_crit=3, zer_pos_c=3, zer_neg_c=3):
     """
-    Determination of periods of separation for each ribbon from time 
+    Determination of periods of separation for each ribbon from time
     derivatives of separation data.
 
     Parameters
@@ -1535,11 +1560,11 @@ def sep_periods(dpos_dist, dneg_dist, start=20, kernel_size=3):
         End times for periods of extended separation, negative ribbon.
 
     """
-    
+
     # Separation values are much more variable, so smoothing is necessary
     sepfiltpos = scipy.signal.medfilt(dpos_dist,kernel_size=kernel_size)
     sepfiltneg = scipy.signal.medfilt(dneg_dist,kernel_size=kernel_size)
-    
+
     sepperiod_start_pos = []
     sepperiod_end_pos = []
     sepperiod_start_neg = []
@@ -1551,46 +1576,46 @@ def sep_periods(dpos_dist, dneg_dist, start=20, kernel_size=3):
             n += 1
             if n == 1:
                 time = i
-            # Append if extended period of separation - more stringent than 
+            # Append if extended period of separation - more stringent than
             # elongation, justified by above smoothing
-            if n > 3 and time not in sepperiod_start_pos:
+            if n > pos_crit and time not in sepperiod_start_pos:
                 sepperiod_start_pos.append(time)
         elif sepfiltpos[i] <= 0:
             # Identify if rate of change has not changed for some time
-            if n > 3:
+            if n > zer_pos_c:
                 sepperiod_end_pos.append(i)
                 n = 0
             else:
                 n = 0
                 continue
-                
+
     # Same method as above
     for i in range(start,len(sepfiltneg)):
         if sepfiltneg[i] > 0:
             m += 1
             if m == 1:
                 time = i
-            if m > 3 and time not in sepperiod_start_neg:
+            if m > neg_crit and time not in sepperiod_start_neg:
                 sepperiod_start_neg.append(time)
         elif sepfiltneg[i] <= 0:
-            if m > 3:
+            if m > zer_neg_c:
                 sepperiod_end_neg.append(i)
                 m = 0
             else:
                 m = 0
                 continue
-            
+
     # Remove repeated values
     sepperiod_start_pos = list(set(sepperiod_start_pos))
     sepperiod_end_pos = list(set(sepperiod_end_pos))
     sepperiod_start_neg = list(set(sepperiod_start_neg))
     sepperiod_end_neg = list(set(sepperiod_end_neg))
-    
+
     sepperiod_start_pos.sort()
     sepperiod_end_pos.sort()
     sepperiod_start_neg.sort()
     sepperiod_end_neg.sort()
-            
+
     return sepperiod_start_pos, sepperiod_end_pos, sepperiod_start_neg, \
         sepperiod_end_neg
 
@@ -1617,13 +1642,13 @@ def prep_times(dn1600, time304):
     dt304 = []
     for i in range(len(dn1600)):
         dt1600.append(datenum_to_datetime(dn1600[i]))
-    
+
     for i in range(len(time304)):
         if np.isnan(time304[i]):
             dt304.append(datenum_to_datetime(time304[0]))
         else:
             dt304.append(datenum_to_datetime(time304[i]))
-            
+
     return dt1600, dt304
 
 ### BEGIN PLOTTING ROUTINES ###
@@ -1632,7 +1657,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
             neg1600,lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm, aiadat, \
             hmi_cumul_mask1,dt304, timelab, conv_f, ivs, dvs, year, mo, day, \
             arnum, xcl, xclnum, X, Y, xarr_Mm, yarr_Mm, dt1600, flag = 1, \
-            stsep = 25, stelon = 1):
+            stsep = 25, stelon = 1, lolim=0, hilim=1):
     """
     Animation plotting, with 1600 Angstrom, 304 Angstrom, and HMI data.
 
@@ -1704,12 +1729,17 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
     dt1600 : list
         Datetime values for 1600 Angstrom data.
     flag : int, optional
-        0 (plot only first five frames) or 1 (plot all frames). The default is 
+        0 (plot only first five frames) or 1 (plot all frames). The default is
         1.
     stsep: int, optional
         Start index for separation curve.  Default is 25.
     stelon: int, optional
         Start index for elongation curve.  Default is 1.
+    lolim: float, optional
+        Start value for second y-axis on sep/elon plot.  Default is 0.
+    hilim: float, optional
+        End value for second y-axis on sep/elon plot.  Default is 1, which
+        triggers 140*conv_f.
 
     Returns
     -------
@@ -1731,7 +1761,10 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
         List comprising negative ribbon elongation plot.
 
     """
-        
+
+    if hilim == 1:
+        hilim = 140*conv_f
+
     # Extremes of chromospheric line light curves
     min304 = min(filter_304[s304:e304])
     max304 = max(filter_304[s304:e304])
@@ -1739,7 +1772,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
     maxpos1600 = max(pos1600)
     minneg1600 = min(neg1600)
     maxneg1600 = max(neg1600)
-    
+
     # Normalize for light curve comparison
     norm304 = (filter_304-min304)/(max304-min304)
     normpos1600 = (pos1600-minpos1600)/(maxpos1600-minpos1600)
@@ -1747,110 +1780,110 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
     scalefac = max(pos1600)/max(neg1600)
 
     # Initialize plot
-    fig = plt.figure(figsize=(25,12))
-    gs = fig.add_gridspec(9,9)
+    fig = plt.figure(figsize=(25, 12))
+    gs = fig.add_gridspec(9, 9)
     ax1 = fig.add_subplot(gs[:, 5:])
     ax2 = fig.add_subplot(gs[0:4, 0:4])
     ax0 = fig.add_subplot(gs[5:, 0:4])
-    
+
     # Elongation plots
-    lns1 = ax0.plot(dn1600[stelon:],lens_pos_Mm[stelon:],'-+',c='red',markersize=10,\
-                    label='Pos. Elongation')
-    lns2 = ax0.plot(dn1600[stelon:],lens_neg_Mm[stelon:],'-+',c='blue',markersize=10,\
-                    label='Neg. Elongation')
+    lns1 = ax0.plot(dn1600[stelon:], lens_pos_Mm[stelon:], '-+', c='red',\
+                    markersize=10, label='Pos. Elongation')
+    lns2 = ax0.plot(dn1600[stelon:], lens_neg_Mm[stelon:], '-+',c='blue',\
+                    markersize=10, label='Neg. Elongation')
     ax5 = ax0.twinx()
     ax5.cla()
     lns4 = ax5
-    
+
     # Separation plots
-    lns5 = ax0.plot(dt1600[stsep:],distpos_Mm[stsep:],'-.',c='red',\
-                    markersize=10,label='Pos. Separation')
-    ax0.plot(dt1600[stsep:],distneg_Mm[stsep:],'-.',c='blue',markersize=10,\
-             label='Neg. Separation')
-    
+    lns5 = ax0.plot(dt1600[stsep:], distpos_Mm[stsep:], '-.', c='red',\
+                    markersize=10, label='Pos. Separation')
+    ax0.plot(dt1600[stsep:], distneg_Mm[stsep:], '-.', c='blue',\
+             markersize=10, label='Neg. Separation')
+
     # Plot 1600 Angstrom pcolormesh images, as well as HMI images
-    col1 = ax1.pcolormesh(X,Y,np.log10(aiadat[0,:,:]),cmap='pink',\
+    col1 = ax1.pcolormesh(X, Y, np.log10(aiadat[0, :, :]), cmap='pink',\
                           shading='auto')
-    col2 = ax1.contour(X,Y,hmi_cumul_mask1[0,:,:],cmap='seismic')
-    
+    col2 = ax1.contour(X, Y, hmi_cumul_mask1[0, :, :], cmap='seismic')
+
     # Plot 304 Angstrom light curve
-    lc304 = ax2.plot(dt304,norm304,color='black',linewidth=1,\
+    lc304 = ax2.plot(dt304, norm304, color='black', linewidth=1,\
                    label='Norm. 304$\AA$ Light Curve')
     ax3=ax2.twinx()
-    
+
     # Plot 1600 Angstrom light curve
-    lc1600 = ax3.plot(dt1600,normpos1600,linewidth=3,color='red',\
+    lc1600 = ax3.plot(dt1600, normpos1600, linewidth=3, color='red',\
                     label='Norm. 1600$\AA$ Light Curve, +')
-    lc1600 = ax3.plot(dt1600,normneg1600,linewidth=3,color='blue',\
+    lc1600 = ax3.plot(dt1600, normneg1600, linewidth=3, color='blue',\
                     label='Norm. 1600$\AA$ Light Curve, +')
 
     ax1.set_title(str(year)+"-"+str(mo)+"-"+str(day)+", AR"+\
                   str(arnum)+"\n"+xcl+str(xclnum)+" Class Flare\n",\
                       font='Times New Roman',fontsize=25,)
-    ax2.set_title('304$\AA$ and 1600$\AA$ Light Curves',fontsize=25,)
-    
-    ax0.set_title('Ribbon Separation and Elongation',fontsize=25,)
+    ax2.set_title('304$\AA$ and 1600$\AA$ Light Curves', fontsize=25,)
+
+    ax0.set_title('Ribbon Separation and Elongation', fontsize=25,)
     ax0.legend(fontsize=15)
     ax0.grid()
-    ax2.set_xlim([dn1600[0],dn1600[-1]])
-    ax3.set_xlim([dn1600[0],dn1600[-1]])
-    ax0.set_xlim([timelab[0],timelab[-1]])
-    
+    ax2.set_xlim([dn1600[0], dn1600[-1]])
+    ax3.set_xlim([dn1600[0], dn1600[-1]])
+    ax0.set_xlim([timelab[0], timelab[-1]])
+
     # Plot PIL on 1600 Angstrom and HMI panel
     ax1.scatter(ivs, dvs, color = 'k', s = 1)
     lines, labels = ax0.get_legend_handles_labels()
     lines2, labels2 = ax5.get_legend_handles_labels()
     ax0.legend(lines + lines2, labels + labels2)
-    
-    ax5.set_ylim([0,140*conv_f])
-    
-    def animate(t): 
+
+    ax5.set_ylim([lolim,hilim])
+
+    def animate(t):
         ax1.cla()
         ax2.cla()
         ax0.cla()
         ax5 = ax0.twinx()
         ax5.cla()
-        
+
         # Plot 1600 Angstrom image
-        col1 = ax1.pcolormesh(X,Y,np.log10(aiadat[t,:,:]),cmap='pink',\
+        col1 = ax1.pcolormesh(X, Y, np.log10(aiadat[t, :, :]), cmap='pink',\
                               shading='auto')
-            
+
         # HMI contour over 1600 Angstrom image
-        col2 = ax1.contour(X,Y,hmi_cumul_mask1[t,:,:],cmap = 'seismic')
+        col2 = ax1.contour(X, Y, hmi_cumul_mask1[t, :, :], cmap = 'seismic')
         ax1.set_xlabel('Horizontal Distance from Image Center [Mm]',\
                        fontsize=15)
-        ax1.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=15)
-        
+        ax1.set_ylabel('Vertical Distance from Image Center [Mm]', fontsize=15)
+
         # Separation curves
-        sep = ax0.plot(dt1600[stsep:],distpos_Mm[stsep:],'-.',c='red',markersize=10,\
-                       label='Pos. Separation')
-        sep2 = ax0.plot(dt1600[stsep:],distneg_Mm[stsep:],'-.',c='blue',\
-                        markersize=10,label='Neg. Separation')
-        ax1.scatter((ivs-400)*conv_f,(dvs-400)*conv_f, color = 'k', s = 1)
-        
+        sep = ax0.plot(dt1600[stsep:], distpos_Mm[stsep:], '-.', c='red',\
+                       markersize=10, label='Pos. Separation')
+        sep2 = ax0.plot(dt1600[stsep:], distneg_Mm[stsep:], '-.', c='blue',\
+                        markersize=10, label='Neg. Separation')
+        ax1.scatter((ivs-400)*conv_f, (dvs-400)*conv_f, color = 'k', s = 1)
+
         # Elongation curves
-        elon = ax5.plot(dt1600[stelon:],lens_pos_Mm[stelon:],'-+',c='red',markersize=10,\
-                        label='Pos. Elongation')
-        elon2 = ax5.plot(dt1600[stelon:],lens_neg_Mm[stelon:],'-+',c='blue',\
-                         markersize=10,label='Neg. Elongation')
-        ax1.set_xlim([-250*conv_f,250*conv_f])
-        ax1.set_ylim([-250*conv_f,250*conv_f])
-        
+        elon = ax5.plot(dt1600[stelon:], lens_pos_Mm[stelon:], '-+', c='red',\
+                        markersize=10, label='Pos. Elongation')
+        elon2 = ax5.plot(dt1600[stelon:], lens_neg_Mm[stelon:], '-+',\
+                         c='blue', markersize=10, label='Neg. Elongation')
+        ax1.set_xlim([-250*conv_f, 250*conv_f])
+        ax1.set_ylim([-250*conv_f, 250*conv_f])
+
         # 304 Angstrom light curve
-        lc304=ax2.plot(dt304,norm304,'-x',color='black',linewidth=1,\
+        lc304=ax2.plot(dt304,norm304,'-x', color='black', linewidth=1,\
                        label='304$\AA$')
         ax3=ax2.twinx()
-        
+
         # 1600 Angstrom light curve
-        lc1600=ax3.plot(dt1600,normpos1600,linewidth=3,color='red',\
+        lc1600=ax3.plot(dt1600, normpos1600, linewidth=3, color='red',\
                         label='1600$\AA$, +')
-        lc1600=ax3.plot(dt1600,normneg1600,linewidth=3,color='blue',\
+        lc1600=ax3.plot(dt1600, normneg1600, linewidth=3, color='blue',\
                         label='1600$\AA$, -')
 
-        ax2.set_xlim([dt1600[0],dt1600[-1]])
-        ax2.set_ylim([-0.05,1.05])
-        ax3.set_ylim([-0.05,1.05])
-    
+        ax2.set_xlim([dt1600[0], dt1600[-1]])
+        ax2.set_ylim([-0.05, 1.05])
+        ax3.set_ylim([-0.05, 1.05])
+
         myFmt = mdates.DateFormatter('%H:%M')
         ax2.xaxis.set_major_formatter(myFmt)
         ax3.xaxis.set_major_formatter(myFmt)
@@ -1858,46 +1891,47 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
         ax5.xaxis.set_major_formatter(myFmt)
         textstr = '1600$\AA$ +/- Factor: '+str(round(scalefac,3))
         ax2.text(2*(max(dt1600)-min(dt1600))/5 + min(dt1600),0.1,textstr,\
-                 fontsize=12,bbox=dict(boxstyle="square", facecolor="white",\
-                                       ec="k", lw=1,pad=0.3))
+                 fontsize=12, bbox=dict(boxstyle="square", facecolor="white",\
+                                       ec="k", lw=1, pad=0.3))
         ax2.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],\
                        fontsize=15)
         ax2.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],\
                        fontsize=15)
-        ax2.set_ylabel('Norm. Integ. Count, 1600$\AA$',color='purple',fontsize=15)
-    
+        ax2.set_ylabel('Norm. Integ. Count, 1600$\AA$', color='purple',\
+                       fontsize=15)
+
         lines, labels = ax2.get_legend_handles_labels()
         lines2, labels2 = ax3.get_legend_handles_labels()
-        ax2.legend(lines + lines2, labels + labels2,loc='lower right')
+        ax2.legend(lines + lines2, labels + labels2, loc='lower right')
         ax2.grid(linestyle='dashed')
         ax3.grid(linestyle='dashdot')
-        ax2.axvline(dt1600[t],linewidth=4,color='black')
-        ax0.axvline(dt1600[t],linewidth=4,color='black')
-        ax0.axvline(dt1600[t],linewidth=4,color='black')
+        ax2.axvline(dt1600[t], linewidth=4, color='black')
+        ax0.axvline(dt1600[t], linewidth=4, color='black')
+        ax0.axvline(dt1600[t], linewidth=4, color='black')
         ax1.set_title(str(year)+"-"+str(mo)+"-"+str(day)+", AR"+str(arnum)+\
                       ", "+xcl+str(xclnum)+" Class Flare",fontsize=25)
-        ax2.set_title('304$\AA$ and 1600$\AA$ Light Curves',fontsize=25)
-        ax0.set_xlim([dt1600[0],dt1600[-1]])
+        ax2.set_title('304$\AA$ and 1600$\AA$ Light Curves', fontsize=25)
+        ax0.set_xlim([dt1600[0], dt1600[-1]])
         ax0.set_xlabel(['Time since 00:00 UT [min], '+year+'-'+mo+'-'+day],\
                        fontsize=15)
-        ax0.set_ylabel('Separation [Mm]',fontsize=15)
-        ax5.set_ylabel('Elongation [Mm]',fontsize=15)
-        ax0.set_title('Ribbon Separation and Elongation',fontsize=25,)
+        ax0.set_ylabel('Separation [Mm]', fontsize=15)
+        ax5.set_ylabel('Elongation [Mm]', fontsize=15)
+        ax0.set_title('Ribbon Separation and Elongation', fontsize=25,)
         ax0.legend(fontsize=15)
         ax0.grid()
-        ax1.text(57,95,str(dt1600[t].hour).zfill(2)+':'+\
+        ax1.text(57, 95, str(dt1600[t].hour).zfill(2)+':'+\
                  str(dt1600[t].minute).zfill(2)+'.'+\
                      str(dt1600[t].second).zfill(2)+' UT',fontsize=20,\
                          bbox=dict(boxstyle="square", facecolor="white",\
                                    ec="k", lw=1,pad=0.3))
-        
+
         lines, labels = ax0.get_legend_handles_labels()
         lines2, labels2 = ax5.get_legend_handles_labels()
         ax0.legend(lines + lines2, labels + labels2,loc='lower right')
-    
-        ax5.set_ylim([0,140*conv_f])
+
+        ax5.set_ylim([lolim,hilim])
         return col1, col2, lc304, lc1600, sep, sep2, elon, elon2
-    
+
     # Option to only include first few frames for debugging purposes
     if flag == 1:
         ani = animat.FuncAnimation(fig, animate, frames=np.shape(aiadat)[0], \
@@ -1905,7 +1939,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600, \
     elif flag == 0:
         ani = animat.FuncAnimation(fig, animate, frames=5, interval=20, \
                                    repeat_delay=0)
-    
+
     ani.save(['/Users/owner/Desktop/'+mo+'_'+day+'_'+year+'.gif'],dpi=200)
 
     return None
@@ -1937,35 +1971,35 @@ def mask_plotting(X, Y, pos_rem, neg_rem, xarr_Mm, yarr_Mm, flnum):
 
     """
     fig1,ax1 = plt.subplots(figsize=(6,6))
-    
+
     # Plot positive mask, with pixel vetting
-    ax1.pcolormesh(X,Y,pos_rem,cmap='bwr',vmin=-1, vmax=1)
-    ax1.set_title('Positive Mask',font="Times New Roman",fontsize=22,\
+    ax1.pcolormesh(X, Y, pos_rem, cmap='bwr', vmin=-1, vmax=1)
+    ax1.set_title('Positive Mask', font="Times New Roman", fontsize=22,\
                   fontweight='bold')
-    
+
     ax1.set_xlim([xarr_Mm[200],xarr_Mm[600]])
     ax1.set_ylim([yarr_Mm[200],yarr_Mm[600]])
-    ax1.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
-    ax1.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
-    
+    ax1.set_xlabel('Horizontal Distance from Image Center [Mm]', fontsize=17)
+    ax1.set_ylabel('Vertical Distance from Image Center [Mm]', fontsize=17)
+
     ax1.tick_params(labelsize=15)
-    
+
     fig2,ax2 = plt.subplots(figsize=(6,6))
-    
+
     # Plot negative mask, with pixel vetting
-    ax2.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
-    ax2.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
+    ax2.set_xlabel('Horizontal Distance from Image Center [Mm]', fontsize=17)
+    ax2.set_ylabel('Vertical Distance from Image Center [Mm]', fontsize=17)
     ax2.tick_params(labelsize=15)
-    ax2.pcolormesh(X,Y,neg_rem,cmap='bwr',vmin=-1, vmax=1)
-    
-    ax2.set_title('Negative Mask',font="Times New Roman",fontsize=22,\
+    ax2.pcolormesh(X, Y, neg_rem, cmap='bwr', vmin=-1, vmax=1)
+
+    ax2.set_title('Negative Mask', font="Times New Roman", fontsize=22,\
                   fontweight='bold')
-    ax2.set_xlim([xarr_Mm[200],xarr_Mm[600]])
-    ax2.set_ylim([yarr_Mm[200],yarr_Mm[600]])
-    
+    ax2.set_xlim([xarr_Mm[200], xarr_Mm[600]])
+    ax2.set_ylim([yarr_Mm[200], yarr_Mm[600]])
+
     fig1.savefig(str(flnum)+'_pos_mask.png')
     fig2.savefig(str(flnum)+'_neg_mask.png')
-    
+
     return None
 
 def convolution_mask_plotting(X, Y, hmi_con_pos_c, hmi_con_neg_c, pil_mask_c,
@@ -2003,41 +2037,41 @@ def convolution_mask_plotting(X, Y, hmi_con_pos_c, hmi_con_neg_c, pil_mask_c,
 
     """
     fig1,ax1 = plt.subplots(figsize=(6,6))
-    ax1.pcolormesh(X,Y,hmi_con_pos_c,cmap='bwr',vmin=-1, vmax=1)
-    ax1.set_title('Positive Mask Convolution',font="Times New Roman",\
-                  fontsize=22,fontweight='bold')
-    ax1.set_xlim([xarr_Mm[200],xarr_Mm[600]])
-    ax1.set_ylim([yarr_Mm[200],yarr_Mm[600]])
-    ax1.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
-    ax1.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
+    ax1.pcolormesh(X, Y, hmi_con_pos_c, cmap='bwr', vmin=-1, vmax=1)
+    ax1.set_title('Positive Mask Convolution', font="Times New Roman",\
+                  fontsize=22, fontweight='bold')
+    ax1.set_xlim([xarr_Mm[200], xarr_Mm[600]])
+    ax1.set_ylim([yarr_Mm[200], yarr_Mm[600]])
+    ax1.set_xlabel('Horizontal Distance from Image Center [Mm]', fontsize=17)
+    ax1.set_ylabel('Vertical Distance from Image Center [Mm]', fontsize=17)
     ax1.tick_params(labelsize=15)
 
     fig2,ax2 = plt.subplots(figsize=(6,6))
     ax2.tick_params(labelsize=15)
-    ax2.pcolormesh(X,Y,hmi_con_neg_c,cmap='bwr',vmin=-1, vmax=1)
-    ax2.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=17)
-    ax2.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=17)
-    ax2.set_title('Negative Mask Convolution',font="Times New Roman",\
-                  fontsize=22,fontweight='bold')
-    ax2.set_xlim([xarr_Mm[xlim[0]],xarr_Mm[xlim[1]]])
-    ax2.set_ylim([yarr_Mm[ylim[0]],yarr_Mm[ylim[1]]])
-    
-    
+    ax2.pcolormesh(X, Y, hmi_con_neg_c, cmap='bwr', vmin=-1, vmax=1)
+    ax2.set_xlabel('Horizontal Distance from Image Center [Mm]', fontsize=17)
+    ax2.set_ylabel('Vertical Distance from Image Center [Mm]', fontsize=17)
+    ax2.set_title('Negative Mask Convolution', font="Times New Roman",\
+                  fontsize=22, fontweight='bold')
+    ax2.set_xlim([xarr_Mm[xlim[0]], xarr_Mm[xlim[1]]])
+    ax2.set_ylim([yarr_Mm[ylim[0]], yarr_Mm[ylim[1]]])
+
+
     fig3,ax3 = plt.subplots()
-    ax3.pcolormesh(X,Y,pil_mask_c)
-    ax3.set_title('Polarity Inversion Line Mask',font="Times New Roman",\
-                  fontsize=22,fontweight='bold')
+    ax3.pcolormesh(X, Y, pil_mask_c)
+    ax3.set_title('Polarity Inversion Line Mask', font="Times New Roman",\
+                  fontsize=22, fontweight='bold')
     ax3.tick_params(labelsize=15)
-    ax3.set_xlim([xarr_Mm[xlim[0]],xarr_Mm[xlim[1]]])
-    ax3.set_ylim([yarr_Mm[ylim[0]],yarr_Mm[ylim[1]]])
-    
+    ax3.set_xlim([xarr_Mm[xlim[0]], xarr_Mm[xlim[1]]])
+    ax3.set_ylim([yarr_Mm[ylim[0]], yarr_Mm[ylim[1]]])
+
     fig1.savefig(str(flnum)+'_pos_conv_mask.png')
-    fig2.savefig(str(flnum)+'_neg_conv_mask.png')    
-    fig3.savefig(str(flnum)+'_PIL_conv_mask.png')  
-    
+    fig2.savefig(str(flnum)+'_neg_conv_mask.png')
+    fig3.savefig(str(flnum)+'_PIL_conv_mask.png')
+
     return None
 
-def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm, 
+def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm,
                   yarr_Mm, flnum, xlim = [200,600], ylim = [200,600]):
     """
     Plotting of PIL polynomial over mask.
@@ -2076,35 +2110,35 @@ def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm,
     """
     # Generate the plot
     fig, ax = plt.subplots(figsize=(7,10))
-    
+
     # show color mesh
-    ax.pcolormesh(X,Y, pil_mask_c,cmap='hot')
-    
+    ax.pcolormesh(X,Y, pil_mask_c, cmap='hot')
+
     # plot the line
-    ax.scatter((ivs-400)*conv_f,(dvs-400)*conv_f, color = 'c', s = 1)
+    ax.scatter((ivs-400)*conv_f, (dvs-400)*conv_f, color = 'c', s = 1)
     hmik = hmi_dat/1000
-    plt.contour(X,Y,hmik,levels=[-3,-1.8,-.6,.6,1.8,3],cmap='seismic')
-    
-    ax.set_xlim([xarr_Mm[xlim[0]],xarr_Mm[xlim[1]]])
-    ax.set_ylim([yarr_Mm[ylim[0]],yarr_Mm[ylim[1]]])
-    ax.set_xticks([-80,-60,-40,-20,0,20,40,60,80])
-    ax.set_yticks([-80,-60,-40,-20,0,20,40,60,80])
+    plt.contour(X, Y, hmik,levels=[-3, -1.8, -.6, .6, 1.8, 3], cmap='seismic')
+
+    ax.set_xlim([xarr_Mm[xlim[0]], xarr_Mm[xlim[1]]])
+    ax.set_ylim([yarr_Mm[ylim[0]], yarr_Mm[ylim[1]]])
+    ax.set_xticks([-80, -60, -40, -20, 0, 20, 40, 60, 80])
+    ax.set_yticks([-80, -60, -40, -20, 0, 20, 40, 60, 80])
     cbar=plt.colorbar(orientation='horizontal')
     tick_font_size = 15
     ax.tick_params(labelsize=tick_font_size)
     cbar.ax.tick_params(labelsize=tick_font_size)
-    ax.set_xlabel('Horizontal Distance from Image Center [Mm]',fontsize=15)
-    ax.set_ylabel('Vertical Distance from Image Center [Mm]',fontsize=15)
-        
-    cbar.ax.set_xlabel('HMI Contours [kG]',font='Times New Roman',fontsize=17,\
+    ax.set_xlabel('Horizontal Distance from Image Center [Mm]', fontsize=15)
+    ax.set_ylabel('Vertical Distance from Image Center [Mm]', fontsize=15)
+
+    cbar.ax.set_xlabel('HMI Contours [kG]', font='Times New Roman', fontsize=17,\
                        fontweight='bold')
-    ax.set_title('PIL Mask and Polynomial',font='Times New Roman',fontsize=25,\
+    ax.set_title('PIL Mask and Polynomial', font='Times New Roman', fontsize=25,\
                  fontweight='bold')
     fig.savefig(str(flnum)+'_pilpolyplot.png')
 
     return None
 
-def ribbon_sep_plot(dist_pos,dist_neg,times,flnum,pltstrt):
+def ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt):
     """
     Plot ribbon separation values throughout flare.
 
@@ -2126,36 +2160,36 @@ def ribbon_sep_plot(dist_pos,dist_neg,times,flnum,pltstrt):
     None.
 
     """
-    timelab = range(0,24*len(times),24)
-    fig,[ax1,ax2] = plt.subplots(2,1,figsize=(13,15))
-    
+    timelab = range(0, 24*len(times), 24)
+    fig, [ax1, ax2] = plt.subplots(2, 1, figsize=(13, 15))
+
     # Plot separation, positive ribbon
-    ax1.plot(timelab[pltstrt:],dist_pos[pltstrt:],'-+',c='red',markersize=10,\
-             label='median')
+    ax1.plot(timelab[pltstrt:], dist_pos[pltstrt:], '-+', c='red',\
+             markersize=10,label='median')
     ax1.legend(fontsize=15)
     ax1.grid()
     s = str(times[0])
-    ax1.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',\
+    ax1.set_xlabel('Time [s since '+s[2:-2]+']', font='Times New Roman',\
                    fontsize=15)
-    ax1.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',\
+    ax1.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',\
                    fontsize=15)
-    ax1.set_title('Positive Ribbon Separation',font='Times New Roman',\
+    ax1.set_title('Positive Ribbon Separation', font='Times New Roman',\
                   fontsize=25)
-    
+
     # Plot separation, negative ribbon
-    ax2.plot(timelab[pltstrt:],dist_neg[pltstrt:],'-+',c='red',markersize=10,\
-             label='median')
+    ax2.plot(timelab[pltstrt:], dist_neg[pltstrt:], '-+', c='red',\
+             markersize=10, label='median')
     ax2.legend(fontsize=15)
     ax2.grid()
-    ax2.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',\
+    ax2.set_xlabel('Time [s since '+s[2:-2]+']', font='Times New Roman',\
                    fontsize=15)
-    ax2.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',\
+    ax2.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',\
                    fontsize=15)
-    ax2.set_title('Negative Ribbon Separation',font='Times New Roman',\
+    ax2.set_title('Negative Ribbon Separation', font='Times New Roman',\
                   fontsize=25)
 
     fig.savefig(str(flnum)+'sep_raw_plt.png')
-    
+
     return None
 
 def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
@@ -2180,34 +2214,34 @@ def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
     None.
 
     """
-    timelab = range(0,24*len(times),24)
-    
+    timelab = range(0, 24*len(times),24)
+
     fig,ax1 = plt.subplots(figsize=(13,7))
-    
+
     # Plot elongation, positive ribbon
-    ax1.plot(timelab[pltstrt:],lens_pos[pltstrt:],'-+',c='red',markersize=10,\
-             label='+ Ribbon')
-        
+    ax1.plot(timelab[pltstrt:], lens_pos[pltstrt:], '-+', c='red',\
+             markersize=10,label='+ Ribbon')
+
     # Plot elongation, negative ribbon
-    ax1.plot(timelab[pltstrt:],lens_neg[pltstrt:],'-+',c='blue',markersize=10,\
-             label='- Ribbon')
+    ax1.plot(timelab[pltstrt:], lens_neg[pltstrt:],'-+', c='blue',\
+             markersize=10, label='- Ribbon')
     ax1.legend(fontsize=15)
     ax1.grid()
     s = str(times[0])
-    ax1.set_xlabel('Time [s since '+s[2:-2]+']',font='Times New Roman',\
+    ax1.set_xlabel('Time [s since '+s[2:-2]+']', font='Times New Roman',\
                    fontsize=17)
-    ax1.set_ylabel('Cartesian Pixel Distance',font='Times New Roman',\
+    ax1.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',\
                    fontsize=17)
-    ax1.set_title('Ribbon Elongation',font='Times New Roman',fontsize=25)
+    ax1.set_title('Ribbon Elongation', font='Times New Roman', fontsize=25)
 
-    fig.savefig(str(flnum)+'elon_raw_plt.png') 
-    
+    fig.savefig(str(flnum)+'elon_raw_plt.png')
+
     return None
 
-def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm, 
-                     lens_neg_Mm, flnum, elonperiod_start_neg, 
-                     elonperiod_start_pos,elonperiod_end_neg, 
-                     elonperiod_end_pos):
+def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
+                     lens_neg_Mm, flnum, elonperiod_start_neg,
+                     elonperiod_start_pos,elonperiod_end_neg,
+                     elonperiod_end_pos,indstart=1):
     """
     Elongation plotting, with periods of extended elongation included.
 
@@ -2235,60 +2269,62 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
         Determined start times for elongation in negative ribbon.
     elonperiod_end_neg : list
         Determined end times for elongation in negative ribbon.
+    indstart : int
+        Start index for plotting.
 
     Returns
     -------
     None.
 
     """
-    timelab = np.linspace(0,24*len(times),len(times))
-    fig,[ax1,ax2,ax3] = plt.subplots(3,1,figsize=(13,20))
-    ax3.plot(timelab[1:-1],dpos_len[1:],'-+',c='red',markersize=10,\
-             label='+ Ribbon')
-    ax3.plot(timelab[1:-1],dneg_len[1:],'-+',c='blue',markersize=10,\
-             label='- Ribbon')
+    timelab = np.linspace(0, 24*len(times), len(times))
+    fig,[ax1,ax2,ax3] = plt.subplots(3, 1, figsize=(13,20))
+    ax3.plot(timelab[indstart:-1], dpos_len[indstart:], '-+', c='red',\
+             markersize=10,label='+ Ribbon')
+    ax3.plot(timelab[indstart:-1], dneg_len[indstart:], '-+', c='blue',\
+             markersize=10, label='- Ribbon')
     ax3.legend(fontsize=15)
     ax3.grid()
-    
+
     s = str(times1600[0])
-    
+
     ax3.set_xlabel('Time [s since '+s[2:13]+', '+s[13:-5]+']',\
-                   font='Times New Roman',fontsize=17)
-    ax3.set_ylabel('Elongation Rate [Mm/sec]',font='Times New Roman',\
+                   font='Times New Roman', fontsize=17)
+    ax3.set_ylabel('Elongation Rate [Mm/sec]', font='Times New Roman',\
                    fontsize=17)
     ax3.set_title('Ribbon Elongation Rate',font='Times New Roman',\
                   fontsize=25,)
-    
-    ax1.plot(timelab[1:-1],lens_pos_Mm[1:-1],'-o',c='red',markersize=6,\
-             label='mean')
-    ax2.plot(timelab[1:-1],lens_neg_Mm[1:-1],'-o',c='blue',markersize=6,\
-             label='mean')
-        
+
+    ax1.plot(timelab[indstart:-1], lens_pos_Mm[indstart:-1], '-o', c='red',\
+             markersize=6,label='mean')
+    ax2.plot(timelab[indstart:-1], lens_neg_Mm[indstart:-1], '-o', c='blue',\
+             markersize=6, label='mean')
+
     ax1.grid()
-    ax1.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
-    ax1.set_title('Ribbon Elongation, Positive Ribbon',font='Times New Roman',\
-                  fontsize=25,)
+    ax1.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
+    ax1.set_title('Ribbon Elongation, Positive Ribbon',\
+                  font='Times New Roman',fontsize=25)
     ax2.set_ylabel('Distance [Mm]',font='Times New Roman',fontsize=17)
-    ax2.set_title('Ribbon Elongation, Negative Ribbon',font='Times New Roman',\
-                  fontsize=25,)
+    ax2.set_title('Ribbon Elongation, Negative Ribbon',\
+                  font='Times New Roman',fontsize=25)
     ax2.grid()
-    
-    for i,j,k,l in zip(elonperiod_start_pos,elonperiod_end_pos,\
-                       elonperiod_start_neg,elonperiod_end_neg):
-        print(i,j,k,l)
-        ax1.axvline(timelab[i],c='green')
-        ax1.axvline(timelab[j],c='red')
-        ax2.axvline(timelab[k],c='green')
-        ax2.axvline(timelab[l],c='red')
+
+    for i,j,k,l in zip(elonperiod_start_pos, elonperiod_end_pos,\
+                       elonperiod_start_neg, elonperiod_end_neg):
+        print(i, j, k, l)
+        ax1.axvline(timelab[i], c='green')
+        ax1.axvline(timelab[j], c='red')
+        ax2.axvline(timelab[k], c='green')
+        ax2.axvline(timelab[l], c='red')
         ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
-        
+
     fig.savefig(str(flnum)+'elon_timing_plt.png')
-    
+
     return None
 
 def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
-                    sepperiod_start_pos, sepperiod_end_pos, 
+                    sepperiod_start_pos, sepperiod_end_pos,
                     sepperiod_start_neg, sepperiod_end_neg, indstrt):
     """
     Separation plots, including periods of extended perpendicular motion.
@@ -2324,7 +2360,7 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
 
     """
     timelab = range(0,24*len(times),24)
-    
+
     fig,[ax1,ax2,ax3] = plt.subplots(3,1,figsize=(13,20))
     ax3.plot(timelab[indstrt:-1],scipy.signal.medfilt(dpos_dist[indstrt:],\
                                                       kernel_size=3),'-+',\
@@ -2334,17 +2370,17 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
              c='blue',markersize=10,label='- Ribbon')
     ax3.legend(fontsize=15)
     ax3.grid()
-    
+
     s = str(times[0])
-    
+
     ax3.set_xlabel('Time [s since '+s[2:12]+ ', '+s[13:-5]+']',\
                    font='Times New Roman',fontsize=17)
     ax3.set_ylabel('Separation Rate [Mm/sec]',font='Times New Roman',\
                    fontsize=17)
     ax3.set_title('Ribbon Separation Rate',font='Times New Roman',\
                   fontsize=25,)
-    
-        
+
+
     ax1.plot(timelab[indstrt:-1],distpos_Mm[indstrt:-1],'-o',c='red',\
              markersize=6,label='mean')
     ax2.plot(timelab[indstrt:-1],distneg_Mm[indstrt:-1],'-o',c='blue',\
@@ -2357,7 +2393,7 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
     ax2.set_title('Ribbon Separation, Negative Ribbon',font='Times New Roman',\
                   fontsize=25,)
     ax2.grid()
-    
+
     for i,j,k,l in zip(sepperiod_start_pos,sepperiod_end_pos,\
                        sepperiod_start_neg,sepperiod_end_neg):
         ax1.axvline(timelab[i],c='green')
@@ -2366,14 +2402,15 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
         ax2.axvline(timelab[l],c='red')
         ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
-        
+
     fig.savefig(str(flnum)+'sep_timing_plt.png')
-    
+
     return None
-    
+
 def flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600):
     """
-    
+    Process data in order to produce reconnection flux and rate arrays in later
+    functions.
 
     Parameters
     ----------
@@ -2404,7 +2441,7 @@ def flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600):
         Time of peak counts from 1600 Angstrom data in negative ribbon.
 
     """
-    # Process data for reconnection flux, reconnection rate, 
+    # Process data for reconnection flux, reconnection rate,
     # rise phase exponential modeling
     hmi = sav_data.hmi
     aia8 = sav_data.pos8
@@ -2415,22 +2452,22 @@ def flux_rec_mod_process(sav_data, dt1600, pos1600, neg1600):
     aia8_inst_neg = np.zeros(np.shape(aia8_inst))
     xsh,ysh,zsh = aia8.shape
     hmi_dat = sav_data.hmi
-    
+
     for i, j, k in np.ndindex(aia8.shape):
         if aia8[i,j,k] == 1 and hmi_dat[j,k] > 0:
             aia8_pos[i,j,k] = 1
         elif aia8[i,j,k] == 1 and hmi_dat[j,k] < 0:
             aia8_neg[i,j,k] = 1
-            
+
     for i, j, k in np.ndindex(aia8.shape):
         if aia8_inst[i,j,k] == 1 and hmi_dat[j,k] > 0:
             aia8_inst_pos[i,j,k] = 1
         elif aia8_inst[i,j,k] == 1 and hmi_dat[j,k] < 0:
-            aia8_inst_neg[i,j,k] = 1    
-            
+            aia8_inst_neg[i,j,k] = 1
+
     peak_pos = dt1600[np.argmax(pos1600)]
     peak_neg = dt1600[np.argmax(neg1600)]
-    
+
     return hmi, aia8_pos, aia8_neg, aia8_inst_pos, aia8_inst_neg, peak_pos, \
         peak_neg
 
@@ -2478,25 +2515,25 @@ def inst_flux_process(aia8_inst_pos, aia8_inst_neg, flnum, conv_f, hmi, \
     neg_area_pix_inst = np.zeros(len(aia8_inst_neg))
     pos_pix_inst = np.zeros(len(aia8_inst_pos))
     neg_pix_inst = np.zeros(len(aia8_inst_neg))
-    
+
     conv_f_cm = conv_f*1e6*100 # conversion factor in cm
     ds2 = conv_f_cm**2 # for each pixel grid
-    
+
     for i in range(len(aia8_inst_pos)):
-        pos_mask_inst = aia8_inst_pos[i,:,:]
-        neg_mask_inst = aia8_inst_neg[i,:,:]
-        
+        pos_mask_inst = aia8_inst_pos[i,  :,  :]
+        neg_mask_inst = aia8_inst_neg[i,  :,  :]
+
         pos_area_pix_inst[i] = np.sum(pos_mask_inst)
         neg_area_pix_inst[i] = np.sum(neg_mask_inst)
-        
+
         hmi_pos_inst = pos_mask_inst*hmi # in G
         hmi_neg_inst = neg_mask_inst*hmi # in G
-        
+
         pos_pix_inst[i] = np.sum(hmi_pos_inst)
         neg_pix_inst[i] = np.sum(hmi_neg_inst)
         rec_flux_pos_inst[i] = np.sum(hmi_pos_inst)*ds2
         rec_flux_neg_inst[i] = np.sum(hmi_neg_inst)*ds2
-    
+
     fig,ax = plt.subplots(figsize=(10,10))
     ax.scatter(dt1600,rec_flux_pos_inst,c='red',label='+')
     ax.scatter(dt1600,rec_flux_neg_inst,c='blue',label='-')
@@ -2507,12 +2544,12 @@ def inst_flux_process(aia8_inst_pos, aia8_inst_neg, flnum, conv_f, hmi, \
     ax.set_ylabel('Reconnection Flux [Mx]',font='Times New Roman',fontsize=20)
     ax.set_title('Reconnection Flux',font='Times New Roman',fontsize=25)
     ax.legend()
-    
+
     fig.savefig(str(flnum)+'_inst_flx.png')
-    
+
     return rec_flux_pos_inst, rec_flux_neg_inst, pos_pix_inst, neg_pix_inst,\
         ds2
-    
+
 def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
                        hmi, dt1600):
     """
@@ -2567,24 +2604,24 @@ def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
     neg_pix = np.zeros(len(aia8_neg))
     pos_area = pos_area_pix
     neg_area = neg_area_pix
-    
+
     conv_f_cm = conv_f*1e6*100 # conversion factor in cm
     ds2 = conv_f_cm**2
     for i in range(len(aia8_pos)):
-        pos_mask = aia8_pos[i,:,:]
-        neg_mask = aia8_neg[i,:,:]
-        
+        pos_mask = aia8_pos[i,  :,  :]
+        neg_mask = aia8_neg[i,  :,  :]
+
         pos_area_pix[i] = np.sum(pos_mask)
         neg_area_pix[i] = np.sum(neg_mask)
-        
+
         hmi_pos = pos_mask*hmi # in G
         hmi_neg = neg_mask*hmi # in G
-        
+
         pos_pix[i] = np.sum(hmi_pos)
         neg_pix[i] = np.sum(hmi_neg)
         rec_flux_pos[i] = np.sum(hmi_pos)*ds2
         rec_flux_neg[i] = np.sum(hmi_neg)*ds2
-    
+
     fig,ax = plt.subplots(figsize=(10,10))
     ax.scatter(dt1600,rec_flux_pos,c='red',label='+')
     ax.scatter(dt1600,rec_flux_neg,c='blue',label='-')
@@ -2595,13 +2632,13 @@ def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
     ax.set_ylabel('Reconnection Flux [Mx]',font='Times New Roman',fontsize=20)
     ax.set_title('Reconnection Flux',font='Times New Roman',fontsize=25)
     ax.legend()
-    
+
     fig.savefig(str(flnum)+'_cumul_flx.png')
-    
+
     return rec_flux_pos, rec_flux_neg, pos_pix, neg_pix, pos_area_pix, \
         neg_area_pix, ds2,pos_area, neg_area
 
-def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential, 
+def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential,
                   exponential_neg, pos_area, neg_area):
     """
     Fit exponential curve to flux and ribbon area curves for each ribbon.
@@ -2647,7 +2684,7 @@ def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential,
         Rise phase reconnection flux, negative ribbon.
 
     """
-    
+
     # Fit only from start to specified exp_ind; usually the index corresponding
     # to the peak of the light curve, but sometimes not.
     rise_pos_flx = rec_flux_pos[0:exp_ind]
@@ -2668,12 +2705,12 @@ def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential,
     poptneg, pcovneg = \
         scipy.optimize.curve_fit(exponential,range(0,len(rise_neg_area)),\
                                  rise_neg_area)
-    
+
     return poptposflx, pcovposflx, poptnegflx, pcovnegflx, poptpos, poptneg, \
         pcovpos, pcovneg, rise_pos_flx, rise_neg_flx
 
-def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx, 
-                  rise_neg_flx, peak_pos, peak_neg, exp_ind, ds2, exponential, 
+def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
+                  rise_neg_flx, peak_pos, peak_neg, exp_ind, ds2, exponential,
                   exponential_neg, poptposflx, poptnegflx, flnum):
     """
     Plotting of exponential curve with fit.
@@ -2714,10 +2751,10 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
     None.
 
     """
-  
+
     rise_pos_time = dt1600[0:exp_ind]
     rise_neg_time = dt1600[0:exp_ind]
-    
+
     fig,ax = plt.subplots(figsize=(10,10))
     ax.scatter(dt1600,rec_flux_pos,c='red',label='+')
     ax.scatter(dt1600,rec_flux_neg,c='blue',label='-')
@@ -2733,13 +2770,13 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
     ax.plot(rise_neg_time,ds2*exponential_neg(range(0,len(rise_neg_flx)), \
                                               *poptnegflx), 'b-',\
             label='Exponential Model, -')
-    ax.axvline(dt1600[29])
+    ax.axvline(dt1600[exp_ind])
     ax.legend()
-    
+
     fig.savefig(str(flnum)+'_recflux_model.png')
-    
+
     # Now plot log-log of just the impulsive phase
-    
+
     fig2,[ax1,ax2] = plt.subplots(2,1,figsize=(10,20))
     ax1.scatter((dt1600),np.log(rec_flux_pos),c='red')
     ax2.scatter((dt1600),-np.log(-rec_flux_neg),c='blue')
@@ -2752,12 +2789,12 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
              np.log(ds2*exponential(range(0,len(rise_pos_flx)),\
                                     *poptposflx)), 'r-',\
                  label='Exponential Model, +')
-        
+
     ax2.plot((rise_neg_time),\
              -np.log(-ds2*exponential_neg(range(0,len(rise_neg_flx)),\
                                           *poptnegflx)), 'b-',\
                  label='Exponential Model, -')
-    
+
     ax1.set_ylabel(r'Rec. Flx [Mx]',font='Times New Roman',fontsize=20)
     ax1.set_title('Reconnection Flux, Impulsive Phase',font='Times New Roman',\
                   fontsize=25)
@@ -2768,7 +2805,7 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
                   fontsize=25)
     ax2.set_xlim(dt1600[0],dt1600[exp_ind])
     ax2.legend(fontsize=15)
-    
+
     fig2.savefig(str(flnum)+'_rec_impphase_model.png')
 
     return None
@@ -2830,9 +2867,9 @@ def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix, \
     # If end of modeling region is before end of impulsive phase
     ax.axvline(dt1600[exp_ind])
     ax.legend()
-    
+
     fig.savefig(str(flnum)+'_ribarea_model.png')
-    
+
     # Just impulsive region, with log-log
     fig2,[ax1,ax2] = plt.subplots(2,1,figsize=(10,20))
     ax1.scatter((dt1600),np.log(pos_area),c='red')
@@ -2847,7 +2884,7 @@ def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix, \
     ax2.plot((rise_neg_time),np.log(exponential(range(0,len(rise_neg_area)), \
                                                 *poptneg)), 'b-',\
              label='Exponential Model, -')
-    
+
     ax1.set_ylabel('Ribbon Area [cm^2]',font='Times New Roman',fontsize=20)
     ax1.set_title('Ribbon Area, Impulsive Phase',font='Times New Roman',\
                   fontsize=25)
@@ -2858,9 +2895,9 @@ def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix, \
                   fontsize=25)
     ax2.set_xlim(dt1600[0],dt1600[exp_ind])
     ax2.legend(fontsize=15)
-    
+
     fig2.savefig(str(flnum)+'_impphase_model.png')
-    
+
     return None
 
 def rec_rate(rec_flux_pos, rec_flux_neg, dn1600, dt1600, peak_pos, peak_neg, \
@@ -2906,9 +2943,7 @@ def rec_rate(rec_flux_pos, rec_flux_neg, dn1600, dt1600, peak_pos, peak_neg, \
     ax.set_ylabel('Reconnection Rate [Mx/s]',font='Times New Roman',\
                   fontsize=20)
     ax.set_title('Reconnection Rate',font='Times New Roman',fontsize=25)
-    
-    fig.savefig(str(flnum)+'_recrate.png')
-    
-    return rec_rate_pos, rec_rate_neg
 
-    
+    fig.savefig(str(flnum)+'_recrate.png')
+
+    return rec_rate_pos, rec_rate_neg
