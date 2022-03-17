@@ -192,7 +192,13 @@ rec_flux_pos_inst, rec_flux_neg_inst, pos_pix_inst, neg_pix_inst, \
     ds2 = fl_funcs.inst_flux_process(aia8_inst_pos, aia8_inst_neg, flnum,
                             conv_f, hmi, dt1600, peak_pos, peak_neg)
 
-exp_ind = np.argmax(pos1600)
+print("Reconnection Rate Determination, Plotting.")
+
+rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
+                                               dn1600, dt1600, peak_pos,
+                                               peak_neg, flnum)
+
+exp_ind = np.argmax(rec_rate_pos+1)
 print("Exponential curve fitting for the fluxes.")
 
 poptposflx, pcovposflx, poptnegflx, pcovnegflx, \
@@ -210,9 +216,3 @@ print("Ribbon Area Plot")
 
 fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix,
                       neg_area_pix, peak_pos, peak_neg, exp_ind)
-
-print("Reconnection Rate Determination, Plotting.")
-
-rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
-                                               dn1600, dt1600, peak_pos,
-                                               peak_neg, flnum)
