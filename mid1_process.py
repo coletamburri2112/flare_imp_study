@@ -39,7 +39,7 @@ hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c \
 
 neg_rem, pos_rem = fl_funcs.spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c,
                                              pos_crit = 2, neg_crit = 2,
-                                             jhi1 = 475, jhi2 = 490)
+                                             jhi = 475, jhi2 = 490)
 
 print("Convolving the HMI images and making the PIL mask.")
 
@@ -127,7 +127,7 @@ startin, peakin, endin, times, s304, e304, filter_304, med304, std304, \
     timelab, aiadat, nt, dn1600, time304, times1600 \
     = fl_funcs.prep_304_1600_parameters(sav_data_aia, sav_data, eventindices,
                                    flnum, start304, peak304, end304,
-                                   times304, curves304)
+                                   times304, curves304, outflag = 1242)
 
 posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos, aia8_neg, aiadat,
                                                      nt)
