@@ -405,7 +405,8 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
     return hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c
 
 def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
-                     pt_range=[-2,-1,1,2]):
+                     pt_range=[-2,-1,1,2], ihi = 800, ilo = 0, jhi = 800,
+                     jlo = 0, ihi2 = 800, ilo2 = 0, jhi2 = 800, jlo2 = 0):
     """
     Spur removal in ribbon masks for the perpendicular motion identification.
     Removes regions where both negative and positive pixels exist.
@@ -447,7 +448,7 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
                     for l in pt_range:
                         if hmi_pos_mask_c[i+k,j-l] == 1:
                             n = n + 1
-                if n > neg_crit:
+                if n > neg_crit or i > ihi or i < ilo or j < jlo or j > jhi:
                     neg_rem[i,j] = 0
                 else:
                     neg_rem[i,j] = -1
@@ -464,7 +465,7 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
                     for l in pt_range:
                         if hmi_neg_mask_c[i+k,j-l] == -1:
                             n = n + 1
-                if n > pos_crit:
+                if n > pos_crit or j > jhi2 or j < jlo2 or i < ilo2 or i > ihi2:
                     pos_rem[i,j] = 0
                 else:
                     pos_rem[i,j] = 1
@@ -600,7 +601,49 @@ def mask_sep(aia_step8, hmi_dat):
 
     return aia8_pos, aia8_neg
 
-def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
+def spur_removal_sep2(aia8_pos, aia8_neg, pos_crit=3, neg_crit=3,
+                     pt_range=[-2,-1,1,2], jhi = 800, jlo = 0, khi = 800,
+                     klo = 0, jhi2 = 800, jlo2 = 0, khi2 = 800, klo2 = 0):
+
+    neg_rem0 = np.zeros(np.shape(aia8_pos))
+    pos_rem0 = np.zeros(np.shape(aia8_neg))
+
+    for i in range(len(neg_rem0)):
+        for j in range(len(neg_rem0[0])-2):
+            for k in range(len(neg_rem0[1])-2):
+                n = 0
+                if aia8_neg[i,j,k] == 1:
+                    for l in pt_range:
+                        for m in pt_range:
+                            if aia8_neg[i,j+l,k+m] == 1:
+                                n = n + 1
+                    if (n > neg_crit) and (j < jhi and j > jlo and k > klo and k < khi):
+                        neg_rem0[i,j,k] = 1
+                    else:
+                        neg_rem0[i,j,k] = 0
+                else:
+                    neg_rem0[i,j,k] = 0
+
+    for i in range(len(pos_rem0)):
+        for j in range(len(pos_rem0[0])-2):
+            for k in range(len(pos_rem0[1])-2):
+                n = 0
+                if aia8_pos[i,j,k] == 1:
+                    for l in pt_range:
+                        for m in pt_range:
+                            if aia8_pos[i,j+l,k+m] == 1:
+                                n = n + 1
+                    if (n > pos_crit) and k < khi and k > klo and j > jlo and j < jhi:
+                        pos_rem0[i,j,k] = 1
+                    else:
+                        pos_rem0[i,j,k] = 0
+                else:
+                    pos_rem0[i,j,k] = 0
+
+    return pos_rem0, neg_rem0
+
+
+def separation(aia_step8, ivs, dvs, pos_rem0, neg_rem0):
     """
     Algorithm for determination of parallel motion for positive and negative
     ribbons.
@@ -645,8 +688,8 @@ def separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg):
 
     # Main working function for separation
     for i in range(len(aia_step8)):
-        posframe = aia8_pos[i,  :,  :]
-        negframe = aia8_neg[i,  :,  :]
+        posframe = pos_rem0[i,  :,  :]
+        negframe = neg_rem0[i,  :,  :]
         xpos,ypos = np.where(posframe == 1)
         xneg,yneg = np.where(negframe == 1)
         pos_ops = list(zip(ypos,xpos))
@@ -703,7 +746,8 @@ def mask_elon(aia_cumul8, hmi_dat):
     return aia8_pos_2, aia8_neg_2
 
 def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3,
-                      pt_range=[-2,-1,1,2]):
+                      pt_range=[-2,-1,1,2], jhi = 800, jlo = 0, khi = 800,
+                      klo = 0, jhi2 = 800, jlo2 = 0, khi2 = 800, klo2 = 0):
     """
     Removal of isolated regions of very few pixels in all time step images.
 
@@ -745,7 +789,7 @@ def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3,
                         for m in pt_range:
                             if aia8_neg_2[i,j+l,k+m] == 1:
                                 n = n + 1
-                    if (n > neg_crit):
+                    if (n > neg_crit) and k>klo and k<khi and j>jlo and j<jhi :
                         neg_rem1[i,j,k] = 1
                     else:
                         neg_rem1[i,j,k] = 0
@@ -761,7 +805,7 @@ def spur_removal_elon(aia8_pos_2, aia8_neg_2, pos_crit=3, neg_crit=3,
                         for m in pt_range:
                             if aia8_pos_2[i,j+l,k+m] == 1:
                                 n = n + 1
-                    if (n > pos_crit):
+                    if (n > pos_crit) and k>klo2 and k<khi2 and j>jlo2 and j<jhi2:
                         pos_rem1[i,j,k] = 1
                     else:
                         pos_rem1[i,j,k] = 0
@@ -2293,7 +2337,7 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
     ax3.set_ylabel('Elongation Rate [Mm/sec]', font='Times New Roman',\
                    fontsize=17)
     ax3.set_title('Ribbon Elongation Rate',font='Times New Roman',\
-                  fontsize=25,)
+                  fontsize=25)
 
     ax1.plot(timelab[indstart:-1], lens_pos_Mm[indstart:-1], '-o', c='red',\
              markersize=6,label='mean')

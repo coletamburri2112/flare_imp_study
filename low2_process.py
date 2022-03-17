@@ -12,7 +12,7 @@ import numpy as np
 
 year = 2013
 mo = 10
-day = 13
+day = 15
 sthr = 8
 stmin = 26
 arnum = 11865
@@ -53,8 +53,15 @@ print("Separation values determination.")
 
 aia8_pos, aia8_neg = fl_funcs.mask_sep(aia_step8, hmi_dat)
 
+pos_rem0, neg_rem0 = fl_funcs.spur_removal_sep2(aia8_pos, aia8_neg,
+                                               jhi = 500, jlo = 325, khi = 475,
+                                               klo = 400, jhi2 = 500, jlo2 = 250,
+                                               khi2 = 500, klo2 = 325)
+
 distpos_med, distpos_mean, distneg_med, distpos_mean \
-    = fl_funcs.separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg)
+    = fl_funcs.separation(aia_step8, ivs, dvs, pos_rem0, neg_rem0)
+
+distpos_med[17] = 0
 
 print("Elongation values determination.")
 
@@ -154,11 +161,11 @@ pltstrt = 1
 fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum)
 
 print("Plotting Elongation with Periods")
-
+indstrt = 1
 fl_funcs.elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
-                          flnum, lens_neg_Mm, elonperiod_start_neg,
+                          lens_neg_Mm, flnum, elonperiod_start_neg,
                           elonperiod_start_pos, elonperiod_end_neg,
-                          elonperiod_end_pos)
+                          elonperiod_end_pos,indstart=indstrt)
 
 print("Plotting Separation with Periods")
 
