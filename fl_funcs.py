@@ -915,6 +915,31 @@ def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y,
 
     return aia_pos_rem, aia_neg_rem
 
+def split_rib(aia_pos_rem,aia_neg_rem,split_pos, split_neg):
+    rib_pos_1 = np.zeros(np.shape(aia_pos_rem))
+    rib_pos_2 = np.zeros(np.shape(aia_pos_rem))
+
+    for i in range(len(aia_pos_rem)):
+        for j in range(len(aia_pos_rem[0])):
+            for k in range(len(aia_pos_rem[1])):
+                if aia_pos_rem[i,j,k] == 1 and k < split_pos:
+                    rib_pos_1[i,j,k] = 1
+                elif aia_pos_rem[i,j,k] == 1 and k > split_pos:
+                    rib_pos_2[i,j,k] = 1
+
+    rib_neg_1 = np.zeros(np.shape(aia_neg_rem))
+    rib_neg_2 = np.zeros(np.shape(aia_neg_rem))
+
+    for i in range(len(aia_neg_rem)):
+        for j in range(len(aia_neg_rem[0])):
+            for k in range(len(aia_neg_rem[1])):
+                if aia_neg_rem[i,j,k] == 1 and k < split_neg:
+                    rib_neg_1[i,j,k] = 1
+                elif aia_neg_rem[i,j,k] == 1 and k > split_neg:
+                    rib_neg_2[i,j,k] = 1
+
+    return rib_pos_1, rib_pos_2, rib_neg_1, rib_neg_2
+
 def find_rib_coordinates(aia_pos_rem, aia_neg_rem):
     """
     Find coordinates of extreme limits of positive and negative ribbons.
