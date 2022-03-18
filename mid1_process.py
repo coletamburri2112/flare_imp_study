@@ -207,13 +207,17 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
                                                dn1600, dt1600, peak_pos,
                                                peak_neg, flnum)
 
-exp_ind = np.argmax(rec_rate_pos+1)
+exp_ind = np.argmax(pos1600)
+exp_ind_area = np.argmax(pos1600)
+
 print("Exponential curve fitting for the fluxes.")
 
 poptposflx, pcovposflx, poptnegflx, pcovnegflx, \
     poptpos, poptneg, pcovpos, pcovneg, rise_pos_flx, \
-        rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, pos_pix, neg_pix,
-                                              exponential, exponential_neg, pos_area, neg_area)
+        rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, exp_ind_area, pos_pix,
+                                              neg_pix, exponential,
+                                              exponential_neg, pos_area,
+                                              neg_area)
 
 print("Exponential curve plot.")
 

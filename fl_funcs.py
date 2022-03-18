@@ -2402,14 +2402,13 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
                   font='Times New Roman',fontsize=25)
     ax2.grid()
 
-    for i,j,k,l in zip(elonperiod_start_pos, elonperiod_end_pos,\
-                       elonperiod_start_neg, elonperiod_end_neg):
-        print(i, j, k, l)
+    for i,j in zip(elonperiod_start_pos, elonperiod_end_pos):
         ax1.axvline(timelab[i], c='green')
         ax1.axvline(timelab[j], c='red')
+        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
+    for k,l in zip(elonperiod_start_neg, elonperiod_end_neg):
         ax2.axvline(timelab[k], c='green')
         ax2.axvline(timelab[l], c='red')
-        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
 
     fig.savefig(str(flnum)+'elon_timing_plt.png')
@@ -2487,13 +2486,13 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
                   fontsize=25,)
     ax2.grid()
 
-    for i,j,k,l in zip(sepperiod_start_pos,sepperiod_end_pos,\
-                       sepperiod_start_neg,sepperiod_end_neg):
+    for i,j in zip(sepperiod_start_pos,sepperiod_end_pos):
         ax1.axvline(timelab[i],c='green')
         ax1.axvline(timelab[j],c='red')
+        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
+    for k,l in zip(sepperiod_start_neg,sepperiod_end_neg):
         ax2.axvline(timelab[k],c='green')
         ax2.axvline(timelab[l],c='red')
-        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
 
     fig.savefig(str(flnum)+'sep_timing_plt.png')
@@ -2731,8 +2730,8 @@ def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
     return rec_flux_pos, rec_flux_neg, pos_pix, neg_pix, pos_area_pix, \
         neg_area_pix, ds2,pos_area, neg_area
 
-def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential,
-                  exponential_neg, pos_area, neg_area):
+def exp_curve_fit(exp_ind, exp_ind_area, rec_flux_pos, rec_flux_neg,
+                  exponential, exponential_neg, pos_area, neg_area):
     """
     Fit exponential curve to flux and ribbon area curves for each ribbon.
 
@@ -2782,8 +2781,8 @@ def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential,
     # to the peak of the light curve, but sometimes not.
     rise_pos_flx = rec_flux_pos[0:exp_ind]
     rise_neg_flx = rec_flux_neg[0:exp_ind]
-    rise_pos_area = pos_area[0:exp_ind]
-    rise_neg_area = neg_area[0:exp_ind]
+    rise_pos_area = pos_area[0:exp_ind_area]
+    rise_neg_area = neg_area[0:exp_ind_area]
 
     # Fitting to exponential and negative exponential models
     poptposflx, pcovposflx = \
