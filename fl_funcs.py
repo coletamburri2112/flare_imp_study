@@ -440,8 +440,8 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
 
     # If > neg_crit positive pixels surround a negative pixel, remove negative
     # pixel.
-    for i in range(len(neg_rem)):
-        for j in range(len(neg_rem[0])):
+    for i in range(len(neg_rem)-2):
+        for j in range(len(neg_rem[0])-2):
             n = 0
             if hmi_neg_mask_c[i,j] == -1:
                 for k in pt_range:
@@ -457,8 +457,8 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
 
     # If > pos_crit negative pixels surround a positive pixel, remove positive
     # pixel.
-    for i in range(len(pos_rem)):
-        for j in range(len(pos_rem[0])):
+    for i in range(len(pos_rem)-2):
+        for j in range(len(pos_rem[0])-2):
             n = 0
             if hmi_pos_mask_c[i,j] == 1:
                 for k in pt_range:
@@ -915,6 +915,31 @@ def rib_lim_elon(aia8_pos_2, aia8_neg_2, pos_rem1, neg_rem1, med_x, med_y,
 
     return aia_pos_rem, aia_neg_rem
 
+def split_rib(aia_pos_rem,aia_neg_rem,split_pos, split_neg):
+    rib_pos_1 = np.zeros(np.shape(aia_pos_rem))
+    rib_pos_2 = np.zeros(np.shape(aia_pos_rem))
+
+    for i in range(len(aia_pos_rem)):
+        for j in range(len(aia_pos_rem[0])):
+            for k in range(len(aia_pos_rem[1])):
+                if aia_pos_rem[i,j,k] == 1 and k < split_pos:
+                    rib_pos_1[i,j,k] = 1
+                elif aia_pos_rem[i,j,k] == 1 and k > split_pos:
+                    rib_pos_2[i,j,k] = 1
+
+    rib_neg_1 = np.zeros(np.shape(aia_neg_rem))
+    rib_neg_2 = np.zeros(np.shape(aia_neg_rem))
+
+    for i in range(len(aia_neg_rem)):
+        for j in range(len(aia_neg_rem[0])):
+            for k in range(len(aia_neg_rem[1])):
+                if aia_neg_rem[i,j,k] == 1 and k < split_neg:
+                    rib_neg_1[i,j,k] = 1
+                elif aia_neg_rem[i,j,k] == 1 and k > split_neg:
+                    rib_neg_2[i,j,k] = 1
+
+    return rib_pos_1, rib_pos_2, rib_neg_1, rib_neg_2
+
 def find_rib_coordinates(aia_pos_rem, aia_neg_rem):
     """
     Find coordinates of extreme limits of positive and negative ribbons.
@@ -1219,7 +1244,8 @@ def convert_to_Mm(lens_pos, dist_pos, lens_neg, dist_neg, conv_f):
         dpos_len, dneg_dist, dpos_dist
 
 def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
-                             start304, peak304, end304, times304, curves304):
+                             start304, peak304, end304, times304, curves304,
+                             outflag = 0):
     """
     Preps parameters for 304 Angstrom images, in addition to some datetime
     processing for 1600 Angstrom SDO/AIA images.
@@ -1318,23 +1344,46 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
         timestep = aiadat[i, :, :]
         sum1600[i] = timestep.sum()
 
-    # Find index of nearest index to flare number in 304 flares array
-    ind = (np.isclose(eventindices,flnum))
-    index = np.where(ind)[0][0]
+    # if flare not in list
+    if outflag == 1242:
+        file1242 = '/Users/owner/Desktop/CU_Research/twelvefortytwo.mat'
+        ev304 = sio.loadmat(file1242)
 
-    # Light curve for selected flare
-    curve304 = curves304[index]
-    time304 = times304[index]
+        curve304_0 = ev304['smspl']
+        time304_0 = ev304['windowthr']
+        st304 = ev304['tst']
+        peak304 = ev304['maxt']
+        end304 = ev304['tend']
+
+        curve304 = []
+        time304 = []
+        for i in range(len(curve304_0)):
+            curve304.append(curve304_0[i][0])
+            time304.append(time304_0[0][i])
+
+        startin = np.where(dn1600==find_nearest(dn1600,st304))
+        peakin = np.where(dn1600==find_nearest(dn1600,peak304))
+        endin = np.where(dn1600==find_nearest(dn1600,end304))
+
+    elif outflag == 0:
+        # Find index of nearest index to flare number in 304 flares array
+        ind = (np.isclose(eventindices,flnum))
+        index = np.where(ind)[0][0]
+
+        # Light curve for selected flare
+        curve304 = curves304[index]
+        time304 = times304[index]
+        # Time indices for 1600A data - time series not identical
+        startin = np.where(dn1600==find_nearest(dn1600,start304[ind][0]))
+        peakin = np.where(dn1600==find_nearest(dn1600,peak304[ind][0]))
+        endin = np.where(dn1600==find_nearest(dn1600,end304[ind][0]))
 
     # Integrate over all pixels in 1600A line
     for i in range(nt):
         timestep=aiadat[i, :, :]
         sum1600[i]=timestep.sum()
 
-    # Time indices for 1600A data - time series not identical
-    startin = np.where(dn1600==find_nearest(dn1600,start304[ind][0]))
-    peakin = np.where(dn1600==find_nearest(dn1600,peak304[ind][0]))
-    endin = np.where(dn1600==find_nearest(dn1600,end304[ind][0]))
+
 
     for i in range(nt):
         timechoi = str(sav_data.tim[i])
@@ -2353,14 +2402,13 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
                   font='Times New Roman',fontsize=25)
     ax2.grid()
 
-    for i,j,k,l in zip(elonperiod_start_pos, elonperiod_end_pos,\
-                       elonperiod_start_neg, elonperiod_end_neg):
-        print(i, j, k, l)
+    for i,j in zip(elonperiod_start_pos, elonperiod_end_pos):
         ax1.axvline(timelab[i], c='green')
         ax1.axvline(timelab[j], c='red')
+        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
+    for k,l in zip(elonperiod_start_neg, elonperiod_end_neg):
         ax2.axvline(timelab[k], c='green')
         ax2.axvline(timelab[l], c='red')
-        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
 
     fig.savefig(str(flnum)+'elon_timing_plt.png')
@@ -2438,13 +2486,13 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
                   fontsize=25,)
     ax2.grid()
 
-    for i,j,k,l in zip(sepperiod_start_pos,sepperiod_end_pos,\
-                       sepperiod_start_neg,sepperiod_end_neg):
+    for i,j in zip(sepperiod_start_pos,sepperiod_end_pos):
         ax1.axvline(timelab[i],c='green')
         ax1.axvline(timelab[j],c='red')
+        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
+    for k,l in zip(sepperiod_start_neg,sepperiod_end_neg):
         ax2.axvline(timelab[k],c='green')
         ax2.axvline(timelab[l],c='red')
-        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
 
     fig.savefig(str(flnum)+'sep_timing_plt.png')
@@ -2682,8 +2730,8 @@ def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
     return rec_flux_pos, rec_flux_neg, pos_pix, neg_pix, pos_area_pix, \
         neg_area_pix, ds2,pos_area, neg_area
 
-def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential,
-                  exponential_neg, pos_area, neg_area):
+def exp_curve_fit(exp_ind, exp_ind_area, rec_flux_pos, rec_flux_neg,
+                  exponential, exponential_neg, pos_area, neg_area):
     """
     Fit exponential curve to flux and ribbon area curves for each ribbon.
 
@@ -2733,8 +2781,8 @@ def exp_curve_fit(exp_ind, rec_flux_pos, rec_flux_neg, exponential,
     # to the peak of the light curve, but sometimes not.
     rise_pos_flx = rec_flux_pos[0:exp_ind]
     rise_neg_flx = rec_flux_neg[0:exp_ind]
-    rise_pos_area = pos_area[0:exp_ind]
-    rise_neg_area = neg_area[0:exp_ind]
+    rise_pos_area = pos_area[0:exp_ind_area]
+    rise_neg_area = neg_area[0:exp_ind_area]
 
     # Fitting to exponential and negative exponential models
     poptposflx, pcovposflx = \
