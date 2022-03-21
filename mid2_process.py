@@ -197,8 +197,8 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
                                                dn1600, dt1600, peak_pos,
                                                peak_neg, flnum)
 
-exp_ind = np.argmax(rec_rate_pos)
-exp_ind_area = np.argmax(rec_rate_neg)
+exp_ind = np.argmax(rec_rate_pos)+1
+exp_ind_area = np.argmax(rec_rate_pos)+1
 
 print("Exponential curve fitting for the fluxes.")
 
