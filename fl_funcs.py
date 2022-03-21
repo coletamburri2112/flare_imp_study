@@ -406,7 +406,8 @@ def pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask):
 
 def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
                      pt_range=[-2,-1,1,2], ihi = 800, ilo = 0, jhi = 800,
-                     jlo = 0, ihi2 = 800, ilo2 = 0, jhi2 = 800, jlo2 = 0):
+                     jlo = 0, ihi2 = 800, ilo2 = 0, jhi2 = 800, jlo2 = 0,
+                     ihi3 = 800, jlo3 = 0):
     """
     Spur removal in ribbon masks for the perpendicular motion identification.
     Removes regions where both negative and positive pixels exist.
@@ -448,7 +449,7 @@ def spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c, pos_crit=3, neg_crit=3,
                     for l in pt_range:
                         if hmi_pos_mask_c[i+k,j-l] == 1:
                             n = n + 1
-                if n > neg_crit or i > ihi or i < ilo or j < jlo or j > jhi:
+                if n > neg_crit or i > ihi or i < ilo or j < jlo or j > jhi or (i > ihi3 and j < jlo3):
                     neg_rem[i,j] = 0
                 else:
                     neg_rem[i,j] = -1
@@ -642,6 +643,48 @@ def spur_removal_sep2(aia8_pos, aia8_neg, pos_crit=3, neg_crit=3,
 
     return pos_rem0, neg_rem0
 
+def spur_removal_sepopt3(aia8_pos, aia8_neg, pos_crit=3, neg_crit=3,
+                     pt_range=[-2,-1,1,2], jhi = 800, jlo = 0, khi = 800,
+                     klo = 0, jhi2 = 800, jlo2 = 0, khi2 = 800, klo2 = 0):
+
+    neg_rem0 = np.zeros(np.shape(aia8_pos))
+    pos_rem0 = np.zeros(np.shape(aia8_neg))
+
+    for i in range(len(neg_rem0)):
+        for j in range(len(neg_rem0[0])-2):
+            for k in range(len(neg_rem0[1])-2):
+                n = 0
+                if aia8_neg[i,j,k] == 1:
+                    for l in pt_range:
+                        for m in pt_range:
+                            if aia8_neg[i,j+l,k+m] == 1:
+                                n = n + 1
+                    if (n > neg_crit) and (j < jhi and j > jlo and k > klo and k < khi):
+                        neg_rem0[i,j,k] = 1
+                    else:
+                        neg_rem0[i,j,k] = 0
+                    if (j > 400 and k > 400 and k < 425):
+                        neg_rem0[i,j,k] = 0
+                else:
+                    neg_rem0[i,j,k] = 0
+
+    for i in range(len(pos_rem0)):
+        for j in range(len(pos_rem0[0])-2):
+            for k in range(len(pos_rem0[1])-2):
+                n = 0
+                if aia8_pos[i,j,k] == 1:
+                    for l in pt_range:
+                        for m in pt_range:
+                            if aia8_pos[i,j+l,k+m] == 1:
+                                n = n + 1
+                    if (n > pos_crit) and k < khi and k > klo and j > jlo and j < jhi:
+                        pos_rem0[i,j,k] = 1
+                    else:
+                        pos_rem0[i,j,k] = 0
+                else:
+                    pos_rem0[i,j,k] = 0
+
+    return pos_rem0, neg_rem0
 
 def separation(aia_step8, ivs, dvs, pos_rem0, neg_rem0):
     """
