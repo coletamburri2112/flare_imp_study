@@ -1525,7 +1525,7 @@ def load_from_file(flnum, pick = True):
         distneg_Mm, lens_pos_Mm, lens_neg_Mm, ivs, dvs
 
 def elon_periods(dpos_len, dneg_len, pos_crit=1, neg_crit=1, zer_pos_c=2,
-                 zer_neg_c=2):
+                 zer_neg_c=2, n_min = 1, m_min = 1):
     """
     Determination of periods of elongation for positive and negative ribbons
     from time series.
@@ -1580,7 +1580,7 @@ def elon_periods(dpos_len, dneg_len, pos_crit=1, neg_crit=1, zer_pos_c=2,
             if n > pos_crit and time not in elonperiod_start_pos:
                 elonperiod_start_pos.append(time)
         elif elonfiltpos[i] <= 0:
-            if n > 1:
+            if n > n_min:
                 zer_n += 1
                 # If rate of change returns to 0 for several points
                 if zer_n > zer_pos_c:
@@ -1598,11 +1598,14 @@ def elon_periods(dpos_len, dneg_len, pos_crit=1, neg_crit=1, zer_pos_c=2,
             if m == 1:
                 time = j
             if m > neg_crit and time not in elonperiod_start_neg:
+
                 elonperiod_start_neg.append(time)
         elif elonfiltneg[j] <= 0:
-            if m > 1:
+            if m > m_min:
+
                 zer_m += 1
                 if zer_m > zer_neg_c:
+
                     elonperiod_end_neg.append(j)
                     m = 0
                     zer_m = 0
