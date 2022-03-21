@@ -65,7 +65,9 @@ print("Elongation values determination.")
 
 aia8_pos_2, aia8_neg_2 = fl_funcs.mask_elon(aia_cumul8, hmi_dat)
 
-neg_rem1, pos_rem1 = fl_funcs.spur_removal_elon(aia8_pos_2, aia8_neg_2)
+neg_rem1, pos_rem1 = fl_funcs.spur_removal_elon(aia8_pos_2, aia8_neg_2,
+                                                neg_crit = 6, jhi = 600,
+                                                klo = 375, pos_crit = 3)
 
 ivs_lim, dvs_lim, med_x, med_y = fl_funcs.lim_pil(ivs, dvs)
 
