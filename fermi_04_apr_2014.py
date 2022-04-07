@@ -15,19 +15,19 @@ directory = '/Users/owner/Desktop/CU_Research/Fermi_April_2022/'\
             'Fermi_Events_sav/'
 
 instrument = 'n5'
-day = '15'
+day = '04'
 month = 'apr'
 year = '2014'
 
-dayint = 15
+dayint = 4
 moint = 4
 yearint = 2014
 
-low = 7000
-high = 7800
+low = 3500
+high = 4500
 
 ylo = 1e-3
-yhi = 10
+yhi = 100
 
 filename_cspec = directory + 'fermi_' + instrument + '_cspec_bkgd_' + day + \
     month + year + '.sav'
@@ -57,7 +57,7 @@ timesadj1 = times + err1
 curr = datetime.fromtimestamp(min(timesadj1))
 corr = datetime(yearint,moint,dayint,0,0,0)
 
-err2 = (6*3600)+(corr-curr).seconds
+err2 = (corr-curr).seconds
 totsec = (b-a).total_seconds() + err2
 
 timesadj = times + totsec
@@ -71,9 +71,9 @@ for i in timesadj:
 flag = 0
 
 for i in range(low, high):
-    if cspec_hxr_sum[i] > 0.1:
+    if cspec_hxr_sum[i] > 0.08:
         flag += 1
-    if cspec_hxr_sum[i] < 0.1:
+    if cspec_hxr_sum[i] < 0.08:
         flag = 0
     if flag > 3:
         startind = i - 3
@@ -93,9 +93,9 @@ ax.set_xlabel('Time [DD HH:MM]',font='Times New Roman',fontsize=20)
 ax.set_ylabel('Flux [cts/s/cm$^2$/keV]',font='Times New Roman',fontsize=20)
 ax.set_title(str(moint)+'-'+str(dayint)+'-'+str(yearint)+' Fermi GBM 25 - 300'\
              'keV Band',font='Times New Roman',fontsize=25)
-ax.set_ylim(np.log10(ylo),np.log10(yhi))
+#ax.set_ylim(np.log10(ylo),np.log10(yhi))
 ax.legend(fontsize=15)
 
-fname = '15_april_2014_Fermi'
+fname = '04_apr_2014_Fermi.png'
 
-plt.savefig(fname,format='png')
+plt.savefig(fname)

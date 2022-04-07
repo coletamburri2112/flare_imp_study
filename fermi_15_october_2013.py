@@ -16,18 +16,18 @@ directory = '/Users/owner/Desktop/CU_Research/Fermi_April_2022/'\
 
 instrument = 'n5'
 day = '15'
-month = 'apr'
-year = '2014'
+month = 'oct'
+year = '2013'
 
 dayint = 15
-moint = 4
-yearint = 2014
+moint = 10
+yearint = 2013
 
-low = 7000
-high = 7800
+low = 6100
+high = 7200
 
 ylo = 1e-3
-yhi = 10
+yhi = 100
 
 filename_cspec = directory + 'fermi_' + instrument + '_cspec_bkgd_' + day + \
     month + year + '.sav'
@@ -57,7 +57,7 @@ timesadj1 = times + err1
 curr = datetime.fromtimestamp(min(timesadj1))
 corr = datetime(yearint,moint,dayint,0,0,0)
 
-err2 = (6*3600)+(corr-curr).seconds
+err2 = (corr-curr).seconds
 totsec = (b-a).total_seconds() + err2
 
 timesadj = times + totsec
@@ -96,6 +96,6 @@ ax.set_title(str(moint)+'-'+str(dayint)+'-'+str(yearint)+' Fermi GBM 25 - 300'\
 ax.set_ylim(np.log10(ylo),np.log10(yhi))
 ax.legend(fontsize=15)
 
-fname = '15_april_2014_Fermi'
+fname = '15_oct_2013_Fermi.png'
 
-plt.savefig(fname,format='png')
+plt.savefig(fname)
