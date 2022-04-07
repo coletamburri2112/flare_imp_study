@@ -56,8 +56,7 @@ timesadj1 = times + err1
 
 curr = datetime.fromtimestamp(min(timesadj1))
 corr = datetime(yearint,moint,dayint,0,0,0)
-print(curr)
-print(corr)
+
 err2 = (corr-curr).seconds
 totsec = (b-a).total_seconds() + err2
 
@@ -77,17 +76,18 @@ for i in range(low, high):
     if cspec_hxr_sum[i] < 0.1:
         flag = 0
     if flag > 3:
-        maxind = i - 3
+        startind = i - 3
         break
     
+maxind = np.where(raw_hxr_sum[low:high] == max(raw_hxr_sum[low:high]))
 fig,ax = plt.subplots(figsize=(15,10))
 
 ax.scatter(strtimes[low:high],np.log10(raw_hxr_sum[low:high]),marker='.',
            label='Raw Cts.')
 ax.scatter(strtimes[low:high],np.log10(cspec_hxr_sum[low:high]),marker='.',
            label='Bkgd. Sub. Cts.')
-ax.axvline(strtimes[maxind],linestyle='--',color='red',label='Start')
-
+ax.axvline(strtimes[startind],linestyle='--',color='red',label='Start')
+ax.axvline(strtimes[maxind[0][0]+low],linestyle='-.',color='black',label='Max')
 ax.grid
 ax.set_xlabel('Time [DD HH:MM]',font='Times New Roman',fontsize=20)
 ax.set_ylabel('Flux [cts/s/cm$^2$/keV]',font='Times New Roman',fontsize=20)
@@ -96,6 +96,6 @@ ax.set_title(str(moint)+'-'+str(dayint)+'-'+str(yearint)+' Fermi GBM 25 - 300'\
 ax.set_ylim(np.log10(ylo),np.log10(yhi))
 ax.legend(fontsize=15)
 
-#fname = '15_april_2014_Fermi.png'
+fname = '15_april_2014_Fermi.png'
 
-#plt.savefig(fname)
+plt.savefig(fname)
