@@ -96,6 +96,6 @@ ax.set_title(str(moint)+'-'+str(dayint)+'-'+str(yearint)+' Fermi GBM 25 - 300'\
 ax.set_ylim(np.log10(ylo),np.log10(yhi))
 ax.legend(fontsize=15)
 
-fname = '15_april_2014_Fermi.png'
+fname = '13_october_2013_Fermi.png'
 
 plt.savefig(fname)
