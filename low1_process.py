@@ -139,13 +139,13 @@ print("Plotting ribbon separation.")
 
 pltstrt = 25
 
-fl_funcs.ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt)
+fl_funcs.ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt, dt1600)
 
 print("Plotting ribbon elongation.")
 
 pltstrt = 1
 
-fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum)
+fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum, dt1600)
 
 print("Plotting Elongation with Periods")
 
@@ -251,4 +251,4 @@ left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
                                             distneg_med, distpos_med)
 
 # Plot guide field ratio
-fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum)
+fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
