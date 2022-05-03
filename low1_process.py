@@ -139,20 +139,20 @@ print("Plotting ribbon separation.")
 
 pltstrt = 25
 
-fl_funcs.ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt)
+fl_funcs.ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt, dt1600)
 
 print("Plotting ribbon elongation.")
 
 pltstrt = 1
 
-fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum)
+fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum, dt1600)
 
 print("Plotting Elongation with Periods")
 
 fl_funcs.elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
-                          flnum, lens_neg_Mm, elonperiod_start_neg,
-                          elonperiod_start_pos, elonperiod_end_neg,
-                          elonperiod_end_pos)
+                         lens_neg_Mm, flnum, elonperiod_start_neg,
+                         elonperiod_start_pos, elonperiod_end_neg,
+                         elonperiod_end_pos)
 
 print("Plotting Separation with Periods")
 
@@ -207,3 +207,48 @@ print("Reconnection Rate Determination, Plotting.")
 rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
                                                dn1600, dt1600, peak_pos,
                                                peak_neg, flnum)
+
+# Begin code added April 2022 
+
+# Establish limits for ribbons corresponding to shear code.
+negylow = ylim0_neg
+negyhi = ylim1_neg
+negxlow = xlim0_neg
+negxhi = xlim1_neg
+
+posylow = ylim0_pos
+posyhi = ylim1_pos
+posxlow = xlim0_pos
+posxhi = xlim1_pos
+
+# Isolate ribbons appropriately for shear analysis
+aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
+    shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y, negylow=negylow,
+                           negyhi=negyhi, posylow=posylow, posyhi=posyhi,
+                           negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
+                           posxhi=posxhi)
+
+# Left and right coordinates of positive and negative ribbons
+lr_coord_neg_shear, lr_coord_pos_shear = \
+    fl_funcs.leftrightshear(aia_pos_rem_shear, aia_neg_rem_shear)
+
+# PIL pixels closest to the left and right coordinates of positive and negative
+# ribbons
+pil_right_near_pos_shear, pil_left_near_pos_shear, pil_right_near_neg_shear,\
+    pil_left_near_neg_shear = fl_funcs.sheardists(lr_coord_pos_shear,
+                                                       lr_coord_neg_shear,
+                                                       ivs_sort, dvs_sort)
+
+# Guide field to the right and left edges of ribbons
+guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
+                                                      pil_left_near_pos_shear,
+                                                      pil_right_near_neg_shear,
+                                                      pil_left_near_neg_shear,
+                                                      sortedpil)
+
+# Guide field ratio to the right and left edges of ribbons
+left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
+                                            distneg_med, distpos_med)
+
+# Plot guide field ratio
+fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)

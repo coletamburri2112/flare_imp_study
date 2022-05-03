@@ -5,7 +5,7 @@ Created on Tue Mar 22 07:09:33 2022
 
 @author: owner
 """
-# Most recent version: 21 March 2022 by Cole Tamburri
+# Most recent version: 29 April 2022 by Cole Tamburri
 # University of Colorado Boulder
 # Advisors: Maria D. Kazachenko and Adam F. Kowalski
 
@@ -38,6 +38,8 @@ Created on Tue Mar 22 07:09:33 2022
 # Plotting and data presentation routines are also below, which includes an
 # animation showing the timing of separation, elongation, and chromospheric
 # line light curves.
+
+# Addition of shear quantification code, 29 April 2022
 
 from os.path import dirname, join as pjoin
 import scipy.io as sio
@@ -2482,7 +2484,7 @@ def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm,
     return None
 
 
-def ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt):
+def ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt, dt1600):
     """
     Plot ribbon separation values throughout flare.
 
@@ -2512,8 +2514,8 @@ def ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt):
              markersize=10, label='median')
     ax1.legend(fontsize=15)
     ax1.grid()
-    s = str(times[0])
-    ax1.set_xlabel('Time [s since ' + s[2:-2] + ']', font='Times New Roman',
+    s = str(dt1600[0])
+    ax1.set_xlabel('Time [s since ' + s[5:-7] + ']', font='Times New Roman',
                    fontsize=15)
     ax1.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',
                    fontsize=15)
@@ -2525,7 +2527,7 @@ def ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt):
              markersize=10, label='median')
     ax2.legend(fontsize=15)
     ax2.grid()
-    ax2.set_xlabel('Time [s since ' + s[2:-2] + ']', font='Times New Roman',
+    ax2.set_xlabel('Time [s since ' + s[5:-7] + ']', font='Times New Roman',
                    fontsize=15)
     ax2.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',
                    fontsize=15)
@@ -2537,7 +2539,7 @@ def ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt):
     return None
 
 
-def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
+def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum, dt1600):
     """
     Plot ribbon elongation values throughout flare.
 
@@ -2553,6 +2555,8 @@ def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
         Flare index from RibbonDB database.
     pltstrt : int
         Index for where to start displaying elongation values.
+    dt1600 : list
+        Array of datetimes for SDO/AIA 1600 Angstrom data
 
     Returns
     -------
@@ -2572,8 +2576,8 @@ def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum):
              markersize=10, label='- Ribbon')
     ax1.legend(fontsize=15)
     ax1.grid()
-    s = str(times[0])
-    ax1.set_xlabel('Time [s since ' + s[2:-2] + ']', font='Times New Roman',
+    s = str(dt1600[0])
+    ax1.set_xlabel('Time [s since ' + s[5:-7] + ']', font='Times New Roman',
                    fontsize=17)
     ax1.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',
                    fontsize=17)
@@ -3305,3 +3309,428 @@ def rec_rate(rec_flux_pos, rec_flux_neg, dn1600, dt1600, peak_pos, peak_neg,
     fig.savefig(str(flnum) + '_recrate.png')
 
     return rec_rate_pos, rec_rate_neg
+
+def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
+                           pt_range=[-2, -1, 1, 2], poscrit=6, negcrit=6,
+                           negylow=400, negyhi=0, negxlow=300,
+                           negxhi=400, posylow=0, posyhi=0,
+                           posxlow=350, posxhi=0):
+    """
+    Isolates ribbons with the shear algorithm in mind.
+
+    Parameters
+    ----------
+    aia8_neg : arr
+        Negative polarity array from AIA.
+    aia8_pos : arr
+        Positive polarity array from AIA
+    med_x : int
+        Median of x dimension.
+    med_y : int
+        Median of y dimension.
+    pt_range : arr, optional
+        Range of points to search around each pixel. The default is
+        [-2,-1,1,2].
+    poscrit : int, optional
+        Minimum number of positive points a pixel must be surrounded by in
+        order to be counted. The default is 6.
+    negcrit : int, optional
+        Minimum number of negative points a pixel must be surrounded by in
+        order to be counted. The default is 6.
+    negylow : int, optional
+        Low y-dimension of image to search through, negative ribbon. The
+        default is 400.
+    negyhi : int, optional
+        High y-dimension of image to search through, negative ribbon.
+        The default is 0.
+    negxlow : int, optional
+        Low x-dimension of image to search through, negative ribbon. The
+        default is 300.
+    negxhi : int, optional
+        High x-dimension of image to search through, negative ribbon.
+        The default is 400.
+    posylow : int, optional
+        Low y-dimension of image to search through, positive ribbon. The
+        default is 0.
+    posyhi : int, optional
+        High y-dimension of image to search through, positive ribbon. The
+        default is 0.
+    posxlow : int, optional
+        Low x-dimension of image to search through, positive ribbon. The
+        default is 350.
+    posxhi : int, optional
+        High x-dimension of image to search through, positive ribbon. The
+        default is 0.
+
+    Returns
+    -------
+    aia_neg_rem_shear : arr
+        AIA 1600 Angstrom images of negative ribbon, with spur pixels removed.
+    aia_pos_rem_shear : arr
+        AIA 1600 Angstrom images of positive ribbon, with spur pixels removed.
+
+    """
+    neg_rem_shear = np.zeros(np.shape(aia8_pos))
+    pos_rem_shear = np.zeros(np.shape(aia8_neg))
+    aia_pos_rem_shear = np.zeros(np.shape(aia8_pos))
+    aia_neg_rem_shear = np.zeros(np.shape(aia8_neg))
+
+    negylow = int(round(med_y) - 100)
+    negyhigh = int(round(med_y) + 100)
+    negxlow = int(round(med_x) - 100)
+    negxhi = int(round(med_y) + 100)
+
+    posylow = int(round(med_y) - 100)
+    posyhigh = int(round(med_y) + 100)
+    posxlow = int(round(med_x) - 100)
+    posxhi = int(round(med_y) + 100)
+
+    # Search through negative ribbon and remove spur points.
+    for i in range(len(neg_rem_shear)):
+        for j in range(len(neg_rem_shear[0])-2):
+            for k in range(len(neg_rem_shear[1])-2):
+                n = 0
+                if aia8_neg[i, j, k] == 1:
+                    for h in pt_range:
+                        for m in pt_range:
+                            if aia8_neg[i, j+h, k+m] == 1:
+                                n = n + 1
+                    if (n > negcrit):
+                        neg_rem_shear[i, j, k] = 1
+                    else:
+                        neg_rem_shear[i, j, k] = 0
+                else:
+                    neg_rem_shear[i, j, k] = 0
+
+    # Search through positive ribbon and remove spur points.
+    for i in range(len(pos_rem_shear)):
+        for j in range(len(pos_rem_shear[0])-2):
+            for k in range(len(pos_rem_shear[1])-2):
+                n = 0
+                if aia8_pos[i, j, k] == 1:
+                    for h in pt_range:
+                        for m in pt_range:
+                            if aia8_pos[i, j+h, k+m] == 1:
+                                n = n + 1
+                    if (n > poscrit):
+                        pos_rem_shear[i, j, k] = 1
+                    else:
+                        pos_rem_shear[i, j, k] = 0
+                else:
+                    pos_rem_shear[i, j, k] = 0
+
+    # Limit ribbons to within desired range for analysis
+    for i in range(len(aia8_neg)):
+        for j in range(negylow, negyhi):
+            for k in range(negxlow, negxhi):
+                if neg_rem_shear[i, j, k] > 0:
+                    aia_neg_rem_shear[i, j, k] = 1
+
+    for i in range(len(aia8_pos)):
+        for j in range(posylow, posyhi):
+            for k in range(posxlow, posxhi):
+                if pos_rem_shear[i, j, k] > 0:
+                    aia_pos_rem_shear[i, j, k] = 1
+
+    return aia_neg_rem_shear, aia_pos_rem_shear
+
+# find left and rightmost pixels
+
+
+def leftrightshear(aia_pos_rem_shear, aia_neg_rem_shear):
+    """
+    Finds leftmost and rightmost pixels of each ribbon.
+
+    Parameters
+    ----------
+    aia_pos_rem_shear : arr
+        Images of isolated positive ribbons from above function.
+    aia_neg_rem_shear : arr
+        Images of isolated negative ribbons from above function.
+
+    Returns
+    -------
+    lr_coord_neg_shear : arr
+        Left and right coordinates of negative ribbon.
+    lr_coord_pos_shear : arr
+        Left and right coordinates of positive ribbon..
+
+    """
+
+    lr_coord_pos_shear = np.zeros([len(aia_pos_rem_shear), 4])
+    lr_coord_neg_shear = np.zeros([len(aia_neg_rem_shear), 4])
+
+    # Find left and rightmost pixels for positive ribbon in each frame
+    for i in range(len(aia_pos_rem_shear)):
+        left_x = 0
+        left_y = 0
+        right_x = 0
+        right_y = 0
+
+        for k in range(len(aia_pos_rem_shear[1])):
+            for j in range(len(aia_pos_rem_shear[0])):
+                if aia_pos_rem_shear[i, j, k] == 1:
+                    left_x = k
+                    left_y = j
+                    break
+
+            if left_x != 0:
+                break
+
+        for k in range(len(aia_pos_rem_shear[1])-1, 0, -1):
+            for j in range(len(aia_pos_rem_shear[0])):
+                if aia_pos_rem_shear[i, j, k] == 1:
+                    right_x = k
+                    right_y = j
+                    break
+            if right_x != 0:
+                break
+
+        lr_coord_pos_shear[i, :] = [left_x, left_y, right_x, right_y]
+
+    # The same, for negative ribbon.
+    for i in range(len(aia_neg_rem_shear)):
+        left_x = 0
+        left_y = 0
+        right_x = 0
+        right_y = 0
+
+        for k in range(len(aia_neg_rem_shear[1])):
+            for j in range(len(aia_neg_rem_shear[0])):
+                if aia_neg_rem_shear[i, j, k] == 1:
+                    left_x = k
+                    left_y = j
+                    break
+
+            if left_x != 0:
+                break
+
+        for k in range(len(aia_neg_rem_shear[1])-1, 0, -1):
+            for j in range(len(aia_neg_rem_shear[0])):
+                if aia_neg_rem_shear[i, j, k] == 1:
+                    right_x = k
+                    right_y = j
+                    break
+            if right_x != 0:
+                break
+
+        lr_coord_neg_shear[i, :] = [left_x, left_y, right_x, right_y]
+
+    return lr_coord_neg_shear, lr_coord_pos_shear
+
+
+def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
+    """
+    Find the position of the pil nearest to the extremes of each ribbon.
+
+    Parameters
+    ----------
+    lr_coord_pos_shear : arr
+        Left and rightmost pixels for the positive ribbon.
+    lr_coord_neg_shear : arr
+        Left and rightmost pixels for negative ribbon.
+    ivs_sort : arr
+        Independent variable indices for PIL.
+    dvs_sort : arr
+        Dependent variable indices for PIL.
+
+    Returns
+    -------
+    pil_right_near_pos_shear : arr
+        Indices of PIL point nearest positive ribbon, rightmost extreme.
+    pil_left_near_pos_shear : arr
+        Indices of PIL points nearest positive ribbon, leftmost extreme.
+    pil_right_near_neg_shear : arr
+        Indices of PIL points nearest negative ribbon, rightmost extreme.
+    pil_left_near_neg_shear : arr
+        Indices of PIL points nearest negative ribbon, leftmost extreme.
+
+    """
+    left_pil_dist_pos_shear = np.zeros(
+        [len(lr_coord_pos_shear), len(ivs_sort)])
+    right_pil_dist_pos_shear = np.zeros([len(lr_coord_pos_shear),
+                                         len(ivs_sort)])
+    pil_left_near_pos_shear = np.zeros([len(left_pil_dist_pos_shear), 3])
+    pil_right_near_pos_shear = np.zeros([len(right_pil_dist_pos_shear), 3])
+    left_pil_dist_neg_shear = np.zeros(
+        [len(lr_coord_neg_shear), len(ivs_sort)])
+    right_pil_dist_neg_shear = np.zeros([len(lr_coord_neg_shear),
+                                         len(ivs_sort)])
+    pil_left_near_neg_shear = np.zeros([len(left_pil_dist_neg_shear), 3])
+    pil_right_near_neg_shear = np.zeros([len(right_pil_dist_neg_shear), 3])
+
+    # Arrays of distances from all positive ribbon points to all PIL points, in
+    # each dimesion
+    for i in range(len(lr_coord_pos_shear)):
+        left_x, left_y, right_x, right_y = lr_coord_pos_shear[i]
+        for j in range(len(ivs_sort)):
+            left_pil_dist_pos_shear[i, j] = np.sqrt((left_x - ivs_sort[j])**2 +
+                                                    (left_y - dvs_sort[j])**2)
+            right_pil_dist_pos_shear[i, j] = np.sqrt((right_x - ivs_sort[j])**2
+                                                     + (right_y -
+                                                        dvs_sort[j])**2)
+
+    # Find smallest distance, and the corresponding PIL point
+    for i in range(len(left_pil_dist_pos_shear)):
+        ind = np.where(left_pil_dist_pos_shear[i] ==
+                       np.min(left_pil_dist_pos_shear[i]))
+        pil_left_near_pos_shear[i, :] = [ivs_sort[ind[0][0]],
+                                         dvs_sort[ind[0][0]], ind[0][0]]
+
+    for j in range(len(right_pil_dist_neg_shear)):
+        ind = np.where(right_pil_dist_neg_shear[j] ==
+                       np.min(right_pil_dist_neg_shear[j]))
+        pil_right_near_neg_shear[j, :] = [ivs_sort[ind[0][0]],
+                                          dvs_sort[ind[0][0]], ind[0][0]]
+
+    # Arrays of distances from all negative ribbon points to all PIL points, in
+    # each dimesion
+    for i in range(len(lr_coord_neg_shear)):
+        left_x, left_y, right_x, right_y = lr_coord_neg_shear[i]
+        for j in range(len(ivs_sort)):
+            left_pil_dist_neg_shear[i, j] = np.sqrt((left_x - ivs_sort[j])**2 +
+                                                    (left_y - dvs_sort[j])**2)
+            right_pil_dist_neg_shear[i, j] = np.sqrt((right_x - ivs_sort[j])**2
+                                                     + (right_y -
+                                                        dvs_sort[j])**2)
+
+    # Find smallest distance, and the corresponding PIL point
+    for i in range(len(left_pil_dist_neg_shear)):
+        ind = np.where(left_pil_dist_neg_shear[i] ==
+                       np.min(left_pil_dist_neg_shear[i]))
+        pil_left_near_neg_shear[i, :] = [ivs_sort[ind[0][0]],
+                                         dvs_sort[ind[0][0]], ind[0][0]]
+
+    for j in range(len(right_pil_dist_neg_shear)):
+        ind = np.where(right_pil_dist_neg_shear[j] ==
+                       np.min(right_pil_dist_neg_shear[j]))
+        pil_right_near_neg_shear[j, :] = [ivs_sort[ind[0][0]],
+                                          dvs_sort[ind[0][0]], ind[0][0]]
+
+    return pil_right_near_pos_shear, pil_left_near_pos_shear,\
+        pil_right_near_neg_shear, pil_left_near_neg_shear
+
+
+def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
+                  pil_right_near_neg_shear, pil_left_near_neg_shear,
+                  sortedpil):
+    """
+    Find length along the axis of the guide field, the PIL-parallel component
+    of magnetic field.
+
+    Parameters
+    ----------
+    pil_right_near_pos_shear : arr
+        Indices of PIL point nearest positive ribbon, rightmost extreme.
+    pil_left_near_pos_shear : arr
+        Indices of PIL points nearest positive ribbon, leftmost extreme.
+    pil_right_near_neg_shear : arr
+        Indices of PIL points nearest negative ribbon, rightmost extreme.
+    pil_left_near_neg_shear : arr
+        Indices of PIL points nearest negative ribbon, leftmost extreme.
+    sortedpil : arr
+        Independent and dependent values of PIL, sorted along PIL.
+
+    Returns
+    -------
+    guide_right : arr
+        Guide field strength, right-hand side.
+    guide_left : arr
+        Guide field strength, left-hand side.
+
+    """
+    guide_left = []
+    guide_right = []
+
+    # Length of segment of PIL between the leftmost ends of positive and
+    # negative ribbons
+    for i in range(len(pil_left_near_pos_shear)):
+        posin = int(pil_left_near_pos_shear[i, 2])
+        negin = int(pil_left_near_neg_shear[i, 2])
+        if posin > negin:
+            curvei = sortedpil[negin:posin, :]
+        else:
+            curvei = -sortedpil[posin:negin, :]
+        guide_left.append(curve_length(curvei))
+
+    # Length of segment of PIL between rightmost ends of positive and negative
+    # ribbons
+    for i in range(len(pil_right_near_pos_shear)):
+        posin = int(pil_right_near_pos_shear[i, 2])
+        negin = int(pil_right_near_neg_shear[i, 2])
+        if posin > negin:
+            curvei = sortedpil[negin:posin, :]
+        else:
+            curvei = -sortedpil[posin:negin, :]
+        guide_right.append(curve_length(curvei))
+
+    return guide_right, guide_left
+
+
+def gfrcalc(guide_left, guide_right, distneg_med, distpos_med):
+    """
+    Determines guide field ratio, the ratio of the PIL-parallel component of
+    magnetic field to the PIL-perpendicular component, a proxy for the magnetic
+    shear.
+
+    Parameters
+    ----------
+    guide_left : arr
+        Guide field strength, right-hand side.
+    guide_right : arr
+        Guide field strength, left-hand side.
+    distneg_med : arr
+        Distance from negative ribbon to PIL for each time step; from code for
+        separation.
+    distpos_med : arr
+        Distance from positive ribbon to PIL for each time step; from code for
+        separation.
+
+    Returns
+    -------
+    left_gfr : arr
+        Guide field ratio, left edge of ribbons.
+    right_gfr : arr
+        Guide field ratio, right edge of ribbons.
+
+    """
+    left_gfr = guide_left/(distneg_med+distpos_med)
+    right_gfr = guide_right/(distneg_med+distneg_med)
+
+    return left_gfr, right_gfr
+
+
+def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
+    """
+    Plots guide field ratio for right and left edges of ribbons.
+
+    Parameters
+    ----------
+    times : arr
+        Times corresponding to AIA 1600 Angstrom images.
+    right_gfr : arr
+        Guide field ratio, right edge of ribbons.
+    left_gfr : arr
+        Guide field ratio, left edge of ribbons.
+    flnum : int
+        Flare number from RibbonDB database.
+
+    Returns
+    -------
+    None.
+
+    """
+    timelab = range(0, 24*len(times), 24)
+    s = str(dt1600[0])
+    fig, ax = plt.subplots(figsize=(13, 7))
+    ax.scatter(timelab, right_gfr, c='red', label='GFR proxy, right')
+    ax.scatter(timelab, left_gfr, c='blue', label='GFR proxy, left')
+    ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
+                  fontsize=18)
+    ax.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=18)
+    ax.set_title('Guide Field Ratio', font='Times New Roman', fontsize=20)
+    ax.grid(0)
+    ax.legend(fontsize=15)
+    fig.savefig(str(flnum) + '_gfr.png')
+
+    return None

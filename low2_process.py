@@ -153,13 +153,13 @@ print("Plotting ribbon separation.")
 
 pltstrt = 1
 
-fl_funcs.ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt)
+fl_funcs.ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt, dt1600)
 
 print("Plotting ribbon elongation.")
 
 pltstrt = 1
 
-fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum)
+fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum, dt1600)
 
 print("Plotting Elongation with Periods")
 indstrt = 1
@@ -202,13 +202,15 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
                                                peak_neg, flnum)
 
 exp_ind = np.argmax(rec_rate_pos+1)
+exp_ind_area = exp_ind
+
 print("Exponential curve fitting for the fluxes.")
 
 poptposflx, pcovposflx, poptnegflx, pcovnegflx, \
     poptpos, poptneg, pcovpos, pcovneg, rise_pos_flx, \
-    rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, pos_pix, neg_pix,
-                                          exponential, exponential_neg,
-                                          pos_area, neg_area)
+    rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, exp_ind_area, pos_pix, 
+                                          neg_pix, exponential,
+                                          exponential_neg, pos_area, neg_area)
 
 print("Exponential curve plot.")
 
@@ -221,3 +223,48 @@ print("Ribbon Area Plot")
 
 fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix,
                       neg_area_pix, peak_pos, peak_neg, exp_ind)
+
+# Begin code added April 2022 
+
+# Establish limits for ribbons corresponding to shear code.
+negylow = ylim0_neg
+negyhi = ylim1_neg
+negxlow = xlim0_neg
+negxhi = xlim1_neg
+
+posylow = ylim0_pos
+posyhi = ylim1_pos
+posxlow = xlim0_pos
+posxhi = xlim1_pos
+
+# Isolate ribbons appropriately for shear analysis
+aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
+    shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y, negylow=negylow,
+                           negyhi=negyhi, posylow=posylow, posyhi=posyhi,
+                           negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
+                           posxhi=posxhi)
+
+# Left and right coordinates of positive and negative ribbons
+lr_coord_neg_shear, lr_coord_pos_shear = \
+    fl_funcs.leftrightshear(aia_pos_rem_shear, aia_neg_rem_shear)
+
+# PIL pixels closest to the left and right coordinates of positive and negative
+# ribbons
+pil_right_near_pos_shear, pil_left_near_pos_shear, pil_right_near_neg_shear,\
+    pil_left_near_neg_shear = fl_funcs.sheardists(lr_coord_pos_shear,
+                                                       lr_coord_neg_shear,
+                                                       ivs_sort, dvs_sort)
+
+# Guide field to the right and left edges of ribbons
+guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
+                                                      pil_left_near_pos_shear,
+                                                      pil_right_near_neg_shear,
+                                                      pil_left_near_neg_shear,
+                                                      sortedpil)
+
+# Guide field ratio to the right and left edges of ribbons
+left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
+                                            distneg_med, distpos_med)
+
+# Plot guide field ratio
+fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
