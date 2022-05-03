@@ -153,13 +153,13 @@ print("Plotting ribbon separation.")
 
 pltstrt = 1
 
-fl_funcs.ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt)
+fl_funcs.ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt, dt1600)
 
 print("Plotting ribbon elongation.")
 
 pltstrt = 1
 
-fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum)
+fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum, dt1600)
 
 print("Plotting Elongation with Periods")
 indstrt = 1
@@ -202,13 +202,15 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
                                                peak_neg, flnum)
 
 exp_ind = np.argmax(rec_rate_pos+1)
+exp_ind_area = exp_ind
+
 print("Exponential curve fitting for the fluxes.")
 
 poptposflx, pcovposflx, poptnegflx, pcovnegflx, \
     poptpos, poptneg, pcovpos, pcovneg, rise_pos_flx, \
-    rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, pos_pix, neg_pix,
-                                          exponential, exponential_neg,
-                                          pos_area, neg_area)
+    rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, exp_ind_area, pos_pix, 
+                                          neg_pix, exponential,
+                                          exponential_neg, pos_area, neg_area)
 
 print("Exponential curve plot.")
 
