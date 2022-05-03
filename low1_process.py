@@ -182,13 +182,14 @@ rec_flux_pos_inst, rec_flux_neg_inst, pos_pix_inst, neg_pix_inst, \
                                      conv_f, hmi, dt1600, peak_pos, peak_neg)
 
 exp_ind = 29
+exp_ind_area = 29
 print("Exponential curve fitting for the fluxes.")
 
 poptposflx, pcovposflx, poptnegflx, pcovnegflx, \
     poptpos, poptneg, pcovpos, pcovneg, rise_pos_flx, \
-    rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, pos_pix, neg_pix,
-                                          exponential, exponential_neg,
-                                          pos_area, neg_area)
+    rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, exp_ind_area, pos_pix,
+                                          neg_pix, exponential,
+                                          exponential_neg, pos_area, neg_area)
 
 print("Exponential curve plot.")
 

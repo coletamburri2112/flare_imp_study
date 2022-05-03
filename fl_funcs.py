@@ -3723,13 +3723,14 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
     timelab = range(0, 24*len(times), 24)
     s = str(dt1600[0])
     fig, ax = plt.subplots(figsize=(13, 7))
-    ax.scatter(timelab, right_gfr, c='red', label='GFR proxy, right')
-    ax.scatter(timelab, left_gfr, c='blue', label='GFR proxy, left')
+    ax.plot(timelab, right_gfr, c='red', marker = 'o', 
+            label='GFR proxy, right')
+    ax.plot(timelab, left_gfr, c='blue', marker = 'o', label='GFR proxy, left')
     ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
                   fontsize=18)
     ax.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=18)
     ax.set_title('Guide Field Ratio', font='Times New Roman', fontsize=20)
-    ax.grid(0)
+    ax.grid()
     ax.legend(fontsize=15)
     fig.savefig(str(flnum) + '_gfr.png')
 
