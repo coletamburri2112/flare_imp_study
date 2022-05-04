@@ -150,9 +150,9 @@ fl_funcs.ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum, dt1600)
 print("Plotting Elongation with Periods")
 
 fl_funcs.elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
-                         lens_neg_Mm, flnum, elonperiod_start_neg,
-                         elonperiod_start_pos, elonperiod_end_neg,
-                         elonperiod_end_pos)
+                          lens_neg_Mm, flnum, elonperiod_start_neg,
+                          elonperiod_start_pos, elonperiod_end_neg,
+                          elonperiod_end_pos)
 
 print("Plotting Separation with Periods")
 
@@ -209,7 +209,7 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
                                                dn1600, dt1600, peak_pos,
                                                peak_neg, flnum)
 
-# Begin code added April 2022 
+print("Begin determination of shear.")
 
 # Establish limits for ribbons corresponding to shear code.
 negylow = ylim0_neg
@@ -237,19 +237,21 @@ lr_coord_neg_shear, lr_coord_pos_shear = \
 # ribbons
 pil_right_near_pos_shear, pil_left_near_pos_shear, pil_right_near_neg_shear,\
     pil_left_near_neg_shear = fl_funcs.sheardists(lr_coord_pos_shear,
-                                                       lr_coord_neg_shear,
-                                                       ivs_sort, dvs_sort)
+                                                  lr_coord_neg_shear,
+                                                  ivs_sort, dvs_sort)
 
 # Guide field to the right and left edges of ribbons
 guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
-                                                      pil_left_near_pos_shear,
-                                                      pil_right_near_neg_shear,
-                                                      pil_left_near_neg_shear,
-                                                      sortedpil)
+                                                 pil_left_near_pos_shear,
+                                                 pil_right_near_neg_shear,
+                                                 pil_left_near_neg_shear,
+                                                 sortedpil)
 
 # Guide field ratio to the right and left edges of ribbons
 left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
-                                            distneg_med, distpos_med)
+                                       distneg_med, distpos_med)
+
+print("Plot guide field ratio proxy based on footpoints.")
 
 # Plot guide field ratio
 fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
