@@ -3744,11 +3744,14 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_pos, sepperiod_end_pos,
                   sepperiod_start_neg, sepperiod_end_neg, poptpos, poptneg, 
                   pos_area_pix, neg_area_pix, peak_pos, peak_neg, exp_ind,
-                  s304, e304, pos1600, neg1600):
+                  s304, e304, pos1600, neg1600, dn1600, indstrt, dpos_dist,
+                  dneg_dist, dpos_len, dneg_len):
+    
     timelab = range(0, 24*len(times), 24)
     s = str(dt1600[0])
     fig, [ax1, ax2, ax3, ax4] = plt.subplots(4, 1, figsize=(13, 35))
     
+    ## PLOTTING OF 1600 and 304 ANGSTROM light curves ##
     # Extremes of chromospheric line light curves
     min304 = min(filter_304[s304: e304])
     max304 = max(filter_304[s304: e304])
@@ -3772,6 +3775,95 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                label=r'Norm. 304$\AA$ Light Curve')
     ax1.grid()
     ax1_0.grid()
-    ax2.set_xlim([dn1600[0], dn1600[-1]])
-    ax3.set_xlim([dn1600[0], dn1600[-1]])
+    ax1.set_xlim([dn1600[0], dn1600[-1]])
+    ax1_0.set_xlim([dn1600[0], dn1600[-1]])
+    
+    # Separation plots
+    
+    ax2.plot(timelab[indstrt:-1], scipy.signal.medfilt(dpos_dist[indstrt:],
+                                                       kernel_size=3), '-+',
+             c='red', markersize=10, label='+ Ribbon')
+    ax2.plot(timelab[indstrt:-1], scipy.signal.medfilt(dneg_dist[indstrt:],
+                                                       kernel_size=3), '-+',
+             c='blue', markersize=10, label='- Ribbon')
+    ax2.legend(fontsize=15)
+    ax2.grid()
+
+    s = str(times[0])
+
+    ax2.set_xlabel('Time [s since ' + s[2:12] + ', ' + s[13:-5] + ']',
+                   font='Times New Roman', fontsize=17)
+    ax2.set_ylabel('Separation Rate [Mm/sec]', font='Times New Roman',
+                   fontsize=17)
+    ax2.set_title('Ribbon Separation Rate', font='Times New Roman',
+                  fontsize=25)
+
+    ax2.plot(timelab[indstrt:-1], distpos_Mm[indstrt:-1], '-o', c='red',
+             markersize=6, label='mean')
+    
+    ax2_0 = ax2.twinx()
+    
+    ax2_0.plot(timelab[indstrt:-1], distneg_Mm[indstrt:-1], '-o', c='blue',
+             markersize=6, label='mean')
+
+    ax2_0.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
+    ax2_0.set_title('Ribbon Separation, Positive Ribbon',
+                  font='Times New Roman', fontsize=25)
+    ax2_0.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
+    ax2_0.set_title('Ribbon Separation, Negative Ribbon',
+                  font='Times New Roman', fontsize=25)
+    ax2_0.grid()
+
+    for i, j in zip(sepperiod_start_pos, sepperiod_end_pos):
+        ax2.axvline(timelab[i], c='green')
+        ax2.axvline(timelab[j], c='red')
+        ax2.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
+    for k, l in zip(sepperiod_start_neg, sepperiod_end_neg):
+        ax2_0.axvline(timelab[k], c='green')
+        ax2_0.axvline(timelab[l], c='red')
+        ax2_0.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
+        
+    # Elongation plots
+    
+    ax3.plot(timelab[indstrt:-1], dpos_len[indstrt:], '-+', c='red',
+             markersize=10, label='+ Ribbon')
+    ax3.plot(timelab[indstrt:-1], dneg_len[indstrt:], '-+', c='blue',
+             markersize=10, label='- Ribbon')
+    ax3.legend(fontsize=15)
+    ax3.grid()
+
+    ax3.set_xlabel('Time [s since ' + s[2:13] + ', ' + s[13:-5] + ']',
+                   font='Times New Roman', fontsize=17)
+    ax3.set_ylabel('Elongation Rate [Mm/sec]', font='Times New Roman',
+                   fontsize=17)
+    ax3.set_title('Ribbon Elongation Rate', font='Times New Roman',
+                  fontsize=25)
+
+    ax1.plot(timelab[indstrt:-1], lens_pos_Mm[indstrt:-1], '-o', c='red',
+             markersize=6, label='mean')
+    ax2.plot(timelab[indstrt:-1], lens_neg_Mm[indstrt:-1], '-o', c='blue',
+             markersize=6, label='mean')
+
+    ax1.grid()
+    ax1.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
+    ax1.set_title('Ribbon Elongation, Positive Ribbon',
+                  font='Times New Roman', fontsize=25)
+    ax2.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
+    ax2.set_title('Ribbon Elongation, Negative Ribbon',
+                  font='Times New Roman', fontsize=25)
+    ax2.grid()
+
+    for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
+        ax1.axvline(timelab[i], c='green')
+        ax1.axvline(timelab[j], c='red')
+        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
+    for k, l in zip(elonperiod_start_neg, elonperiod_end_neg):
+        ax2.axvline(timelab[k], c='green')
+        ax2.axvline(timelab[l], c='red')
+        ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
+
+    fig.savefig(str(flnum) + '_summary.png')
+
+
+    
     return None
