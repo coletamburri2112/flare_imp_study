@@ -3735,3 +3735,43 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
     fig.savefig(str(flnum) + '_gfr.png')
 
     return None
+
+def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
+                  filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
+                  dt304, timelab, conv_f, pltstrt_sep, pltstrt_elon,
+                  elonperiod_start_pos, elonperiod_end_pos,
+                  elonperiod_start_neg, elonperiod_end_neg,
+                  sepperiod_start_pos, sepperiod_end_pos,
+                  sepperiod_start_neg, sepperiod_end_neg, poptpos, poptneg, 
+                  pos_area_pix, neg_area_pix, peak_pos, peak_neg, exp_ind,
+                  s304, e304, pos1600, neg1600):
+    timelab = range(0, 24*len(times), 24)
+    s = str(dt1600[0])
+    fig, [ax1, ax2, ax3, ax4] = plt.subplots(4, 1, figsize=(13, 35))
+    
+    # Extremes of chromospheric line light curves
+    min304 = min(filter_304[s304: e304])
+    max304 = max(filter_304[s304: e304])
+    minpos1600 = min(pos1600)
+    maxpos1600 = max(pos1600)
+    minneg1600 = min(neg1600)
+    maxneg1600 = max(neg1600)
+
+    # Normalize for light curve comparison
+    norm304 = (filter_304 - min304) / (max304 - min304)
+    normpos1600 = (pos1600 - minpos1600) / (maxpos1600 - minpos1600)
+    normneg1600 = (neg1600 - minneg1600) / (maxneg1600 - minneg1600)
+    scalefac = max(pos1600) / max(neg1600)
+    
+    ax1.plot(dt1600, normpos1600, linewidth=3, color='red',
+             label=r'Norm. 1600$\AA$ Light Curve, +')
+    ax1.plot(dt1600, normneg1600, linewidth=3, color='blue',
+             label=r'Norm. 1600$\AA$ Light Curve, +')
+    ax1_0 = ax1.twinx()
+    ax1_0.plot(dt304, norm304, color = 'black', linewidth=1, 
+               label=r'Norm. 304$\AA$ Light Curve')
+    ax1.grid()
+    ax1_0.grid()
+    ax2.set_xlim([dn1600[0], dn1600[-1]])
+    ax3.set_xlim([dn1600[0], dn1600[-1]])
+    return None
