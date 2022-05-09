@@ -52,6 +52,7 @@ from scipy.spatial.distance import cdist
 import scipy.signal
 import matplotlib.dates as mdates
 from astropy.convolution import convolve, Gaussian2DKernel
+import time as timepkg
 
 
 def conv_facts():
@@ -3736,6 +3737,69 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
 
     return None
 
+def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
+                  high=800, ylo=1e-3, yhi=10):
+    
+    directory = '/Users/owner/Desktop/CU_Research/Fermi_April_2022/'\
+        'Fermi_Events_sav/'
+        
+    filename_cspec = directory + 'fermi_' + instrument + '_cspec_bkgd_' + day + \
+        month + year + '.sav'
+        
+    cspec_dat = readsav(filename_cspec, python_dict='True')
+
+    bksub_cspec = cspec_dat['lc_bksub'][0][0]
+    raw_cspec = cspec_dat['lc_raw'][0][0]
+    times = cspec_dat['time']
+    energies = cspec_dat['ct_energy']
+
+    hxrinds = np.where(cspec_dat['ct_energy'] < 300.) and \
+        np.where(cspec_dat['ct_energy'] > 25.)
+        
+    cspec_hxr = bksub_cspec[:, hxrinds]
+    raw_hxr = raw_cspec[:, hxrinds]
+    cspec_hxr_sum = np.sum(cspec_hxr, axis = 2)
+    raw_hxr_sum = np.sum(raw_hxr, axis=2)
+
+    a = datetime(1970,1,1,0,0,0)
+    b = datetime(1979,1,1,0,0,0)
+
+    err1 = (b-a).total_seconds()
+
+    timesadj1 = times + err1
+
+    curr = datetime.fromtimestamp(min(timesadj1))
+    corr = datetime(yearint,moint,dayint,0,0,0)
+
+    err2 = (corr-curr).seconds
+    totsec = (b-a).total_seconds() + err2
+
+    timesadj = times + totsec
+
+    timepkg.ctime(min(timesadj))
+    strtimes = []
+
+    for i in timesadj:
+        strtimes.append(datetime.fromtimestamp(i))
+        
+    flag = 0
+
+    for i in range(low, high):
+        if cspec_hxr_sum[i] > 0.1:
+            flag += 1
+        if cspec_hxr_sum[i] < 0.1:
+            flag = 0
+        if flag > 3:
+            startind = i - 3
+            break
+        
+    maxind = np.where(raw_hxr_sum[low:high] == max(raw_hxr_sum[low:high]))
+    
+    fermitimes = strtimes
+    
+    return raw_hxr_sum, cspec_hxr_sum, fermitimes
+        
+    
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f, pltstrt_sep, pltstrt_elon,
@@ -3744,8 +3808,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_pos, sepperiod_end_pos,
                   sepperiod_start_neg, sepperiod_end_neg, poptpos, poptneg, 
                   pos_area_pix, neg_area_pix, peak_pos, peak_neg, exp_ind,
-                  s304, e304, pos1600, neg1600, dn1600, indstrt, dpos_dist,
-                  dneg_dist, dpos_len, dneg_len):
+                  s304, e304, pos1600, neg1600, dn1600, indstrt, fermitimes,
+                  raw_hxr_sum, spec_hxr_sum):
     
     timelab = range(0, 24*len(times), 24)
     s = str(dt1600[0])
@@ -3778,40 +3842,23 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1.set_xlim([dn1600[0], dn1600[-1]])
     ax1_0.set_xlim([dn1600[0], dn1600[-1]])
     
-    # Separation plots
-    
-    ax2.plot(timelab[indstrt:-1], scipy.signal.medfilt(dpos_dist[indstrt:],
-                                                       kernel_size=3), '-+',
-             c='red', markersize=10, label='+ Ribbon')
-    ax2.plot(timelab[indstrt:-1], scipy.signal.medfilt(dneg_dist[indstrt:],
-                                                       kernel_size=3), '-+',
-             c='blue', markersize=10, label='- Ribbon')
-    ax2.legend(fontsize=15)
-    ax2.grid()
+    # Separation plot
 
     s = str(times[0])
-
-    ax2.set_xlabel('Time [s since ' + s[2:12] + ', ' + s[13:-5] + ']',
-                   font='Times New Roman', fontsize=17)
-    ax2.set_ylabel('Separation Rate [Mm/sec]', font='Times New Roman',
-                   fontsize=17)
-    ax2.set_title('Ribbon Separation Rate', font='Times New Roman',
-                  fontsize=25)
-
     ax2.plot(timelab[indstrt:-1], distpos_Mm[indstrt:-1], '-o', c='red',
              markersize=6, label='mean')
-    
     ax2_0 = ax2.twinx()
-    
     ax2_0.plot(timelab[indstrt:-1], distneg_Mm[indstrt:-1], '-o', c='blue',
              markersize=6, label='mean')
 
-    ax2_0.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
-    ax2_0.set_title('Ribbon Separation, Positive Ribbon',
+    ax2.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
+    ax2.set_title('Ribbon Separation, Positive Ribbon',
                   font='Times New Roman', fontsize=25)
     ax2_0.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
     ax2_0.set_title('Ribbon Separation, Negative Ribbon',
                   font='Times New Roman', fontsize=25)
+    
+    ax2.grid()
     ax2_0.grid()
 
     for i, j in zip(sepperiod_start_pos, sepperiod_end_pos):
@@ -3825,33 +3872,20 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         
     # Elongation plots
     
-    ax3.plot(timelab[indstrt:-1], dpos_len[indstrt:], '-+', c='red',
-             markersize=10, label='+ Ribbon')
-    ax3.plot(timelab[indstrt:-1], dneg_len[indstrt:], '-+', c='blue',
-             markersize=10, label='- Ribbon')
-    ax3.legend(fontsize=15)
+    ax3.plot(timelab[indstrt:-1], lens_pos_Mm[indstrt:-1], '-o', c='red',
+             markersize=6, label='mean')
+    ax3_0 = ax3.twinx()
+    ax3_0.plot(timelab[indstrt:-1], lens_neg_Mm[indstrt:-1], '-o', c='blue',
+             markersize=6, label='mean')
+
     ax3.grid()
-
-    ax3.set_xlabel('Time [s since ' + s[2:13] + ', ' + s[13:-5] + ']',
-                   font='Times New Roman', fontsize=17)
-    ax3.set_ylabel('Elongation Rate [Mm/sec]', font='Times New Roman',
-                   fontsize=17)
-    ax3.set_title('Ribbon Elongation Rate', font='Times New Roman',
-                  fontsize=25)
-
-    ax1.plot(timelab[indstrt:-1], lens_pos_Mm[indstrt:-1], '-o', c='red',
-             markersize=6, label='mean')
-    ax2.plot(timelab[indstrt:-1], lens_neg_Mm[indstrt:-1], '-o', c='blue',
-             markersize=6, label='mean')
-
-    ax1.grid()
-    ax1.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
-    ax1.set_title('Ribbon Elongation, Positive Ribbon',
+    ax3.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
+    ax3.set_title('Ribbon Elongation, Positive Ribbon',
                   font='Times New Roman', fontsize=25)
-    ax2.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
-    ax2.set_title('Ribbon Elongation, Negative Ribbon',
+    ax3_0.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
+    ax3_0.set_title('Ribbon Elongation, Negative Ribbon',
                   font='Times New Roman', fontsize=25)
-    ax2.grid()
+    ax3_0.grid()
 
     for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
         ax1.axvline(timelab[i], c='green')
@@ -3861,6 +3895,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         ax2.axvline(timelab[k], c='green')
         ax2.axvline(timelab[l], c='red')
         ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
+        
+    # Fermi plots
 
     fig.savefig(str(flnum) + '_summary.png')
 
