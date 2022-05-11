@@ -53,6 +53,7 @@ import scipy.signal
 import matplotlib.dates as mdates
 from astropy.convolution import convolve, Gaussian2DKernel
 import time as timepkg
+from matplotlib import font_manager
 
 
 def conv_facts():
@@ -193,6 +194,10 @@ def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx]
+
+def find_nearest_idx(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
 
 
 def format_time():
@@ -3806,100 +3811,138 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   elonperiod_start_pos, elonperiod_end_pos,
                   elonperiod_start_neg, elonperiod_end_neg,
                   sepperiod_start_pos, sepperiod_end_pos,
-                  sepperiod_start_neg, sepperiod_end_neg, poptpos, poptneg, 
-                  pos_area_pix, neg_area_pix, peak_pos, peak_neg, exp_ind,
-                  s304, e304, pos1600, neg1600, dn1600, indstrt, fermitimes,
-                  raw_hxr_sum, spec_hxr_sum):
+                  sepperiod_start_neg, sepperiod_end_neg, exp_ind,
+                  s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
+                  indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum, low_hxr,
+                  high_hxr, strtimes_hxr, normpos1600, normneg1600, norm304,
+                  gfr_trans, period_flag = 0):
     
-    timelab = range(0, 24*len(times), 24)
-    s = str(dt1600[0])
-    fig, [ax1, ax2, ax3, ax4] = plt.subplots(4, 1, figsize=(13, 35))
+    GFR = np.mean([right_gfr,left_gfr],axis=0)
+    hxrmax0 = np.argmax(cspec_hxr_sum[low_hxr:high_hxr])
+    hxrmaxt = strtimes_hxr[hxrmax0]
+    hxrmax = find_nearest_idx(dt1600,hxrmaxt)
     
-    ## PLOTTING OF 1600 and 304 ANGSTROM light curves ##
-    # Extremes of chromospheric line light curves
-    min304 = min(filter_304[s304: e304])
-    max304 = max(filter_304[s304: e304])
-    minpos1600 = min(pos1600)
-    maxpos1600 = max(pos1600)
-    minneg1600 = min(neg1600)
-    maxneg1600 = max(neg1600)
-
-    # Normalize for light curve comparison
-    norm304 = (filter_304 - min304) / (max304 - min304)
-    normpos1600 = (pos1600 - minpos1600) / (maxpos1600 - minpos1600)
-    normneg1600 = (neg1600 - minneg1600) / (maxneg1600 - minneg1600)
-    scalefac = max(pos1600) / max(neg1600)
+    max304_0 = np.nanargmax(filter_304)
+    max304t = dt304[max304_0]
+    max304=find_nearest_idx(dt1600,max304t)
     
-    ax1.plot(dt1600, normpos1600, linewidth=3, color='red',
-             label=r'Norm. 1600$\AA$ Light Curve, +')
-    ax1.plot(dt1600, normneg1600, linewidth=3, color='blue',
-             label=r'Norm. 1600$\AA$ Light Curve, +')
+    max1600pos = np.argmax(normpos1600)
+    max1600neg = np.argmax(normneg1600)
+    
+    fig, [ax1, ax2, ax3, ax4] = plt.subplots(4, 1, figsize=(20, 35))
+    lns1 = ax1.plot(dt1600, normpos1600, linewidth=1, color='red',marker='.',linestyle = 'dashed',
+             label=r'Norm. 1600 $\AA$ Light Curve, +')
+    lns2 = ax1.plot(dt1600, normneg1600, linewidth=1, color='blue',marker='.',linestyle = 'dashed',
+             label=r'Norm. 1600 $\AA$ Light Curve, -')
+    
+    lns3 = ax1.plot(dt304, norm304, color = 'black', linewidth=1, marker='.',linestyle = 'dashed',
+               label=r'Norm. 304 $\AA$ Light Curve')
     ax1_0 = ax1.twinx()
-    ax1_0.plot(dt304, norm304, color = 'black', linewidth=1, 
-               label=r'Norm. 304$\AA$ Light Curve')
+    lns4 = ax1_0.plot(strtimes_hxr[low_hxr:high_hxr],np.log10(scipy.signal.medfilt(cspec_hxr_sum[low_hxr:high_hxr,0],3)),marker='.',linestyle='dashed',
+               label='Fermi Bkgd. Sub. Cts.')
     ax1.grid()
-    ax1_0.grid()
-    ax1.set_xlim([dn1600[0], dn1600[-1]])
-    ax1_0.set_xlim([dn1600[0], dn1600[-1]])
+    lns = lns1+lns2+lns3+lns4
+    labs = [l.get_label() for l in lns]
+    font = font_manager.FontProperties(family='Times New Roman',
+                                       style='normal', size=16)
+    ax1.legend(lns, labs, prop=font,fontsize=20, loc='lower center')
+    ax1.set_ylabel('EUV Normalized Light Curves',font='Times New Roman',fontsize=25)
+    ax1_0.set_ylabel('HXR Flux [$cts* s^{-1}* cm^{-2}* keV^{-1}$]',font='Times New Roman',fontsize=25)
+    ax1.set_title('Chromospheric and HXR Light Curves',font = 'Times New Roman',fontsize=30)
+    ax1.set_xlim([dt1600[0], dt1600[-1]])
     
-    # Separation plot
-
-    s = str(times[0])
-    ax2.plot(timelab[indstrt:-1], distpos_Mm[indstrt:-1], '-o', c='red',
-             markersize=6, label='mean')
-    ax2_0 = ax2.twinx()
-    ax2_0.plot(timelab[indstrt:-1], distneg_Mm[indstrt:-1], '-o', c='blue',
-             markersize=6, label='mean')
-
-    ax2.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
-    ax2.set_title('Ribbon Separation, Positive Ribbon',
-                  font='Times New Roman', fontsize=25)
-    ax2_0.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
-    ax2_0.set_title('Ribbon Separation, Negative Ribbon',
-                  font='Times New Roman', fontsize=25)
     
+    s = str(dt1600[0])
+    ax2.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], '-o', c='red',
+             markersize=6)
+    
+    ax2.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1], '-o', c='blue',
+             markersize=6)
+    
+    ax2.set_ylabel('Parallel PIL Distance [Mm]', font='Times New Roman', fontsize=25)
+    ax2.set_title('Ribbon Separation',
+                  font='Times New Roman', fontsize=30)
+    
+    ax2.set_xlim([dt1600[0], dt1600[-1]])
+    
+    ax2.axvline(dt1600[hxrmax], label = 'Max. HXR')
+    ax2.axvline(dt1600[max304],color='black', label = 'Max. 304 $\AA$',linestyle='dashdot')
+    ax2.axvline(dt1600[max1600pos],color = 'red',label = 'Max. pos. 1600 $\AA$',linestyle='dashed')
+    ax2.axvline(dt1600[max1600neg],color='blue', label = 'Max. neg. 1600 $\AA$',linestyle='dotted')
     ax2.grid()
-    ax2_0.grid()
-
-    for i, j in zip(sepperiod_start_pos, sepperiod_end_pos):
-        ax2.axvline(timelab[i], c='green')
-        ax2.axvline(timelab[j], c='red')
-        ax2.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
-    for k, l in zip(sepperiod_start_neg, sepperiod_end_neg):
-        ax2_0.axvline(timelab[k], c='green')
-        ax2_0.axvline(timelab[l], c='red')
-        ax2_0.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
-        
-    # Elongation plots
+    font = font_manager.FontProperties(family='Times New Roman',
+                                       style='normal', size=20)
     
-    ax3.plot(timelab[indstrt:-1], lens_pos_Mm[indstrt:-1], '-o', c='red',
-             markersize=6, label='mean')
-    ax3_0 = ax3.twinx()
-    ax3_0.plot(timelab[indstrt:-1], lens_neg_Mm[indstrt:-1], '-o', c='blue',
-             markersize=6, label='mean')
-
+    ax2.legend(prop=font,fontsize = 20)
+    
+    
+    #regions of separation/elongation make a little busy?
+    
+    if period_flag == 1:
+        for i, j in zip(sepperiod_start_pos, sepperiod_end_pos):
+            ax2.axvline(dt1600[i], c='green')
+            ax2.axvline(dt1600[j], c='red')
+            ax2.axvspan(dt1600[i], dt1600[j], alpha=0.5, color='pink')
+        for k, l in zip(elonperiod_start_neg, elonperiod_end_neg):
+            ax2.axvline(dt1600[k], c='green')
+            ax2.axvline(dt1600[l], c='red')
+            ax2.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
+        
+    ax3.plot(dt1600[indstrt_elon:-1], lens_pos_Mm[indstrt_elon:-1], '-o', c='red',
+                 markersize=6)
+    
+    ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1], '-o', c='blue',
+             markersize=6)
+    
     ax3.grid()
-    ax3.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
-    ax3.set_title('Ribbon Elongation, Positive Ribbon',
-                  font='Times New Roman', fontsize=25)
-    ax3_0.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
-    ax3_0.set_title('Ribbon Elongation, Negative Ribbon',
-                  font='Times New Roman', fontsize=25)
-    ax3_0.grid()
-
-    for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
-        ax1.axvline(timelab[i], c='green')
-        ax1.axvline(timelab[j], c='red')
-        ax1.axvspan(timelab[i], timelab[j], alpha=0.5, color='pink')
-    for k, l in zip(elonperiod_start_neg, elonperiod_end_neg):
-        ax2.axvline(timelab[k], c='green')
-        ax2.axvline(timelab[l], c='red')
-        ax2.axvspan(timelab[k], timelab[l], alpha=0.5, color='cyan')
+    ax3.set_ylabel('Perpendicular PIL Distance [Mm]', font='Times New Roman', fontsize=25)
+    ax3.set_title('Ribbon Elongation',
+                  font='Times New Roman', fontsize=30)
+    
+    
+    
+    ax3.set_xlim([dt1600[0], dt1600[-1]])
+    
+    ax3.axvline(dt1600[hxrmax], label = 'Max. HXR')
+    ax3.axvline(dt1600[max304],color='black', label = 'Max. 304 $\AA$',linestyle='dashdot')
+    ax3.axvline(dt1600[max1600pos],color = 'red',label = 'Max. pos. 1600 $\AA$',linestyle='dashed')
+    ax3.axvline(dt1600[max1600neg],color='blue', label = 'Max. neg. 1600 $\AA$',linestyle='dotted')
+    font = font_manager.FontProperties(family='Times New Roman',
+                                       style='normal', size=20)
+    
+    ax3.legend(prop=font,fontsize = 20)
+    
+    # definitely optional...
+    if period_flag == 1:
+        for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
+            ax3.axvline(dt1600[i], c='green')
+            ax3.axvline(dt1600[j], c='red')
+            ax3.axvspan(dt1600[i], dt1600[j], alpha=0.5, color='pink')
+        for k, l in zip(elonperiod_start_neg, elonperiod_end_neg):
+            ax3.axvline(dt1600[k], c='green')
+            ax3.axvline(dt1600[l], c='red')
+            ax3.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
+        
+    
+    ax4.plot(dt1600[gfr_trans:], GFR[gfr_trans:], c='green', marker = 'o')
+    ax4.set_xlabel('Time [DD HH:MM]', font='Times New Roman',
+                  fontsize=18)
+    ax4.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=25)
+    ax4.set_title('Guide Field Ratio', font='Times New Roman', fontsize=30)
+    ax4.grid()
+    ax4.legend(fontsize=15)
+    
+    ax4.set_xlim([dt1600[0], dt1600[-1]])
+    ax4.axvline(dt1600[hxrmax], label = 'Max. HXR')
+    ax4.axvline(dt1600[max304],color='black', label = 'Max. 304 $\AA$',linestyle='dashdot')
+    ax4.axvline(dt1600[max1600pos],color = 'red',label = 'Max. pos. 1600 $\AA$',linestyle='dashed')
+    ax4.axvline(dt1600[max1600neg],color='blue', label = 'Max. neg. 1600 $\AA$',linestyle='dotted')
+    font = font_manager.FontProperties(family='Times New Roman',
+                                       style='normal', size=20)
+    ax4.legend(prop=font,fontsize = 20)
         
     # Fermi plots
 
     fig.savefig(str(flnum) + '_summary.png')
 
-
-    
     return None
