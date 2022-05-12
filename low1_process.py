@@ -8,6 +8,8 @@ Created on Wed Mar  9 12:15:45 2022
 import fl_funcs
 from fl_funcs import exponential
 from fl_funcs import exponential_neg
+from scipy.io import readsav
+import time
 
 year = 2013
 mo = 10
@@ -18,6 +20,11 @@ arnum = 11865
 xclnum = 1.7
 xcl = 'M'
 flnum = 1401
+instrument = 'n5'
+daystr = '13'
+mostr = 'oct'
+yearstr = '2013'
+
 
 bestflarefile = "/Users/owner/Desktop/CU_Research/MAT_SOURCE/bestperf_more.mat"
 
@@ -255,3 +262,11 @@ print("Plot guide field ratio proxy based on footpoints.")
 
 # Plot guide field ratio
 fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
+
+print("Fermi Processing")
+
+raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr, 
+                                                                yearstr, 
+                                                                instrument, 
+                                                                day, mo, year)
+

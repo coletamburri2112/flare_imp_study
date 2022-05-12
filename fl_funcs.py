@@ -3739,7 +3739,7 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
     ax.grid()
     ax.legend(fontsize=15)
     fig.savefig(str(flnum) + '_gfr.png')
-
+    
     return None
 
 def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
@@ -3758,6 +3758,8 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     times = cspec_dat['time']
     energies = cspec_dat['ct_energy']
 
+    print("data loaded")
+    
     hxrinds = np.where(cspec_dat['ct_energy'] < 300.) and \
         np.where(cspec_dat['ct_energy'] > 25.)
         
@@ -3766,15 +3768,15 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     cspec_hxr_sum = np.sum(cspec_hxr, axis = 2)
     raw_hxr_sum = np.sum(raw_hxr, axis=2)
 
-    a = datetime(1970,1,1,0,0,0)
-    b = datetime(1979,1,1,0,0,0)
+    a = datetime.datetime(1970,1,1,0,0,0)
+    b = datetime.datetime(1979,1,1,0,0,0)
 
     err1 = (b-a).total_seconds()
 
     timesadj1 = times + err1
 
-    curr = datetime.fromtimestamp(min(timesadj1))
-    corr = datetime(yearint,moint,dayint,0,0,0)
+    curr = datetime.datetime.fromtimestamp(min(timesadj1))
+    corr = datetime.datetime(yearint,moint,dayint,0,0,0)
 
     err2 = (corr-curr).seconds
     totsec = (b-a).total_seconds() + err2
@@ -3784,8 +3786,9 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     timepkg.ctime(min(timesadj))
     strtimes = []
 
+    print("Time stamps")
     for i in timesadj:
-        strtimes.append(datetime.fromtimestamp(i))
+        strtimes.append(datetime.datetime.fromtimestamp(i))
         
     flag = 0
 
@@ -3798,6 +3801,7 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
             startind = i - 3
             break
         
+    print("Final Step, ID max")
     maxind = np.where(raw_hxr_sum[low:high] == max(raw_hxr_sum[low:high]))
     
     fermitimes = strtimes
@@ -3898,8 +3902,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax3.set_ylabel('Perpendicular PIL Distance [Mm]', font='Times New Roman', fontsize=25)
     ax3.set_title('Ribbon Elongation',
                   font='Times New Roman', fontsize=30)
-    
-    
     
     ax3.set_xlim([dt1600[0], dt1600[-1]])
     
