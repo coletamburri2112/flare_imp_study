@@ -195,11 +195,6 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return array[idx]
 
-def find_nearest_idx(array, value):
-    array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-
-
 def format_time():
     """
     Time formatter.
@@ -3758,7 +3753,6 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     times = cspec_dat['time']
     energies = cspec_dat['ct_energy']
 
-    print("data loaded")
     
     hxrinds = np.where(cspec_dat['ct_energy'] < 300.) and \
         np.where(cspec_dat['ct_energy'] > 25.)
@@ -3786,7 +3780,6 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     timepkg.ctime(min(timesadj))
     strtimes = []
 
-    print("Time stamps")
     for i in timesadj:
         strtimes.append(datetime.datetime.fromtimestamp(i))
         
@@ -3800,8 +3793,7 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
         if flag > 3:
             startind = i - 3
             break
-        
-    print("Final Step, ID max")
+
     maxind = np.where(raw_hxr_sum[low:high] == max(raw_hxr_sum[low:high]))
     
     fermitimes = strtimes
@@ -3811,24 +3803,38 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
-                  dt304, timelab, conv_f, pltstrt_sep, pltstrt_elon,
+                  dt304, timelab, conv_f,
                   elonperiod_start_pos, elonperiod_end_pos,
                   elonperiod_start_neg, elonperiod_end_neg,
                   sepperiod_start_pos, sepperiod_end_pos,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
-                  indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum, low_hxr,
-                  high_hxr, strtimes_hxr, normpos1600, normneg1600, norm304,
-                  gfr_trans, period_flag = 0):
+                  indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum, 
+                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag = 0):
+    
+    min304 = min(filter_304[s304: e304])
+    max304 = max(filter_304[s304: e304])
+    minpos1600 = min(pos1600)
+    maxpos1600 = max(pos1600)
+    minneg1600 = min(neg1600)
+    maxneg1600 = max(neg1600)
+
+    # Normalize for light curve comparison
+    norm304 = (filter_304 - min304) / (max304 - min304)
+    normpos1600 = (pos1600 - minpos1600) / (maxpos1600 - minpos1600)
+    normneg1600 = (neg1600 - minneg1600) / (maxneg1600 - minneg1600)
+    scalefac = max(pos1600) / max(neg1600)
     
     GFR = np.mean([right_gfr,left_gfr],axis=0)
     hxrmax0 = np.argmax(cspec_hxr_sum[low_hxr:high_hxr])
-    hxrmaxt = strtimes_hxr[hxrmax0]
-    hxrmax = find_nearest_idx(dt1600,hxrmaxt)
+    print(hxrmax0)
+    hxrmaxt = fermitimes[hxrmax0]
+    print(hxrmaxt)
+    hxrmax = find_nearest_ind(dt1600,hxrmaxt)
     
     max304_0 = np.nanargmax(filter_304)
     max304t = dt304[max304_0]
-    max304=find_nearest_idx(dt1600,max304t)
+    max304=find_nearest_ind(dt1600,max304t)
     
     max1600pos = np.argmax(normpos1600)
     max1600neg = np.argmax(normneg1600)
@@ -3842,7 +3848,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     lns3 = ax1.plot(dt304, norm304, color = 'black', linewidth=1, marker='.',linestyle = 'dashed',
                label=r'Norm. 304 $\AA$ Light Curve')
     ax1_0 = ax1.twinx()
-    lns4 = ax1_0.plot(strtimes_hxr[low_hxr:high_hxr],np.log10(scipy.signal.medfilt(cspec_hxr_sum[low_hxr:high_hxr,0],3)),marker='.',linestyle='dashed',
+    lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],np.log10(scipy.signal.medfilt(cspec_hxr_sum[low_hxr:high_hxr,0],3)),marker='.',linestyle='dashed',
                label='Fermi Bkgd. Sub. Cts.')
     ax1.grid()
     lns = lns1+lns2+lns3+lns4
@@ -3928,9 +3934,9 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     
     ax4.plot(dt1600[gfr_trans:], GFR[gfr_trans:], c='green', marker = 'o')
     ax4.set_xlabel('Time [DD HH:MM]', font='Times New Roman',
-                  fontsize=18)
+                  fontsize=25)
     ax4.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=25)
-    ax4.set_title('Guide Field Ratio', font='Times New Roman', fontsize=30)
+    ax4.set_title('Magnetic Shear', font='Times New Roman', fontsize=30)
     ax4.grid()
     ax4.legend(fontsize=15)
     

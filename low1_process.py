@@ -265,8 +265,25 @@ fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
 
 print("Fermi Processing")
 
-raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr, 
+raw_hxr_sum, cspec_hxr_sum, fermitimes, timesadj = fl_funcs.process_fermi(daystr, mostr, 
                                                                 yearstr, 
                                                                 instrument, 
                                                                 day, mo, year)
+
+# Figure for timestamp comparison
+
+indstrt_sep = 25
+indstrt_elon = 1
+gfr_trans = 26
+
+fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
+                  filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
+                  dt304, timelab, conv_f,
+                  elonperiod_start_pos, elonperiod_end_pos,
+                  elonperiod_start_neg, elonperiod_end_neg,
+                  sepperiod_start_pos, sepperiod_end_pos,
+                  sepperiod_start_neg, sepperiod_end_neg, exp_ind,
+                  s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
+                  indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
+                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag = 0)
 
