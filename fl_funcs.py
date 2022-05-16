@@ -5,7 +5,7 @@ Created on Tue Mar 22 07:09:33 2022
 
 @author: owner
 """
-# Most recent version: 29 April 2022 by Cole Tamburri
+# Most recent version: 16 May 2022 by Cole Tamburri
 # University of Colorado Boulder
 # Advisors: Maria D. Kazachenko and Adam F. Kowalski
 
@@ -40,6 +40,9 @@ Created on Tue Mar 22 07:09:33 2022
 # line light curves.
 
 # Addition of shear quantification code, 29 April 2022
+
+# Addition of four-paneled figure comparing HXR, AIA, EVE, and shear
+# quantification values with coordinated timestamps included.
 
 from os.path import dirname, join as pjoin
 import scipy.io as sio
