@@ -5,7 +5,7 @@ Created on Tue Mar 22 07:09:33 2022
 
 @author: owner
 """
-# Most recent version: 29 April 2022 by Cole Tamburri
+# Most recent version: 16 May 2022 by Cole Tamburri
 # University of Colorado Boulder
 # Advisors: Maria D. Kazachenko and Adam F. Kowalski
 
@@ -40,6 +40,9 @@ Created on Tue Mar 22 07:09:33 2022
 # line light curves.
 
 # Addition of shear quantification code, 29 April 2022
+
+# Addition of four-paneled figure comparing HXR, AIA, EVE, and shear
+# quantification values with coordinated timestamps included.
 
 from os.path import dirname, join as pjoin
 import scipy.io as sio
@@ -194,6 +197,7 @@ def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx]
+
 
 def format_time():
     """
@@ -3311,6 +3315,7 @@ def rec_rate(rec_flux_pos, rec_flux_neg, dn1600, dt1600, peak_pos, peak_neg,
 
     return rec_rate_pos, rec_rate_neg
 
+
 def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
                            pt_range=[-2, -1, 1, 2], poscrit=6, negcrit=6,
                            negylow=400, negyhi=0, negxlow=300,
@@ -3724,9 +3729,9 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
     timelab = range(0, 24*len(times), 24)
     s = str(dt1600[0])
     fig, ax = plt.subplots(figsize=(13, 7))
-    ax.plot(timelab, right_gfr, c='red', marker = 'o', 
+    ax.plot(timelab, right_gfr, c='red', marker='o',
             label='GFR proxy, right')
-    ax.plot(timelab, left_gfr, c='blue', marker = 'o', label='GFR proxy, left')
+    ax.plot(timelab, left_gfr, c='blue', marker='o', label='GFR proxy, left')
     ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
                   fontsize=18)
     ax.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=18)
@@ -3734,18 +3739,54 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
     ax.grid()
     ax.legend(fontsize=15)
     fig.savefig(str(flnum) + '_gfr.png')
-    
+
     return None
+
 
 def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
                   high=800, ylo=1e-3, yhi=10):
-    
+    """
+    Processing of Fermi data in the 25-300 keV band (though applicable to 
+    others), from a .sav file generated using the Fermi OSPEX database.
+
+    Parameters
+    ----------
+    day : str
+        Day of flare, numerical string format (DD).
+    month : str
+        Month of flare, numerical string format (MM).
+    year : str
+        Year of flare, numerical string format (YYYY).
+    instrument : str
+        Corresponding Fermi instrument (n5, typically).
+    dayint : int
+        Day of flare, integer format.
+    moint : int
+        Month of flare, integer format.
+    yearint : int
+        Year of flare, integer format.
+    low : int, optional
+        Lower limit of range to search for flare in curve. The default is 0.
+    high : int, optional
+        Upper limit of range to search for flare in curve. The default is 800.
+
+    Returns
+    -------
+    raw_hxr_sum : arr
+        Raw 25-300 keV energy from Fermi.
+    cspec_hxr_sum : arr
+        Background-subtracted 25-300 keV energy from Fermi.
+    fermitimes : arr
+        Timestamps from Fermi data file.
+
+    """
+
     directory = '/Users/owner/Desktop/CU_Research/Fermi_April_2022/'\
         'Fermi_Events_sav/'
-        
-    filename_cspec = directory + 'fermi_' + instrument + '_cspec_bkgd_' + day + \
-        month + year + '.sav'
-        
+
+    filename_cspec = directory + 'fermi_' + instrument + '_cspec_bkgd_' + day \
+        + month + year + '.sav'
+
     cspec_dat = readsav(filename_cspec, python_dict='True')
 
     bksub_cspec = cspec_dat['lc_bksub'][0][0]
@@ -3753,24 +3794,23 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     times = cspec_dat['time']
     energies = cspec_dat['ct_energy']
 
-    
     hxrinds = np.where(cspec_dat['ct_energy'] < 300.) and \
         np.where(cspec_dat['ct_energy'] > 25.)
-        
+
     cspec_hxr = bksub_cspec[:, hxrinds]
     raw_hxr = raw_cspec[:, hxrinds]
-    cspec_hxr_sum = np.sum(cspec_hxr, axis = 2)
+    cspec_hxr_sum = np.sum(cspec_hxr, axis=2)
     raw_hxr_sum = np.sum(raw_hxr, axis=2)
 
-    a = datetime.datetime(1970,1,1,0,0,0)
-    b = datetime.datetime(1979,1,1,0,0,0)
+    a = datetime.datetime(1970, 1, 1, 0, 0, 0)
+    b = datetime.datetime(1979, 1, 1, 0, 0, 0)
 
     err1 = (b-a).total_seconds()
 
     timesadj1 = times + err1
 
     curr = datetime.datetime.fromtimestamp(min(timesadj1))
-    corr = datetime.datetime(yearint,moint,dayint,0,0,0)
+    corr = datetime.datetime(yearint, moint, dayint, 0, 0, 0)
 
     err2 = (corr-curr).seconds
     totsec = (b-a).total_seconds() + err2
@@ -3782,7 +3822,7 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
 
     for i in timesadj:
         strtimes.append(datetime.datetime.fromtimestamp(i))
-        
+
     flag = 0
 
     for i in range(low, high):
@@ -3795,12 +3835,12 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
             break
 
     maxind = np.where(raw_hxr_sum[low:high] == max(raw_hxr_sum[low:high]))
-    
+
     fermitimes = strtimes
-    
+
     return raw_hxr_sum, cspec_hxr_sum, fermitimes
-        
-    
+
+
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f,
@@ -3808,10 +3848,106 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   elonperiod_start_neg, elonperiod_end_neg,
                   sepperiod_start_pos, sepperiod_end_pos,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
-                  s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
-                  indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum, 
-                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag = 0):
-    
+                  s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
+                  indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
+                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag=0):
+    """
+    Four panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1), 
+    ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
+    proxy (panel 4, a measurement of shear).  the peak times for the Fermi HXR
+    25-300 keV band, 304 Angstrom light curve, and 1600 Angstrom light curves
+    are shown in each panel, and timestamps accurately lined up to show periods
+    of separation/elongation/shear.  There is an option to plot, also, the
+    periods of significant separation and elongation, though this may make
+    panels 2 and 3 too busy.
+
+    Parameters
+    ----------
+    times : arr
+        Array of times for the flare, from AIA datafile.
+    right_gfr : arr
+        Guide field ratio, determined from the right edge of the ribbons.
+    left_gfr : arr
+        Guide field ratio, determined from the left edge of the ribbons.
+    flnum : int
+        Flare number
+    dt1600 : arr
+        Datetime values from 1600 Angstrom data file.
+    time304 : arr
+        Datenum values from MATLAB 304 Angstrom data file
+    filter_304 : arr
+        Filtered 304 Angstrom data.
+    lens_pos_Mm : list
+        Perpendicular extent of positive ribbon for each time step, in Mm.
+    lens_neg_Mm : list
+        Parallel extent of positive ribbon for each time step in Mm.
+    distpos_Mm : list
+        Perpendicular extent of negative ribbon for each time step, in Mm.
+    distneg_Mm : list
+        Parallel extent of positive ribbon for each time step in Mm.
+    dt304 : list
+        Datetime values for 304 Angstrom data.
+    timelab : list
+        Preparation of time labels for future plotting of light curves.
+    conv_f : float
+        Conversion factor between pixels and Mm, approximate assuming no
+        curvature
+    elonperiod_start_pos : list
+        Determined start times for elongation in positive ribbon.
+    elonperiod_end_pos : list
+        Determined end times for elongation in positive ribbon.
+    elonperiod_start_neg : list
+        Determined start times for elongation in negative ribbon.
+    elonperiod_end_neg : list
+        Determined end times for elongation in negative ribbon.
+    sepperiod_start_pos : list
+        Start times for periods of extended separation, positive ribbon.
+    sepperiod_end_pos : list
+        End times for periods of extended separation, positive ribbon.
+    sepperiod_start_neg : list
+        Start times for periods of extended separation, negative ribbon.
+    sepperiod_end_neg : list
+        End times for periods of extended separation, negative ribbon.
+    exp_ind : int
+        The index where to stop the exponential fitting.
+    s304 : int
+        Nearest index in AIA data to start time of the flare from EUV 304 light
+        curve.
+    e304 : int
+        Nearest index in AIA data to end time of the flare from EUV 304 light
+        curve.
+    pos1600 : list
+        Summed pixel numbers in positive ribbon for each time step.
+    neg1600 : list
+        Summed pixel numbers in negative ribbon for each time step.
+    dn1600 : list
+        Datenum values for 1600 Angstrom data.
+    indstrt_elon : int
+        Index at which to begin plotting elongation.
+    indstrt_sep : int
+        Index at which to begin plotting separation.
+    fermitimes : arr
+        Timestamps from Fermi data file.
+    raw_hxr_sum : arr
+        Raw 25-300 keV energy from Fermi.
+    cspec_hxr_sum : arr
+        Background-subtracted 25-300 keV energy from Fermi.
+    gfr_trans : arr
+        Index for the end of the Guide Field Ratio transient period.
+    low_hxr : int, optional
+        Low index for flare search in HXR data. The default is 0.
+    high_hxr : int, optional
+        High index for flare search in HXR data. The default is 800,
+        applied to Oct-13-2013 flare.
+    period_flag : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    None.
+
+    """
+
     min304 = min(filter_304[s304: e304])
     max304 = max(filter_304[s304: e304])
     minpos1600 = min(pos1600)
@@ -3820,74 +3956,87 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     maxneg1600 = max(neg1600)
 
     # Normalize for light curve comparison
+
     norm304 = (filter_304 - min304) / (max304 - min304)
     normpos1600 = (pos1600 - minpos1600) / (maxpos1600 - minpos1600)
     normneg1600 = (neg1600 - minneg1600) / (maxneg1600 - minneg1600)
     scalefac = max(pos1600) / max(neg1600)
-    
-    GFR = np.mean([right_gfr,left_gfr],axis=0)
+
+    GFR = np.mean([right_gfr, left_gfr], axis=0)
     hxrmax0 = np.argmax(cspec_hxr_sum[low_hxr:high_hxr])
     print(hxrmax0)
     hxrmaxt = fermitimes[hxrmax0]
     print(hxrmaxt)
-    hxrmax = find_nearest_ind(dt1600,hxrmaxt)
-    
+    hxrmax = find_nearest_ind(dt1600, hxrmaxt)
+
     max304_0 = np.nanargmax(filter_304)
     max304t = dt304[max304_0]
-    max304=find_nearest_ind(dt1600,max304t)
-    
+    max304 = find_nearest_ind(dt1600, max304t)
+
     max1600pos = np.argmax(normpos1600)
     max1600neg = np.argmax(normneg1600)
-    
+
     fig, [ax1, ax2, ax3, ax4] = plt.subplots(4, 1, figsize=(20, 35))
-    lns1 = ax1.plot(dt1600, normpos1600, linewidth=1, color='red',marker='.',linestyle = 'dashed',
-             label=r'Norm. 1600 $\AA$ Light Curve, +')
-    lns2 = ax1.plot(dt1600, normneg1600, linewidth=1, color='blue',marker='.',linestyle = 'dashed',
-             label=r'Norm. 1600 $\AA$ Light Curve, -')
-    
-    lns3 = ax1.plot(dt304, norm304, color = 'black', linewidth=1, marker='.',linestyle = 'dashed',
-               label=r'Norm. 304 $\AA$ Light Curve')
+    lns1 = ax1.plot(dt1600, normpos1600, linewidth=1, color='red', marker='.',
+                    linestyle='dashed',
+                    label=r'Norm. 1600 $\AA$ Light Curve, +')
+    lns2 = ax1.plot(dt1600, normneg1600, linewidth=1, color='blue', marker='.',
+                    linestyle='dashed',
+                    label=r'Norm. 1600 $\AA$ Light Curve, -')
+
+    lns3 = ax1.plot(dt304, norm304, color='black', linewidth=1, marker='.',
+                    linestyle='dashed',
+                    label=r'Norm. 304 $\AA$ Light Curve')
     ax1_0 = ax1.twinx()
-    lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],np.log10(scipy.signal.medfilt(cspec_hxr_sum[low_hxr:high_hxr,0],3)),marker='.',linestyle='dashed',
-               label='Fermi Bkgd. Sub. Cts.')
+    lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
+                      np.log10(scipy.signal.medfilt(
+                          cspec_hxr_sum[low_hxr:high_hxr, 0], 3)),
+                      marker='.', linestyle='dashed',
+                      label='Fermi Bkgd. Sub. Cts.')
     ax1.grid()
     lns = lns1+lns2+lns3+lns4
-    labs = [l.get_label() for l in lns]
+    labs = [k.get_label() for k in lns]
     font = font_manager.FontProperties(family='Times New Roman',
                                        style='normal', size=16)
-    ax1.legend(lns, labs, prop=font,fontsize=20, loc='lower center')
-    ax1.set_ylabel('EUV Normalized Light Curves',font='Times New Roman',fontsize=25)
-    ax1_0.set_ylabel('HXR Flux [$cts* s^{-1}* cm^{-2}* keV^{-1}$]',font='Times New Roman',fontsize=25)
-    ax1.set_title('Chromospheric and HXR Light Curves',font = 'Times New Roman',fontsize=30)
+    ax1.legend(lns, labs, prop=font, fontsize=20, loc='lower center')
+    ax1.set_ylabel('EUV Normalized Light Curves',
+                   font='Times New Roman', fontsize=25)
+    ax1_0.set_ylabel(
+        'HXR Flux [$cts* s^{-1}* cm^{-2}* keV^{-1}$]', font='Times New Roman',
+        fontsize=25)
+    ax1.set_title('Chromospheric and HXR Light Curves',
+                  font='Times New Roman', fontsize=30)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
-    
-    
+
     s = str(dt1600[0])
     ax2.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], '-o', c='red',
              markersize=6)
-    
-    ax2.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1], '-o', c='blue',
-             markersize=6)
-    
-    ax2.set_ylabel('Parallel PIL Distance [Mm]', font='Times New Roman', fontsize=25)
+
+    ax2.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1], '-o',
+             c='blue', markersize=6)
+
+    ax2.set_ylabel(
+        'Perpendicular PIL Distance [Mm]', font='Times New Roman', fontsize=25)
     ax2.set_title('Ribbon Separation',
                   font='Times New Roman', fontsize=30)
-    
+
     ax2.set_xlim([dt1600[0], dt1600[-1]])
-    
-    ax2.axvline(dt1600[hxrmax], label = 'Max. HXR')
-    ax2.axvline(dt1600[max304],color='black', label = 'Max. 304 $\AA$',linestyle='dashdot')
-    ax2.axvline(dt1600[max1600pos],color = 'red',label = 'Max. pos. 1600 $\AA$',linestyle='dashed')
-    ax2.axvline(dt1600[max1600neg],color='blue', label = 'Max. neg. 1600 $\AA$',linestyle='dotted')
+
+    ax2.axvline(dt1600[hxrmax], label='Max. HXR')
+    ax2.axvline(dt1600[max304], color='black',
+                label=r'Max. 304 $\AA$', linestyle='dashdot')
+    ax2.axvline(dt1600[max1600pos], color='red',
+                label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
+    ax2.axvline(dt1600[max1600neg], color='blue',
+                label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     ax2.grid()
     font = font_manager.FontProperties(family='Times New Roman',
                                        style='normal', size=20)
-    
-    ax2.legend(prop=font,fontsize = 20)
-    
-    
-    #regions of separation/elongation make a little busy?
-    
+
+    ax2.legend(prop=font, fontsize=20)
+
+    # regions of separation/elongation make a little busy?
+
     if period_flag == 1:
         for i, j in zip(sepperiod_start_pos, sepperiod_end_pos):
             ax2.axvline(dt1600[i], c='green')
@@ -3897,30 +4046,35 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
             ax2.axvline(dt1600[k], c='green')
             ax2.axvline(dt1600[l], c='red')
             ax2.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
-        
-    ax3.plot(dt1600[indstrt_elon:-1], lens_pos_Mm[indstrt_elon:-1], '-o', c='red',
-                 markersize=6)
-    
-    ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1], '-o', c='blue',
-             markersize=6)
-    
+
+    ax3.plot(dt1600[indstrt_elon:-1], lens_pos_Mm[indstrt_elon:-1], '-o',
+             c='red', markersize=6)
+
+    ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1], '-o',
+             c='blue', markersize=6)
+
     ax3.grid()
-    ax3.set_ylabel('Perpendicular PIL Distance [Mm]', font='Times New Roman', fontsize=25)
+    ax3.set_ylabel(
+        'Parallel PIL Distance [Mm]', font='Times New Roman', fontsize=25)
     ax3.set_title('Ribbon Elongation',
                   font='Times New Roman', fontsize=30)
-    
+
     ax3.set_xlim([dt1600[0], dt1600[-1]])
-    
-    ax3.axvline(dt1600[hxrmax], label = 'Max. HXR')
-    ax3.axvline(dt1600[max304],color='black', label = 'Max. 304 $\AA$',linestyle='dashdot')
-    ax3.axvline(dt1600[max1600pos],color = 'red',label = 'Max. pos. 1600 $\AA$',linestyle='dashed')
-    ax3.axvline(dt1600[max1600neg],color='blue', label = 'Max. neg. 1600 $\AA$',linestyle='dotted')
+
+    ax3.axvline(dt1600[hxrmax], label='Max. HXR')
+    ax3.axvline(dt1600[max304], color='black',
+                label=r'Max. 304 $\AA$', linestyle='dashdot')
+    ax3.axvline(dt1600[max1600pos], color='red',
+                label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
+    ax3.axvline(dt1600[max1600neg], color='blue',
+                label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     font = font_manager.FontProperties(family='Times New Roman',
                                        style='normal', size=20)
-    
-    ax3.legend(prop=font,fontsize = 20)
-    
+
+    ax3.legend(prop=font, fontsize=20)
+
     # definitely optional...
+
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
             ax3.axvline(dt1600[i], c='green')
@@ -3930,26 +4084,26 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
             ax3.axvline(dt1600[k], c='green')
             ax3.axvline(dt1600[l], c='red')
             ax3.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
-        
-    
-    ax4.plot(dt1600[gfr_trans:], GFR[gfr_trans:], c='green', marker = 'o')
+
+    ax4.plot(dt1600[gfr_trans:], GFR[gfr_trans:], c='green', marker='o')
     ax4.set_xlabel('Time [DD HH:MM]', font='Times New Roman',
-                  fontsize=25)
+                   fontsize=25)
     ax4.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=25)
     ax4.set_title('Magnetic Shear', font='Times New Roman', fontsize=30)
     ax4.grid()
     ax4.legend(fontsize=15)
-    
+
     ax4.set_xlim([dt1600[0], dt1600[-1]])
-    ax4.axvline(dt1600[hxrmax], label = 'Max. HXR')
-    ax4.axvline(dt1600[max304],color='black', label = 'Max. 304 $\AA$',linestyle='dashdot')
-    ax4.axvline(dt1600[max1600pos],color = 'red',label = 'Max. pos. 1600 $\AA$',linestyle='dashed')
-    ax4.axvline(dt1600[max1600neg],color='blue', label = 'Max. neg. 1600 $\AA$',linestyle='dotted')
+    ax4.axvline(dt1600[hxrmax], label='Max. HXR')
+    ax4.axvline(dt1600[max304], color='black',
+                label=r'Max. 304 r$\AA$', linestyle='dashdot')
+    ax4.axvline(dt1600[max1600pos], color='red',
+                label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
+    ax4.axvline(dt1600[max1600neg], color='blue',
+                label=r'Max. neg. 1600 r$\AA$', linestyle='dotted')
     font = font_manager.FontProperties(family='Times New Roman',
                                        style='normal', size=20)
-    ax4.legend(prop=font,fontsize = 20)
-        
-    # Fermi plots
+    ax4.legend(prop=font, fontsize=20)
 
     fig.savefig(str(flnum) + '_summary.png')
 
