@@ -265,7 +265,7 @@ fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
 
 print("Fermi Processing")
 
-raw_hxr_sum, cspec_hxr_sum, fermitimes, timesadj = fl_funcs.process_fermi(daystr, mostr, 
+raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr, 
                                                                 yearstr, 
                                                                 instrument, 
                                                                 day, mo, year)
