@@ -3742,6 +3742,41 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
 
 def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
                   high=800, ylo=1e-3, yhi=10):
+    """
+    Processing of Fermi data in the 25-300 keV band (though applicable to 
+    others), from a .sav file generated using the Fermi OSPEX database.
+
+    Parameters
+    ----------
+    day : str
+        Day of flare, numerical string format (DD).
+    month : str
+        Month of flare, numerical string format (MM).
+    year : str
+        Year of flare, numerical string format (YYYY).
+    instrument : str
+        Corresponding Fermi instrument (n5, typically).
+    dayint : int
+        Day of flare, integer format.
+    moint : int
+        Month of flare, integer format.
+    yearint : int
+        Year of flare, integer format.
+    low : int, optional
+        Lower limit of range to search for flare in curve. The default is 0.
+    high : int, optional
+        Upper limit of range to search for flare in curve. The default is 800.
+
+    Returns
+    -------
+    raw_hxr_sum : arr
+        Raw 25-300 keV energy from Fermi.
+    cspec_hxr_sum : arr
+        Background-subtracted 25-300 keV energy from Fermi.
+    fermitimes : arr
+        Timestamps from Fermi data file.
+
+    """
 
     directory = '/Users/owner/Desktop/CU_Research/Fermi_April_2022/'\
         'Fermi_Events_sav/'
@@ -3893,7 +3928,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     raw_hxr_sum : arr
         Raw 25-300 keV energy from Fermi.
     cspec_hxr_sum : arr
-        Background-subtracted 25-300 keV energy from Fermi
+        Background-subtracted 25-300 keV energy from Fermi.
     gfr_trans : arr
         Index for the end of the Guide Field Ratio transient period.
     low_hxr : int, optional
