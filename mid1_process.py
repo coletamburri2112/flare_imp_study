@@ -308,7 +308,7 @@ raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr,
 
 indstrt_sep = 1
 indstrt_elon = 1
-gfr_trans = 3
+gfr_trans = 7
 
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
