@@ -284,8 +284,8 @@ raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr,
                                                                 yearstr, 
                                                                 instrument, 
                                                                 day, mo, year,
-                                                                low=7000,
-                                                                high=7800,
+                                                                low=3500,
+                                                                high=4500,
                                                                 ylo=1e-3,
                                                                 yhi=100)
 
@@ -293,7 +293,7 @@ raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr,
 
 indstrt_sep = 1
 indstrt_elon = 1
-gfr_trans = 1
+gfr_trans = 5
 
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
@@ -304,4 +304,4 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, low_hxr=7000, high_hxr=7800,  period_flag = 0)
+                  gfr_trans, low_hxr=3500, high_hxr=4500,  period_flag = 0)
