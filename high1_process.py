@@ -20,7 +20,7 @@ xclnum = 3.6
 xcl = 'C'
 flnum = 1924
 instrument = 'n5'
-daystr = '4'
+daystr = '04'
 mostr = 'apr'
 yearstr = '2014'
 
