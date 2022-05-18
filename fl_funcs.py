@@ -4096,11 +4096,11 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.set_xlim([dt1600[0], dt1600[-1]])
     ax4.axvline(dt1600[hxrmax], label='Max. HXR')
     ax4.axvline(dt1600[max304], color='black',
-                label=r'Max. 304 r$\AA$', linestyle='dashdot')
+                label=r'Max. 304 $\AA$', linestyle='dashdot')
     ax4.axvline(dt1600[max1600pos], color='red',
                 label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
     ax4.axvline(dt1600[max1600neg], color='blue',
-                label=r'Max. neg. 1600 r$\AA$', linestyle='dotted')
+                label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     font = font_manager.FontProperties(family='Times New Roman',
                                        style='normal', size=20)
     ax4.legend(prop=font, fontsize=20)
