@@ -3672,7 +3672,7 @@ def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
 
     return guide_right, guide_left
 
-def guidefieldalt(pil_right_near_pos_shear, pil_left_near_pos_shear,
+def guidefieldlen_alt(pil_right_near_pos_shear, pil_left_near_pos_shear,
                   pil_right_near_neg_shear, pil_left_near_neg_shear,
                   sortedpil, flag='posright'):
     """
@@ -4049,6 +4049,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     if flag == 0:
         GFR = np.mean([right_gfr, left_gfr], axis=0)
     elif flag == 1:
+        # if the alterative version of GFR, take only right_gfr (the input 
+        # should just be gfr)
         GFR = right_gfr
 
     hxrmax0 = np.argmax(cspec_hxr_sum[low_hxr:high_hxr])
