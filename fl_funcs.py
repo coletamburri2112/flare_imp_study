@@ -3607,10 +3607,10 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
         pil_left_near_neg_shear[i, :] = [ivs_sort[ind[0][0]],
                                          dvs_sort[ind[0][0]], ind[0][0]]
 
-    for j in range(len(right_pil_dist_neg_shear)):
-        ind = np.where(right_pil_dist_neg_shear[j] ==
-                       np.min(right_pil_dist_neg_shear[j]))
-        pil_right_near_neg_shear[j, :] = [ivs_sort[ind[0][0]],
+    for j in range(len(right_pil_dist_pos_shear)):
+        ind = np.where(right_pil_dist_pos_shear[j] ==
+                       np.min(right_pil_dist_pos_shear[j]))
+        pil_right_near_pos_shear[j, :] = [ivs_sort[ind[0][0]],
                                           dvs_sort[ind[0][0]], ind[0][0]]
 
     return pil_right_near_pos_shear, pil_left_near_pos_shear,\
@@ -3672,8 +3672,88 @@ def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
 
     return guide_right, guide_left
 
+def guidefieldlen_alt(pil_right_near_pos_shear, pil_left_near_pos_shear,
+                  pil_right_near_neg_shear, pil_left_near_neg_shear,
+                  sortedpil, flag='posright'):
+    """
+    Find length along the axis of the guide field, the PIL-parallel component
+    of magnetic field - alternative, tracking opposite ends of ribbons.
+
+    Parameters
+    ----------
+    pil_right_near_pos_shear : arr
+        Indices of PIL point nearest positive ribbon, rightmost extreme.
+    pil_left_near_pos_shear : arr
+        Indices of PIL points nearest positive ribbon, leftmost extreme.
+    pil_right_near_neg_shear : arr
+        Indices of PIL points nearest negative ribbon, rightmost extreme.
+    pil_left_near_neg_shear : arr
+        Indices of PIL points nearest negative ribbon, leftmost extreme.
+    sortedpil : arr
+        Independent and dependent values of PIL, sorted along PIL.
+    flag : str, optional
+        Ends of ribbons to check; either right positive/left negative or 
+        right negative/left positive.
+
+    Returns
+    -------
+    guide : arr
+        Guide field strength.
+
+    """
+    guide = []
+
+    if flag == 'posleft':
+        for i in range(len(pil_left_near_pos_shear)):
+            posin = int(pil_left_near_pos_shear[i, 2])
+            negin = int(pil_right_near_neg_shear[i, 2])
+            if posin > negin:
+                curvei = sortedpil[negin:posin, :]
+            else:
+                curvei = -sortedpil[posin:negin, :]
+            guide.append(curve_length(curvei))
+    elif flag == 'posright':
+        for i in range(len(pil_right_near_pos_shear)):
+            posin = int(pil_right_near_pos_shear[i, 2])
+            negin = int(pil_left_near_neg_shear[i, 2])
+            if posin > negin:
+                curvei = sortedpil[negin:posin, :]
+            else:
+                curvei = -sortedpil[posin:negin, :]
+            guide.append(curve_length(curvei))
+
+    return guide
 
 def gfrcalc(guide_left, guide_right, distneg_med, distpos_med):
+    """
+    Determines guide field ratio, the ratio of the PIL-parallel component of
+    magnetic field to the PIL-perpendicular component, a proxy for the magnetic
+    shear. Alternative, with cross-PIL-perpendicular loops.
+
+    Parameters
+    ----------
+    guide : arr
+        Guide-field strength.
+    distneg_med : arr
+        Distance from negative ribbon to PIL for each time step; from code for
+        separation.
+    distpos_med : arr
+        Distance from positive ribbon to PIL for each time step; from code for
+        separation.
+
+    Returns
+    -------
+    gfr : arr
+        Guide field ratio, left edge of ribbons.
+
+    """
+    left_gfr = guide_left/(distneg_med+distpos_med)
+    right_gfr = guide_right/(distneg_med+distneg_med)
+
+    return left_gfr, right_gfr
+
+
+def gfrcalc_alt(guide, distneg_med, distpos_med):
     """
     Determines guide field ratio, the ratio of the PIL-parallel component of
     magnetic field to the PIL-perpendicular component, a proxy for the magnetic
@@ -3700,13 +3780,11 @@ def gfrcalc(guide_left, guide_right, distneg_med, distpos_med):
         Guide field ratio, right edge of ribbons.
 
     """
-    left_gfr = guide_left/(distneg_med+distpos_med)
-    right_gfr = guide_right/(distneg_med+distneg_med)
+    gfr = guide/(distneg_med+distpos_med)
 
-    return left_gfr, right_gfr
+    return gfr
 
-
-def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
+def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600, flag = 0):
     """
     Plots guide field ratio for right and left edges of ribbons.
 
@@ -3729,12 +3807,17 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
     timelab = range(0, 24*len(times), 24)
     s = str(dt1600[0])
     fig, ax = plt.subplots(figsize=(13, 7))
-    ax.plot(timelab, right_gfr, c='red', marker='o',
-            label='GFR proxy, right')
-    ax.plot(timelab, left_gfr, c='blue', marker='o', label='GFR proxy, left')
-    ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
-                  fontsize=18)
-    ax.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=18)
+    if flag == 0:
+        ax.plot(timelab, right_gfr, c='red', marker='o',
+                label='GFR proxy, right')
+
+        ax.plot(timelab, left_gfr, c='blue', marker='o', label='GFR proxy, left')
+    elif flag == 1:
+        ax.plot(timelab, right_gfr, c='blue', marker='o', label='GFR proxy')
+        ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
+                      fontsize=18)
+        ax.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=18)
+
     ax.set_title('Guide Field Ratio', font='Times New Roman', fontsize=20)
     ax.grid()
     ax.legend(fontsize=15)
@@ -3850,7 +3933,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag=0):
+                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag=0,
+                  flag = 0):
     """
     Four panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1), 
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
@@ -3962,7 +4046,13 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     normneg1600 = (neg1600 - minneg1600) / (maxneg1600 - minneg1600)
     scalefac = max(pos1600) / max(neg1600)
 
-    GFR = np.mean([right_gfr, left_gfr], axis=0)
+    if flag == 0:
+        GFR = np.mean([right_gfr, left_gfr], axis=0)
+    elif flag == 1:
+        # if the alterative version of GFR, take only right_gfr (the input 
+        # should just be gfr)
+        GFR = right_gfr
+
     hxrmax0 = np.argmax(cspec_hxr_sum[low_hxr:high_hxr])
     print(hxrmax0)
     hxrmaxt = fermitimes[hxrmax0]
