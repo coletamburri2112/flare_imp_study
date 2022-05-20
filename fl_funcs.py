@@ -3607,10 +3607,10 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
         pil_left_near_neg_shear[i, :] = [ivs_sort[ind[0][0]],
                                          dvs_sort[ind[0][0]], ind[0][0]]
 
-    for j in range(len(right_pil_dist_neg_shear)):
-        ind = np.where(right_pil_dist_neg_shear[j] ==
-                       np.min(right_pil_dist_neg_shear[j]))
-        pil_right_near_neg_shear[j, :] = [ivs_sort[ind[0][0]],
+    for j in range(len(right_pil_dist_pos_shear)):
+        ind = np.where(right_pil_dist_pos_shear[j] ==
+                       np.min(right_pil_dist_pos_shear[j]))
+        pil_right_near_pos_shear[j, :] = [ivs_sort[ind[0][0]],
                                           dvs_sort[ind[0][0]], ind[0][0]]
 
     return pil_right_near_pos_shear, pil_left_near_pos_shear,\
@@ -3672,6 +3672,57 @@ def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
 
     return guide_right, guide_left
 
+def guidefieldalt(pil_right_near_pos_shear, pil_left_near_pos_shear,
+                  pil_right_near_neg_shear, pil_left_near_neg_shear,
+                  sortedpil, flag='posright'):
+    """
+    Find length along the axis of the guide field, the PIL-parallel component
+    of magnetic field - alternative, tracking opposite ends of ribbons.
+
+    Parameters
+    ----------
+    pil_right_near_pos_shear : arr
+        Indices of PIL point nearest positive ribbon, rightmost extreme.
+    pil_left_near_pos_shear : arr
+        Indices of PIL points nearest positive ribbon, leftmost extreme.
+    pil_right_near_neg_shear : arr
+        Indices of PIL points nearest negative ribbon, rightmost extreme.
+    pil_left_near_neg_shear : arr
+        Indices of PIL points nearest negative ribbon, leftmost extreme.
+    sortedpil : arr
+        Independent and dependent values of PIL, sorted along PIL.
+    flag : str, optional
+        Ends of ribbons to check; either right positive/left negative or 
+        right negative/left positive.
+
+    Returns
+    -------
+    guide : arr
+        Guide field strength.
+
+    """
+    guide = []
+
+    if flag == 'posleft':
+        for i in range(len(pil_left_near_pos_shear)):
+            posin = int(pil_left_near_pos_shear[i, 2])
+            negin = int(pil_right_near_neg_shear[i, 2])
+            if posin > negin:
+                curvei = sortedpil[negin:posin, :]
+            else:
+                curvei = -sortedpil[posin:negin, :]
+            guide.append(curve_length(curvei))
+    elif flag == 'posright':
+        for i in range(len(pil_right_near_pos_shear)):
+            posin = int(pil_right_near_pos_shear[i, 2])
+            negin = int(pil_left_near_neg_shear[i, 2])
+            if posin > negin:
+                curvei = sortedpil[negin:posin, :]
+            else:
+                curvei = -sortedpil[posin:negin, :]
+            guide.append(curve_length(curvei))
+
+    return guide
 
 def gfrcalc(guide_left, guide_right, distneg_med, distpos_med):
     """
