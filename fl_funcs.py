@@ -3728,6 +3728,35 @@ def gfrcalc(guide_left, guide_right, distneg_med, distpos_med):
     """
     Determines guide field ratio, the ratio of the PIL-parallel component of
     magnetic field to the PIL-perpendicular component, a proxy for the magnetic
+    shear. Alternative, with cross-PIL-perpendicular loops.
+
+    Parameters
+    ----------
+    guide : arr
+        Guide-field strength.
+    distneg_med : arr
+        Distance from negative ribbon to PIL for each time step; from code for
+        separation.
+    distpos_med : arr
+        Distance from positive ribbon to PIL for each time step; from code for
+        separation.
+
+    Returns
+    -------
+    gfr : arr
+        Guide field ratio, left edge of ribbons.
+
+    """
+    left_gfr = guide_left/(distneg_med+distpos_med)
+    right_gfr = guide_right/(distneg_med+distneg_med)
+
+    return left_gfr, right_gfr
+
+
+def gfrcalc_alt(guide, distneg_med, distpos_med):
+    """
+    Determines guide field ratio, the ratio of the PIL-parallel component of
+    magnetic field to the PIL-perpendicular component, a proxy for the magnetic
     shear.
 
     Parameters
@@ -3751,13 +3780,11 @@ def gfrcalc(guide_left, guide_right, distneg_med, distpos_med):
         Guide field ratio, right edge of ribbons.
 
     """
-    left_gfr = guide_left/(distneg_med+distpos_med)
-    right_gfr = guide_right/(distneg_med+distneg_med)
+    gfr = guide/(distneg_med+distpos_med)
 
-    return left_gfr, right_gfr
+    return gfr
 
-
-def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
+def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600, flag = 0):
     """
     Plots guide field ratio for right and left edges of ribbons.
 
@@ -3780,12 +3807,17 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600):
     timelab = range(0, 24*len(times), 24)
     s = str(dt1600[0])
     fig, ax = plt.subplots(figsize=(13, 7))
-    ax.plot(timelab, right_gfr, c='red', marker='o',
-            label='GFR proxy, right')
-    ax.plot(timelab, left_gfr, c='blue', marker='o', label='GFR proxy, left')
-    ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
-                  fontsize=18)
-    ax.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=18)
+    if flag == 0:
+        ax.plot(timelab, right_gfr, c='red', marker='o',
+                label='GFR proxy, right')
+
+        ax.plot(timelab, left_gfr, c='blue', marker='o', label='GFR proxy, left')
+    elif flag == 1:
+        ax.plot(timelab, right_gfr, c='blue', marker='o', label='GFR proxy')
+        ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
+                      fontsize=18)
+        ax.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=18)
+
     ax.set_title('Guide Field Ratio', font='Times New Roman', fontsize=20)
     ax.grid()
     ax.legend(fontsize=15)
@@ -3901,7 +3933,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag=0):
+                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag=0,
+                  flag = 0):
     """
     Four panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1), 
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
@@ -4013,7 +4046,11 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     normneg1600 = (neg1600 - minneg1600) / (maxneg1600 - minneg1600)
     scalefac = max(pos1600) / max(neg1600)
 
-    GFR = np.mean([right_gfr, left_gfr], axis=0)
+    if flag == 0:
+        GFR = np.mean([right_gfr, left_gfr], axis=0)
+    elif flag == 1:
+        GFR = right_gfr
+
     hxrmax0 = np.argmax(cspec_hxr_sum[low_hxr:high_hxr])
     print(hxrmax0)
     hxrmaxt = fermitimes[hxrmax0]
