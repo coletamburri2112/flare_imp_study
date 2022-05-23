@@ -5,7 +5,7 @@ Created on Tue Mar 22 07:09:33 2022
 
 @author: owner
 """
-# Most recent version: 16 May 2022 by Cole Tamburri
+# Most recent version: 23 May 2022 by Cole Tamburri
 # University of Colorado Boulder
 # Advisors: Maria D. Kazachenko and Adam F. Kowalski
 
@@ -3382,12 +3382,12 @@ def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
     aia_neg_rem_shear = np.zeros(np.shape(aia8_neg))
 
     negylow = int(round(med_y) - 100)
-    negyhigh = int(round(med_y) + 100)
+    negyhi = int(round(med_y) + 100)
     negxlow = int(round(med_x) - 100)
     negxhi = int(round(med_y) + 100)
 
     posylow = int(round(med_y) - 100)
-    posyhigh = int(round(med_y) + 100)
+    posyhi = int(round(med_y) + 100)
     posxlow = int(round(med_x) - 100)
     posxhi = int(round(med_y) + 100)
 
@@ -3494,7 +3494,7 @@ def leftrightshear(aia_pos_rem_shear, aia_neg_rem_shear):
 
         lr_coord_pos_shear[i, :] = [left_x, left_y, right_x, right_y]
 
-    # The same, for negative ribbon.
+    # The same, for negative ribbon
     for i in range(len(aia_neg_rem_shear)):
         left_x = 0
         left_y = 0
@@ -3527,7 +3527,7 @@ def leftrightshear(aia_pos_rem_shear, aia_neg_rem_shear):
 
 def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
     """
-    Find the position of the pil nearest to the extremes of each ribbon.
+    Find the position of the PIL nearest to the extremes of each ribbon.
 
     Parameters
     ----------
@@ -3566,7 +3566,7 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
     pil_right_near_neg_shear = np.zeros([len(right_pil_dist_neg_shear), 3])
 
     # Arrays of distances from all positive ribbon points to all PIL points, in
-    # each dimesion
+    # each dimension
     for i in range(len(lr_coord_pos_shear)):
         left_x, left_y, right_x, right_y = lr_coord_pos_shear[i]
         for j in range(len(ivs_sort)):
@@ -3590,7 +3590,7 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
                                           dvs_sort[ind[0][0]], ind[0][0]]
 
     # Arrays of distances from all negative ribbon points to all PIL points, in
-    # each dimesion
+    # each dimension
     for i in range(len(lr_coord_neg_shear)):
         left_x, left_y, right_x, right_y = lr_coord_neg_shear[i]
         for j in range(len(ivs_sort)):
@@ -3913,11 +3913,6 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
             flag += 1
         if cspec_hxr_sum[i] < 0.1:
             flag = 0
-        if flag > 3:
-            startind = i - 3
-            break
-
-    maxind = np.where(raw_hxr_sum[low:high] == max(raw_hxr_sum[low:high]))
 
     fermitimes = strtimes
 
@@ -4044,7 +4039,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     norm304 = (filter_304 - min304) / (max304 - min304)
     normpos1600 = (pos1600 - minpos1600) / (maxpos1600 - minpos1600)
     normneg1600 = (neg1600 - minneg1600) / (maxneg1600 - minneg1600)
-    scalefac = max(pos1600) / max(neg1600)
 
     if flag == 0:
         GFR = np.mean([right_gfr, left_gfr], axis=0)
@@ -4098,7 +4092,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   font='Times New Roman', fontsize=30)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
 
-    s = str(dt1600[0])
     ax2.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], '-o', c='red',
              markersize=6)
 
