@@ -3944,6 +3944,13 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     pos_v = pos_v_Mm * 1e6
     neg_v = neg_v_Mm * 1e6
     
+    # setting velocities equal to zero because these are not real
+    for i in range(len(pos_v)):
+        if pos_v[i] < 0:
+            pos_v[i] = 0
+        if neg_v[i] < 0:
+            neg_v[i] = 0
+    
     for i in range(len(hmi_dat)):
         for j in range(len(hmi_dat[0])):
             if hmi_dat[i,j] > 0.0 and pos_rem[i,j] == 1:
@@ -3963,8 +3970,7 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     
     avg_B_pos = sum_pos/count_pos # in G
     avg_B_neg = sum_neg/count_neg # in G
-    print(avg_B_pos)
-    print(pos_v)
+
     
     E_pos = avg_B_pos*pos_v*1e-6 # in V/cm
     E_neg = -avg_B_neg*neg_v*1e-6 # in V/cm
