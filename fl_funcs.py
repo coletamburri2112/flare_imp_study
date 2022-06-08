@@ -3918,6 +3918,78 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
 
     return raw_hxr_sum, cspec_hxr_sum, fermitimes
 
+def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
+                flnum, startind = 25):
+    
+    hmi_pos = np.zeros(np.shape(hmi_dat))
+    hmi_neg = np.zeros(np.shape(hmi_dat))
+    sum_pos = 0
+    count_pos = 0
+    sum_neg = 0
+    count_neg = 0
+    
+    pos_Mm_dist = conv_f*distpos[startind:]
+    neg_Mm_dist = conv_f*distneg[startind:]
+    time_E = timelab[startind:]*60 #conversion to seconds
+    
+    time_res = time_E[1] - time_E[0]
+    
+    # velocities, in Mm/s
+    
+    pos_v_Mm = scipy.signal.medfilt(np.diff(pos_Mm_dist)/time_res, kernel_size=5)
+    neg_v_Mm = scipy.signal.medfilt(np.diff(neg_Mm_dist)/time_res, kernel_size=5)
+    
+    # convert to m/s for SI units
+    
+    pos_v = pos_v_Mm * 1e6
+    neg_v = neg_v_Mm * 1e6
+    
+    # setting velocities equal to zero because these are not real
+    for i in range(len(pos_v)):
+        if pos_v[i] < 0:
+            pos_v[i] = 0
+        if neg_v[i] < 0:
+            neg_v[i] = 0
+    
+    for i in range(len(hmi_dat)):
+        for j in range(len(hmi_dat[0])):
+            if hmi_dat[i,j] > 0.0 and pos_rem[i,j] == 1:
+                hmi_pos[i,j] = hmi_dat[i,j]
+            
+            if hmi_dat[i,j] < 0.0 and neg_rem[i,j] == -1:
+                hmi_neg[i,j] = hmi_dat[i,j]
+                
+    for i in range(len(hmi_dat)):
+        for j in range(len(hmi_dat[0])):
+            if hmi_pos[i,j] > 0:
+                sum_pos += hmi_pos[i,j]
+                count_pos += 1
+            if hmi_neg[i,j] < 0:
+                sum_neg += hmi_neg[i,j]
+                count_neg += 1
+    
+    avg_B_pos = sum_pos/count_pos # in G
+    avg_B_neg = sum_neg/count_neg # in G
+
+    
+    E_pos = avg_B_pos*pos_v*1e-6 # in V/cm
+    E_neg = -avg_B_neg*neg_v*1e-6 # in V/cm
+    
+    E_rat = E_pos/E_neg
+    
+    fig,ax = plt.subplots(figsize=(10,10))
+    
+    ax.plot(time_E[0:-1], E_pos, c = 'red', label = 'E_pos')
+    ax.plot(time_E[0:-1], E_neg, c = 'blue', label = 'E_neg')
+    ax.set_xlabel('Time since flare start [s]')
+    ax.grid()
+    ax.set_ylabel('Reconnection Electric Field [V/cm]')
+    ax.set_title('Reconnection Electric Field Strength',fontsize=20)
+    ax.legend()
+    
+    fig.savefig(str(flnum) + '_E_field.png')
+    
+    return E_pos, E_neg, E_rat, time_E
 
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
