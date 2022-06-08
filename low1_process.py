@@ -292,5 +292,5 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
                                                    distneg_med, timelab, 
                                                    hmi_dat, pos_rem, neg_rem, 
-                                                   flnum, startind = 25)
+                                                   flnum)
 
