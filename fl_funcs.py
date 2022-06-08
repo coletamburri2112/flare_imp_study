@@ -3919,7 +3919,7 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     return raw_hxr_sum, cspec_hxr_sum, fermitimes
 
 def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
-                startind = 25):
+                flnum, startind = 25):
     
     hmi_pos = np.zeros(np.shape(hmi_dat))
     hmi_neg = np.zeros(np.shape(hmi_dat))
@@ -3966,12 +3966,12 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     print(avg_B_pos)
     print(pos_v)
     
-    E_pos = avg_B_pos*pos_v*1e-2 # in V/cm
-    E_neg = -avg_B_neg*neg_v*1e-2 # in V/cm
+    E_pos = avg_B_pos*pos_v*1e-6 # in V/cm
+    E_neg = -avg_B_neg*neg_v*1e-6 # in V/cm
     
     E_rat = E_pos/E_neg
     
-    fig,ax = plt.subplots(figsize=(5,5))
+    fig,ax = plt.subplots(figsize=(10,10))
     
     ax.plot(time_E[0:-1], E_pos, c = 'red', label = 'E_pos')
     ax.plot(time_E[0:-1], E_neg, c = 'blue', label = 'E_neg')
@@ -3980,6 +3980,8 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     ax.set_ylabel('Reconnection Electric Field [V/cm]')
     ax.set_title('Reconnection Electric Field Strength',fontsize=20)
     ax.legend()
+    
+    fig.savefig(str(flnum) + '_E_field.png')
     
     return E_pos, E_neg, E_rat, time_E
 
