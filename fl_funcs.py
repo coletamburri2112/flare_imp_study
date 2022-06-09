@@ -3983,9 +3983,9 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     
     fig,ax = plt.subplots(figsize=(7,7))
     
-    ax.plot(time_E[0:-1], E_pos, '--ro', label = '$E_{pos}$')
-    ax.plot(time_E[0:-1], E_neg, '--bo', label = '$E_{neg}$')
-    ax.set_xlabel('Time [s since'+slab[5:-7]+']',font = 'Times New Roman',
+    ax.plot(time_E[0:-1]/60, E_pos, '--ro', label = '$E_{pos}$')
+    ax.plot(time_E[0:-1]/60, E_neg, '--bo', label = '$E_{neg}$')
+    ax.set_xlabel('Time [min since'+s[5:-7]+']',font = 'Times New Roman',
                   fontsize=18)
     ax.grid()
     ax.set_ylabel('Electric Field [V/cm]',font='Times New Roman',
