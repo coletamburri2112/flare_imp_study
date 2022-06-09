@@ -3919,7 +3919,7 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
     return raw_hxr_sum, cspec_hxr_sum, fermitimes
 
 def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
-                flnum, startind = 25):
+                flnum, dt1600, times, startind = 25):
     
     hmi_pos = np.zeros(np.shape(hmi_dat))
     hmi_neg = np.zeros(np.shape(hmi_dat))
@@ -3928,11 +3928,15 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     sum_neg = 0
     count_neg = 0
     
+    s = str(dt1600[0])
+    
     pos_Mm_dist = conv_f*distpos[startind:]
     neg_Mm_dist = conv_f*distneg[startind:]
     time_E = timelab[startind:]*60 #conversion to seconds
     
     time_res = time_E[1] - time_E[0]
+    
+    slab = s[startind:]
     
     # velocities, in Mm/s
     
@@ -3977,14 +3981,17 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     
     E_rat = E_pos/E_neg
     
-    fig,ax = plt.subplots(figsize=(10,10))
+    fig,ax = plt.subplots(figsize=(7,7))
     
-    ax.plot(time_E[0:-1], E_pos, c = 'red', label = 'E_pos')
-    ax.plot(time_E[0:-1], E_neg, c = 'blue', label = 'E_neg')
-    ax.set_xlabel('Time since flare start [s]')
+    ax.plot(time_E[0:-1], E_pos, '--ro', label = '$E_{pos}$')
+    ax.plot(time_E[0:-1], E_neg, '--bo', label = '$E_{neg}$')
+    ax.set_xlabel('Time [s since'+slab[5:-7]+']',font = 'Times New Roman',
+                  fontsize=18)
     ax.grid()
-    ax.set_ylabel('Reconnection Electric Field [V/cm]')
-    ax.set_title('Reconnection Electric Field Strength',fontsize=20)
+    ax.set_ylabel('Electric Field [V/cm]',font='Times New Roman',
+                  fontsize=18)
+    ax.set_title('Reconnection Electric Field Strength',font='Times New Roman',
+                 fontsize=25)
     ax.legend()
     
     fig.savefig(str(flnum) + '_E_field.png')
