@@ -263,20 +263,19 @@ pil_right_near_pos_shear, pil_left_near_pos_shear, pil_right_near_neg_shear,\
                                                   ivs_sort, dvs_sort)
 
 # Guide field to the right and left edges of ribbons
-guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
+guide = fl_funcs.guidefieldlen_alt(pil_right_near_pos_shear,
                                                  pil_left_near_pos_shear,
                                                  pil_right_near_neg_shear,
                                                  pil_left_near_neg_shear,
                                                  sortedpil)
 
 # Guide field ratio to the right and left edges of ribbons
-left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
-                                       distneg_med, distpos_med)
+gfr= fl_funcs.gfrcalc_alt(guide, distneg_med, distpos_med)
 
 print("Plot guide field ratio proxy based on footpoints.")
 
 # Plot guide field ratio
-fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
+fl_funcs.plt_gfr(times, gfr, gfr, flnum, dt1600)
 
 print("Fermi Processing")
 
@@ -295,7 +294,7 @@ indstrt_sep = 1
 indstrt_elon = 1
 gfr_trans = 5
 
-fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
+fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f,
                   elonperiod_start_pos, elonperiod_end_pos,
