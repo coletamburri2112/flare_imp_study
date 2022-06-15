@@ -3985,7 +3985,7 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     
     ax.plot(time_E[0:-1]/60, E_pos, '--ro', label = '$E_{pos}$')
     ax.plot(time_E[0:-1]/60, E_neg, '--bo', label = '$E_{neg}$')
-    ax.set_xlabel('Time [min since'+s[5:-7]+']',font = 'Times New Roman',
+    ax.set_xlabel('Time [min since '+s[5:-7]+']',font = 'Times New Roman',
                   fontsize=18)
     ax.set_xlim([0,time_E[-1]/60])
     ax.grid()
@@ -4008,10 +4008,10 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag=0,
-                  flag = 0):
+                  gfr_trans, E_pos, E_neg, time_E, low_hxr=0, high_hxr=800,
+                  period_flag=0, flag = 0):
     """
-    Four panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1), 
+    Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1), 
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
     proxy (panel 4, a measurement of shear).  the peak times for the Fermi HXR
     25-300 keV band, 304 Angstrom light curve, and 1600 Angstrom light curves
@@ -4172,19 +4172,17 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   font='Times New Roman', fontsize=30)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax2.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], '-o', c='red',
-             markersize=6)
 
-    ax2.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1], '-o',
-             c='blue', markersize=6)
+    lns1 = ax2.plot(dt1600[gfr_trans:], GFR[gfr_trans:], c='green', marker='o',
+                    label = 'GFR')
 
-    ax2.set_ylabel(
-        'Perpendicular PIL Distance [Mm]', font='Times New Roman', fontsize=25)
-    ax2.set_title('Ribbon Separation',
-                  font='Times New Roman', fontsize=30)
+
+    ax2.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=25)
+    ax2.set_title('Magnetic Shear, Reconnecting Electric Field Strength', font='Times New Roman', fontsize=30)
+    ax2.set_ylim([0,np.nanmax(GFR)+2])
+    ax2.grid()
 
     ax2.set_xlim([dt1600[0], dt1600[-1]])
-
     ax2.axvline(dt1600[hxrmax], label='Max. HXR')
     ax2.axvline(dt1600[max304], color='black',
                 label=r'Max. 304 $\AA$', linestyle='dashdot')
@@ -4192,11 +4190,27 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                 label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
     ax2.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
-    ax2.grid()
+    font = font_manager.FontProperties(family='Times New Roman',
+                                       style='normal', size=20)
+    ax2.legend(prop=font, fontsize=20)    
+    ax2_0 = ax2.twinx()
+    lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, '--rx', label = '$E_{pos}$')
+    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, '--bx', label = '$E_{neg}$')
+
+    ax2_0.set_xlim([dt1600[0], dt1600[-1]])
+
+    ax2_0.set_ylabel('Electric Field [V/cm]',font='Times New Roman',
+                  fontsize=25)
+
+
     font = font_manager.FontProperties(family='Times New Roman',
                                        style='normal', size=20)
 
-    ax2.legend(prop=font, fontsize=20)
+    lns = lns1+lns2+lns3
+    labs = [k.get_label() for k in lns]
+    font = font_manager.FontProperties(family='Times New Roman',
+                                       style='normal', size=16)
+    ax2.legend(lns, labs, prop=font, fontsize=20)
 
     # regions of separation/elongation make a little busy?
 
@@ -4236,8 +4250,31 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax3.legend(prop=font, fontsize=20)
 
-    # definitely optional...
 
+    ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], '-o', c='red',
+             markersize=6)
+
+    ax4.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1], '-o',
+             c='blue', markersize=6)
+
+    ax4.set_ylabel(
+        'Perpendicular PIL Distance [Mm]', font='Times New Roman', fontsize=25)
+    ax4.set_title('Ribbon Separation',
+                  font='Times New Roman', fontsize=30)
+
+    ax4.set_xlim([dt1600[0], dt1600[-1]])
+
+    ax4.axvline(dt1600[hxrmax], label='Max. HXR')
+    ax4.axvline(dt1600[max304], color='black',
+                label=r'Max. 304 $\AA$', linestyle='dashdot')
+    ax4.axvline(dt1600[max1600pos], color='red',
+                label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
+    ax4.axvline(dt1600[max1600neg], color='blue',
+                label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
+    ax4.grid()
+    ax4.set_xlabel('Time [DD HH:MM]', font='Times New Roman',
+                   fontsize=25)
+    
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
             ax3.axvline(dt1600[i], c='green')
@@ -4248,25 +4285,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
             ax3.axvline(dt1600[l], c='red')
             ax3.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
 
-    ax4.plot(dt1600[gfr_trans:], GFR[gfr_trans:], c='green', marker='o')
-    ax4.set_xlabel('Time [DD HH:MM]', font='Times New Roman',
-                   fontsize=25)
-    ax4.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=25)
-    ax4.set_title('Magnetic Shear', font='Times New Roman', fontsize=30)
-    ax4.grid()
-    ax4.legend(fontsize=15)
-
-    ax4.set_xlim([dt1600[0], dt1600[-1]])
-    ax4.axvline(dt1600[hxrmax], label='Max. HXR')
-    ax4.axvline(dt1600[max304], color='black',
-                label=r'Max. 304 $\AA$', linestyle='dashdot')
-    ax4.axvline(dt1600[max1600pos], color='red',
-                label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
-    ax4.axvline(dt1600[max1600neg], color='blue',
-                label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
-    font = font_manager.FontProperties(family='Times New Roman',
-                                       style='normal', size=20)
-    ax4.legend(prop=font, fontsize=20)
 
     fig.savefig(str(flnum) + '_summary.png')
 
