@@ -310,6 +310,14 @@ indstrt_sep = 1
 indstrt_elon = 1
 gfr_trans = 7
 
+
+
+E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
+                                                   distneg_med, timelab, 
+                                                   hmi_dat, pos_rem, neg_rem, 
+                                                   flnum, dt1600, times,
+                                                   startind=7)
+
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f,
@@ -319,10 +327,4 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, low_hxr=16500, high_hxr=18000,  period_flag = 0)
-
-E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
-                                                   distneg_med, timelab, 
-                                                   hmi_dat, pos_rem, neg_rem, 
-                                                   flnum, dt1600, times,
-                                                   startind=7)
+                  gfr_trans, E_pos, E_neg, time_E, low_hxr=16500, high_hxr=18000,  period_flag = 0)

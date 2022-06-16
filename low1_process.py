@@ -285,7 +285,8 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, low_hxr=0, high_hxr=800,  period_flag = 0)
+                  gfr_trans, E_pos, E_neg, time_E,
+                  low_hxr=0, high_hxr=800,  period_flag = 0)
 
 # Electric field computation
 
