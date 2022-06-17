@@ -276,6 +276,19 @@ indstrt_sep = 25
 indstrt_elon = 1
 gfr_trans = 26
 
+# Electric field computation
+
+E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
+                                                   distneg_med, timelab, 
+                                                   hmi_dat, pos_rem, neg_rem, 
+                                                   flnum, dt1600, times)
+
+shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(time,flnum,dt1600, left_gfr, right_gfr)
+
+quartermax_min = fl_funcs.quartermax_min(gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_idx, flag = 0)
+
+print(quartermax_min)
+
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f,
@@ -287,11 +300,4 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                   gfr_trans, E_pos, E_neg, time_E,
                   low_hxr=0, high_hxr=800,  period_flag = 0)
-
-# Electric field computation
-
-E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
-                                                   distneg_med, timelab, 
-                                                   hmi_dat, pos_rem, neg_rem, 
-                                                   flnum, dt1600, times)
 
