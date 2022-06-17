@@ -3999,6 +3999,34 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     
     return E_pos, E_neg, E_rat, time_E
 
+def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag = 0):
+    ang_prep_left = 1/left_gfr
+    ang_prep_right = 1/right_gfr
+    
+    shear_ang_left = np.arctan(ang_prep_left)*180./np.pi
+    shear_ang_right = np.arctan(ang_prep_right)*180./np.pi
+    
+    timelab = range(0, 24*len(times), 24)
+    s = str(dt1600[0])
+    fig, ax = plt.subplots(figsize=(13, 7))
+    if flag == 0:
+        ax.plot(timelab, shear_ang_left, c='green', marker='o',
+                label='Shear Angle, Left')
+
+        ax.plot(timelab, shear_ang_right, c='black', marker='o', label='Shear Angle, Right')
+    elif flag == 1:
+        ax.plot(timelab, right_gfr, c='black', marker='o', label='GFR proxy')
+        ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
+                      fontsize=18)
+        ax.set_ylabel('Shear Angle', font='Times New Roman', fontsize=18)
+
+    ax.set_title('Shear Angle', font='Times New Roman', fontsize=20)
+    ax.grid()
+    ax.legend(fontsize=15)
+    fig.savefig(str(flnum) + '_shear_angle.png')
+    
+    return shear_ang_left, shear_ang_right
+
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f,
