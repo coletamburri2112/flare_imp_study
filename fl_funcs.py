@@ -4027,6 +4027,26 @@ def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag = 0):
     
     return shear_ang_left, shear_ang_right
 
+def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx, flag = 0):
+    if flag == 0:
+        gfr = (right_gfr+left_gfr)/2
+    if flag == 1:
+        gfr = right_gfr
+        
+    mingfr = np.nanmin(gfr[transtime:])
+    maxgfr = np.nanmax(gfr[transtime:])
+
+    minmaxavg = mingfr+0.5*np.mean([mingfr,maxgfr])
+
+    idx = find_nearest_idx(gfr[transtime:],minmaxavg)
+        
+    quartermaxtime = timelab[transtime+idx] - timelab[transtime]
+    
+    quartermax_min = quartermaxtime/60.
+    
+    return quartermax_min
+    
+
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f,
