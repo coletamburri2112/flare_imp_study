@@ -55,10 +55,10 @@ pil_mask_c, ivs, dvs, hmik = fl_funcs.pil_gen(pil_mask_c, hmi_dat)
 
 print("Separation values determination.")
 
-aia8_pos, aia8_neg = fl_funcs.mask_sep(aia_step8, hmi_dat)
+aia8_pos_step, aia8_neg_step = fl_funcs.mask_sep(aia_step8, hmi_dat)
 
 distpos_med, distpos_mean, distneg_med, distpos_mean \
-    = fl_funcs.separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg)
+    = fl_funcs.separation(aia_step8, ivs, dvs, aia8_pos_step, aia8_neg_step)
 
 print("Elongation values determination.")
 
@@ -114,7 +114,7 @@ startin, peakin, endin, times, s304, e304, filter_304, med304, std304, \
                                         flnum, start304, peak304, end304,
                                         times304, curves304)
 
-posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos, aia8_neg,
+posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos_step, aia8_neg_step,
                                                      aiadat, nt)
 
 print("Determining the regions of separation and elongation.")
@@ -218,7 +218,7 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
 
 print("Begin determination of shear.")
 
-aia8_pos, aia8_neg = fl_funcs.mask_sep(aia_step8, hmi_dat)
+
 
 # Establish limits for ribbons corresponding to shear code.
 negylow = ylim0_neg
@@ -233,7 +233,7 @@ posxhi = xlim1_pos
 
 # Isolate ribbons appropriately for shear analysis
 aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
-    shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y, negylow=negylow,
+    shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y, negylow=negylow,
                            negyhi=negyhi, posylow=posylow, posyhi=posyhi,
                            negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
                            posxhi=posxhi, flag=1)
