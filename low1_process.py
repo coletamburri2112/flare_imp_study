@@ -218,6 +218,8 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
 
 print("Begin determination of shear.")
 
+aia8_pos, aia8_neg = fl_funcs.mask_sep(aia_step8, hmi_dat)
+
 # Establish limits for ribbons corresponding to shear code.
 negylow = ylim0_neg
 negyhi = ylim1_neg
@@ -234,7 +236,7 @@ aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
     shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y, negylow=negylow,
                            negyhi=negyhi, posylow=posylow, posyhi=posyhi,
                            negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
-                           posxhi=posxhi)
+                           posxhi=posxhi, flag=1)
 
 # Left and right coordinates of positive and negative ribbons
 lr_coord_neg_shear, lr_coord_pos_shear = \
@@ -252,7 +254,7 @@ guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
                                                  pil_left_near_pos_shear,
                                                  pil_right_near_neg_shear,
                                                  pil_left_near_neg_shear,
-                                                 sortedpil)
+                                                 sortedpil, fl_funcs.curve_length)
 
 # Guide field ratio to the right and left edges of ribbons
 left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
@@ -283,7 +285,7 @@ E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
                                                    hmi_dat, pos_rem, neg_rem, 
                                                    flnum, dt1600, times)
 
-shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(time,flnum,dt1600, left_gfr, right_gfr)
+shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(times,flnum,dt1600, left_gfr, right_gfr)
 
 quartermax_min = fl_funcs.quartermax_min(gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_idx, flag = 0)
 
