@@ -56,9 +56,9 @@ pil_mask_c, ivs, dvs, hmik = fl_funcs.pil_gen(
 
 print("Separation values determination.")
 
-aia8_pos, aia8_neg = fl_funcs.mask_sep(aia_step8, hmi_dat)
+aia8_pos_step, aia8_neg_step = fl_funcs.mask_sep(aia_step8, hmi_dat)
 
-pos_rem0, neg_rem0 = fl_funcs.spur_removal_sep2(aia8_pos, aia8_neg, jlo=360,
+pos_rem0, neg_rem0 = fl_funcs.spur_removal_sep2(aia8_pos_step, aia8_neg_step, jlo=360,
                                                 klo=320, khi=400,
                                                 khi2=410)
 
@@ -123,7 +123,7 @@ startin, peakin, endin, times, s304, e304, filter_304, med304, std304, \
                                         flnum, start304, peak304, end304,
                                         times304, curves304)
 
-posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos, aia8_neg,
+posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos_step, aia8_neg_step,
                                                      aiadat, nt)
 
 print("Determining the regions of separation and elongation.")
@@ -244,7 +244,7 @@ posxhi = xlim1_pos
 
 # Isolate ribbons appropriately for shear analysis
 aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
-    shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y, negylow=negylow,
+    shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y, negylow=negylow,
                            negyhi=negyhi, posylow=posylow, posyhi=posyhi,
                            negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
                            posxhi=posxhi)
@@ -265,7 +265,7 @@ guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
                                                  pil_left_near_pos_shear,
                                                  pil_right_near_neg_shear,
                                                  pil_left_near_neg_shear,
-                                                 sortedpil)
+                                                 sortedpil, fl_funcs.curve_length)
 
 # Guide field ratio to the right and left edges of ribbons
 left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
@@ -291,13 +291,22 @@ raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr,
 
 indstrt_sep = 1
 indstrt_elon = 1
-gfr_trans = 10
+gfr_trans = 8
 
 E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
                                                    distneg_med, timelab, 
                                                    hmi_dat, pos_rem, neg_rem, 
                                                    flnum, dt1600, times,
                                                    startind=gfr_trans)
+
+E_pos = np.append(E_pos,E_pos[-1])
+E_neg = np.append(E_neg,E_neg[-1])
+
+shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(times,flnum,dt1600, left_gfr, right_gfr)
+
+quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_ind, flag = 0)
+
+print(quartermaxtim)
 
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
@@ -311,3 +320,6 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   gfr_trans,  E_pos, E_neg, time_E, 
                   low_hxr=15500, high_hxr=16500,  period_flag = 0)
 
+file='mid2shear'
+
+np.savez(file,shear_ang_left,shear_ang_right,right_gfr,left_gfr)
