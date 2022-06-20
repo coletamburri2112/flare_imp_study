@@ -326,11 +326,6 @@ quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr, timelab,
 print(quartermaxtim)
 
 
-E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
-                                                   distneg_med, timelab, 
-                                                   hmi_dat, pos_rem, neg_rem, 
-                                                   flnum, dt1600, times,
-                                                   startind=gfr_trans)
 
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
