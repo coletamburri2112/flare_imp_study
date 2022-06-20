@@ -6,9 +6,11 @@ Created on Wed Mar  9 12:15:45 2022
 @author: owner
 """
 import fl_funcs
+import numpy as np
 from fl_funcs import exponential
 from fl_funcs import exponential_neg
-import numpy as np
+from scipy.io import readsav
+import time
 
 year = 2013
 mo = 10
@@ -56,9 +58,9 @@ pil_mask_c, ivs, dvs, hmik = fl_funcs.pil_gen(pil_mask_c, hmi_dat)
 
 print("Separation values determination.")
 
-aia8_pos, aia8_neg = fl_funcs.mask_sep(aia_step8, hmi_dat)
+aia8_pos_step, aia8_neg_step = fl_funcs.mask_sep(aia_step8, hmi_dat)
 
-pos_rem0, neg_rem0 = fl_funcs.spur_removal_sep2(aia8_pos, aia8_neg,
+pos_rem0, neg_rem0 = fl_funcs.spur_removal_sep2(aia8_pos_step, aia8_neg_step,
                                                 jhi=500, jlo=325, khi=475,
                                                 klo=400, jhi2=500, jlo2=250,
                                                 khi2=500, klo2=325)
@@ -125,7 +127,7 @@ startin, peakin, endin, times, s304, e304, filter_304, med304, std304, \
                                         flnum, start304, peak304, end304,
                                         times304, curves304)
 
-posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos, aia8_neg,
+posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos_step, aia8_neg_step,
                                                      aiadat, nt)
 
 print("Determining the regions of separation and elongation.")
@@ -243,10 +245,10 @@ posxhi = xlim1_pos
 
 # Isolate ribbons appropriately for shear analysis
 aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
-    shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y, negylow=negylow,
+    shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y, negylow=negylow,
                            negyhi=negyhi, posylow=posylow, posyhi=posyhi,
                            negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
-                           posxhi=posxhi)
+                           posxhi=posxhi,flag = 1)
 
 # Left and right coordinates of positive and negative ribbons
 lr_coord_neg_shear, lr_coord_pos_shear = \
@@ -299,6 +301,12 @@ E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
                                                    flnum, dt1600, times,
                                                    startind=gfr_trans)
 
+shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(times,flnum,dt1600, left_gfr, right_gfr)
+
+quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_ind, flag = 0)
+
+print(quartermaxtim)
+
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f,
@@ -311,3 +319,6 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   gfr_trans, E_pos, E_neg, time_E, low_hxr=6100, 
                   high_hxr=7200,  period_flag = 0)
 
+file='low2shear'
+
+np.savez(file,shear_ang_left,shear_ang_right,right_gfr,left_gfr)

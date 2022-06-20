@@ -4046,11 +4046,9 @@ def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx, fl
 
     idx = find_nearest_idx(gfr[transtime:],minmaxavg)
         
-    quartermaxtime = timelab[transtime+idx] - timelab[transtime]
+    quartermax_time = timelab[transtime+idx] - timelab[transtime]
     
-    quartermax_min = quartermaxtime/60.
-    
-    return quartermax_min
+    return quartermax_time
     
 
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
@@ -4248,8 +4246,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                                        style='normal', size=20)
     ax2.legend(prop=font, fontsize=20)    
     ax2_0 = ax2.twinx()
-    lns2 = ax2_0.plot(dt1600[gfr_trans:-1], E_pos, '--rx', label = '$E_{pos}$')
-    lns3 = ax2_0.plot(dt1600[gfr_trans:-1], E_neg, '--bx', label = '$E_{neg}$')
+    lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, '--rx', label = '$E_{pos}$')
+    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, '--bx', label = '$E_{neg}$')
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 

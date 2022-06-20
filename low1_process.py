@@ -6,6 +6,7 @@ Created on Wed Mar  9 12:15:45 2022
 @author: owner
 """
 import fl_funcs
+import numpy as np
 from fl_funcs import exponential
 from fl_funcs import exponential_neg
 from scipy.io import readsav
@@ -287,9 +288,9 @@ E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
 
 shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(times,flnum,dt1600, left_gfr, right_gfr)
 
-quartermax_min = fl_funcs.quartermax_min(gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_idx, flag = 0)
+quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_ind, flag = 0)
 
-print(quartermax_min)
+print(quartermaxtim)
 
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
@@ -303,3 +304,6 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   gfr_trans, E_pos, E_neg, time_E,
                   low_hxr=0, high_hxr=800,  period_flag = 0)
 
+file='low1shear'
+
+np.savez(file,shear_ang_left,shear_ang_right,right_gfr,left_gfr)
