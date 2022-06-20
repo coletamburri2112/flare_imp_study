@@ -4225,7 +4225,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1.set_xlim([dt1600[0], dt1600[-1]])
 
 
-    lns1 = ax2.plot(dt1600[gfr_trans:], GFR[gfr_trans:], c='green', marker='o',
+    lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c='green', marker='o',
                     label = 'GFR')
 
 
@@ -4243,7 +4243,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax2.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     font = font_manager.FontProperties(family='Times New Roman',
-                                       style='normal', size=20)
+                                       style='normal', size=20) 
     ax2.legend(prop=font, fontsize=20)    
     ax2_0 = ax2.twinx()
     lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, '--rx', label = '$E_{pos}$')

@@ -266,7 +266,7 @@ guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
                                                  pil_left_near_pos_shear,
                                                  pil_right_near_neg_shear,
                                                  pil_left_near_neg_shear,
-                                                 sortedpil)
+                                                 sortedpil, fl_funcs.curve_length)
 
 # Guide field ratio to the right and left edges of ribbons
 left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
