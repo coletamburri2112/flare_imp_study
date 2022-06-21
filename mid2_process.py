@@ -247,7 +247,7 @@ aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
     shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y, negylow=negylow,
                            negyhi=negyhi, posylow=posylow, posyhi=posyhi,
                            negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
-                           posxhi=posxhi)
+                           posxhi=posxhi, flag = 1)
 
 # Left and right coordinates of positive and negative ribbons
 lr_coord_neg_shear, lr_coord_pos_shear = \
