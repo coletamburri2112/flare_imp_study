@@ -3680,7 +3680,7 @@ def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
 
 def guidefieldlen_alt(pil_right_near_pos_shear, pil_left_near_pos_shear,
                   pil_right_near_neg_shear, pil_left_near_neg_shear,
-                  sortedpil, flag='posright'):
+                  sortedpil, curve_length, flag='posright'):
     """
     Find length along the axis of the guide field, the PIL-parallel component
     of magnetic field - alternative, tracking opposite ends of ribbons.
