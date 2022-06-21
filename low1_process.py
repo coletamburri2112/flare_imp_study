@@ -284,7 +284,8 @@ gfr_trans = 26
 E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
                                                    distneg_med, timelab, 
                                                    hmi_dat, pos_rem, neg_rem, 
-                                                   flnum, dt1600, times)
+                                                   flnum, dt1600, times,
+                                                   startind=gfr_trans)
 
 shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(times,flnum,dt1600, left_gfr, right_gfr)
 
