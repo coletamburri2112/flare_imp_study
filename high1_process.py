@@ -267,7 +267,7 @@ guide = fl_funcs.guidefieldlen_alt(pil_right_near_pos_shear,
                                                  pil_left_near_pos_shear,
                                                  pil_right_near_neg_shear,
                                                  pil_left_near_neg_shear,
-                                                 sortedpil)
+                                                 sortedpil, fl_funcs.curve_length,'posleft')
 
 # Guide field ratio to the right and left edges of ribbons
 gfr= fl_funcs.gfrcalc_alt(guide, distneg_med, distpos_med)
@@ -321,3 +321,6 @@ fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
                   gfr_trans, E_pos, E_neg, time_E, 
                   low_hxr=3500, high_hxr=4500,  period_flag = 0)
 
+file='high1shear'
+
+np.savez(file,shear_ang_left,shear_ang_right,gfr)
