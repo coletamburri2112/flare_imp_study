@@ -325,4 +325,4 @@ fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
 
 file='high2shear'
 
-np.savez(file,shear_ang_left,shear_ang_right,right_gfr,left_gfr)
+np.savez(file,shear_ang_left,shear_ang_right,gfr)

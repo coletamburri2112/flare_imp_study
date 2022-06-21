@@ -292,7 +292,7 @@ raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr,
 
 indstrt_sep = 1
 indstrt_elon = 1
-gfr_trans = 5
+gfr_trans = 19
 # Electric field computation
 
 E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
