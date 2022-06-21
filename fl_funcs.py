@@ -4231,7 +4231,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax2.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=25)
     ax2.set_title('Magnetic Shear, Reconnecting Electric Field Strength', font='Times New Roman', fontsize=30)
-    ax2.set_ylim([0,np.nanmax(GFR)+2])
+    ax2.set_ylim([0,np.nanmax(GFR[gfr_trans:])+2])
     ax2.grid()
 
     ax2.set_xlim([dt1600[0], dt1600[-1]])
