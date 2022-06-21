@@ -3320,7 +3320,7 @@ def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
                            pt_range=[-2, -1, 1, 2], poscrit=6, negcrit=6,
                            negylow=400, negyhi=0, negxlow=300,
                            negxhi=400, posylow=0, posyhi=0,
-                           posxlow=350, posxhi=0):
+                           posxlow=350, posxhi=0, flag=0):
     """
     Isolates ribbons with the shear algorithm in mind.
 
@@ -3367,6 +3367,9 @@ def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
     posxhi : int, optional
         High x-dimension of image to search through, positive ribbon. The
         default is 0.
+    flag : int, optional
+        If 0, values for limits in x and y are set based on the median values.
+        If 1, values for limits in x and y are set via the function inputs.
 
     Returns
     -------
@@ -3381,15 +3384,16 @@ def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
     aia_pos_rem_shear = np.zeros(np.shape(aia8_pos))
     aia_neg_rem_shear = np.zeros(np.shape(aia8_neg))
 
-    negylow = int(round(med_y) - 100)
-    negyhi = int(round(med_y) + 100)
-    negxlow = int(round(med_x) - 100)
-    negxhi = int(round(med_y) + 100)
-
-    posylow = int(round(med_y) - 100)
-    posyhi = int(round(med_y) + 100)
-    posxlow = int(round(med_x) - 100)
-    posxhi = int(round(med_y) + 100)
+    if flag == 0:
+        negylow = int(round(med_y) - 100)
+        negyhi = int(round(med_y) + 100)
+        negxlow = int(round(med_x) - 100)
+        negxhi = int(round(med_x) + 100)
+    
+        posylow = int(round(med_y) - 100)
+        posyhi = int(round(med_y) + 100)
+        posxlow = int(round(med_x) - 100)
+        posxhi = int(round(med_x) + 100)
 
     # Search through negative ribbon and remove spur points.
     for i in range(len(neg_rem_shear)):
@@ -3556,8 +3560,10 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
         [len(lr_coord_pos_shear), len(ivs_sort)])
     right_pil_dist_pos_shear = np.zeros([len(lr_coord_pos_shear),
                                          len(ivs_sort)])
+    
     pil_left_near_pos_shear = np.zeros([len(left_pil_dist_pos_shear), 3])
     pil_right_near_pos_shear = np.zeros([len(right_pil_dist_pos_shear), 3])
+    
     left_pil_dist_neg_shear = np.zeros(
         [len(lr_coord_neg_shear), len(ivs_sort)])
     right_pil_dist_neg_shear = np.zeros([len(lr_coord_neg_shear),
@@ -3575,6 +3581,17 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
             right_pil_dist_pos_shear[i, j] = np.sqrt((right_x - ivs_sort[j])**2
                                                      + (right_y -
                                                         dvs_sort[j])**2)
+            
+    # Arrays of distances from all negative ribbon points to all PIL points, in
+    # each dimension
+    for i in range(len(lr_coord_neg_shear)):
+        left_x, left_y, right_x, right_y = lr_coord_neg_shear[i]
+        for j in range(len(ivs_sort)):
+            left_pil_dist_neg_shear[i, j] = np.sqrt((left_x - ivs_sort[j])**2 +
+                                                    (left_y - dvs_sort[j])**2)
+            right_pil_dist_neg_shear[i, j] = np.sqrt((right_x - ivs_sort[j])**2
+                                                     + (right_y -
+                                                        dvs_sort[j])**2)
 
     # Find smallest distance, and the corresponding PIL point
     for i in range(len(left_pil_dist_pos_shear)):
@@ -3588,17 +3605,6 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
                        np.min(right_pil_dist_neg_shear[j]))
         pil_right_near_neg_shear[j, :] = [ivs_sort[ind[0][0]],
                                           dvs_sort[ind[0][0]], ind[0][0]]
-
-    # Arrays of distances from all negative ribbon points to all PIL points, in
-    # each dimension
-    for i in range(len(lr_coord_neg_shear)):
-        left_x, left_y, right_x, right_y = lr_coord_neg_shear[i]
-        for j in range(len(ivs_sort)):
-            left_pil_dist_neg_shear[i, j] = np.sqrt((left_x - ivs_sort[j])**2 +
-                                                    (left_y - dvs_sort[j])**2)
-            right_pil_dist_neg_shear[i, j] = np.sqrt((right_x - ivs_sort[j])**2
-                                                     + (right_y -
-                                                        dvs_sort[j])**2)
 
     # Find smallest distance, and the corresponding PIL point
     for i in range(len(left_pil_dist_neg_shear)):
@@ -3619,7 +3625,7 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
 
 def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
                   pil_right_near_neg_shear, pil_left_near_neg_shear,
-                  sortedpil):
+                  sortedpil,curve_length):
     """
     Find length along the axis of the guide field, the PIL-parallel component
     of magnetic field.
@@ -3674,7 +3680,7 @@ def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
 
 def guidefieldlen_alt(pil_right_near_pos_shear, pil_left_near_pos_shear,
                   pil_right_near_neg_shear, pil_left_near_neg_shear,
-                  sortedpil, flag='posright'):
+                  sortedpil, curve_length, flag='posright'):
     """
     Find length along the axis of the guide field, the PIL-parallel component
     of magnetic field - alternative, tracking opposite ends of ribbons.
@@ -4040,11 +4046,9 @@ def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx, fl
 
     idx = find_nearest_idx(gfr[transtime:],minmaxavg)
         
-    quartermaxtime = timelab[transtime+idx] - timelab[transtime]
+    quartermax_time = timelab[transtime+idx] - timelab[transtime]
     
-    quartermax_min = quartermaxtime/60.
-    
-    return quartermax_min
+    return quartermax_time
     
 
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
@@ -4221,13 +4225,13 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1.set_xlim([dt1600[0], dt1600[-1]])
 
 
-    lns1 = ax2.plot(dt1600[gfr_trans:], GFR[gfr_trans:], c='green', marker='o',
+    lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c='green', marker='o',
                     label = 'GFR')
 
 
     ax2.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=25)
     ax2.set_title('Magnetic Shear, Reconnecting Electric Field Strength', font='Times New Roman', fontsize=30)
-    ax2.set_ylim([0,np.nanmax(GFR)+2])
+    ax2.set_ylim([0,np.nanmax(GFR[gfr_trans:])+2])
     ax2.grid()
 
     ax2.set_xlim([dt1600[0], dt1600[-1]])
@@ -4239,11 +4243,11 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax2.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     font = font_manager.FontProperties(family='Times New Roman',
-                                       style='normal', size=20)
+                                       style='normal', size=20) 
     ax2.legend(prop=font, fontsize=20)    
     ax2_0 = ax2.twinx()
-    lns2 = ax2_0.plot(dt1600[gfr_trans:-1], E_pos, '--rx', label = '$E_{pos}$')
-    lns3 = ax2_0.plot(dt1600[gfr_trans:-1], E_neg, '--bx', label = '$E_{neg}$')
+    lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, '--rx', label = '$E_{pos}$')
+    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, '--bx', label = '$E_{neg}$')
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 

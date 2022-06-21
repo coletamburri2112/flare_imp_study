@@ -6,6 +6,7 @@ Created on Wed Mar  9 12:15:45 2022
 @author: owner
 """
 import fl_funcs
+import numpy as np
 from fl_funcs import exponential
 from fl_funcs import exponential_neg
 from scipy.io import readsav
@@ -55,10 +56,10 @@ pil_mask_c, ivs, dvs, hmik = fl_funcs.pil_gen(pil_mask_c, hmi_dat)
 
 print("Separation values determination.")
 
-aia8_pos, aia8_neg = fl_funcs.mask_sep(aia_step8, hmi_dat)
+aia8_pos_step, aia8_neg_step = fl_funcs.mask_sep(aia_step8, hmi_dat)
 
 distpos_med, distpos_mean, distneg_med, distpos_mean \
-    = fl_funcs.separation(aia_step8, ivs, dvs, aia8_pos, aia8_neg)
+    = fl_funcs.separation(aia_step8, ivs, dvs, aia8_pos_step, aia8_neg_step)
 
 print("Elongation values determination.")
 
@@ -114,7 +115,7 @@ startin, peakin, endin, times, s304, e304, filter_304, med304, std304, \
                                         flnum, start304, peak304, end304,
                                         times304, curves304)
 
-posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos, aia8_neg,
+posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos_step, aia8_neg_step,
                                                      aiadat, nt)
 
 print("Determining the regions of separation and elongation.")
@@ -218,6 +219,8 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
 
 print("Begin determination of shear.")
 
+
+
 # Establish limits for ribbons corresponding to shear code.
 negylow = ylim0_neg
 negyhi = ylim1_neg
@@ -231,10 +234,10 @@ posxhi = xlim1_pos
 
 # Isolate ribbons appropriately for shear analysis
 aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
-    shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y, negylow=negylow,
+    shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y, negylow=negylow,
                            negyhi=negyhi, posylow=posylow, posyhi=posyhi,
                            negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
-                           posxhi=posxhi)
+                           posxhi=posxhi, flag=1)
 
 # Left and right coordinates of positive and negative ribbons
 lr_coord_neg_shear, lr_coord_pos_shear = \
@@ -252,7 +255,7 @@ guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
                                                  pil_left_near_pos_shear,
                                                  pil_right_near_neg_shear,
                                                  pil_left_near_neg_shear,
-                                                 sortedpil)
+                                                 sortedpil, fl_funcs.curve_length)
 
 # Guide field ratio to the right and left edges of ribbons
 left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
@@ -276,6 +279,20 @@ indstrt_sep = 25
 indstrt_elon = 1
 gfr_trans = 26
 
+# Electric field computation
+
+E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
+                                                   distneg_med, timelab, 
+                                                   hmi_dat, pos_rem, neg_rem, 
+                                                   flnum, dt1600, times,
+                                                   startind=gfr_trans)
+
+shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(times,flnum,dt1600, left_gfr, right_gfr)
+
+quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_ind, flag = 0)
+
+print(quartermaxtim)
+
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
                   dt304, timelab, conv_f,
@@ -288,10 +305,6 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   gfr_trans, E_pos, E_neg, time_E,
                   low_hxr=0, high_hxr=800,  period_flag = 0)
 
-# Electric field computation
+file='low1shear'
 
-E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
-                                                   distneg_med, timelab, 
-                                                   hmi_dat, pos_rem, neg_rem, 
-                                                   flnum, dt1600, times)
-
+np.savez(file,shear_ang_left,shear_ang_right,right_gfr,left_gfr)
