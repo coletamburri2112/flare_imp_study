@@ -57,6 +57,7 @@ import matplotlib.dates as mdates
 from astropy.convolution import convolve, Gaussian2DKernel
 import time as timepkg
 from matplotlib import font_manager
+from matplotlib.ticker import MaxNLocator
 
 
 def conv_facts():
@@ -4329,6 +4330,19 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1_0.yaxis.set_tick_params(labelsize=24)
     ax2_0.xaxis.set_tick_params(labelsize=24)
     ax2_0.yaxis.set_tick_params(labelsize=24)
+    
+    ax1.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax1.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax2.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax2.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax3.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax3.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax4.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax4.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax1_0.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax1_0.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax2_0.xaxis.set_major_locator(MaxNLocator(5)) 
+    ax2_0.xaxis.set_major_locator(MaxNLocator(5)) 
     
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
