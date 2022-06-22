@@ -4212,16 +4212,15 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1.grid()
     lns = lns1+lns2+lns3+lns4
     labs = [k.get_label() for k in lns]
-    font = font_manager.FontProperties(family='Times New Roman',
-                                       style='normal', size=16)
+    font = font_manager.FontProperties(style='normal', size=20)
     ax1.legend(lns, labs, prop=font, fontsize=20, loc='lower center')
     ax1.set_ylabel('EUV Normalized Light Curves',
-                   font='Times New Roman', fontsize=25)
+                   fontsize=35)
     ax1_0.set_ylabel(
-        'HXR Flux [$cts* s^{-1}* cm^{-2}* keV^{-1}$]', font='Times New Roman',
-        fontsize=25)
+        'HXR Flux [$cts* s^{-1}* cm^{-2}* keV^{-1}$]',
+        fontsize=35)
     ax1.set_title('Chromospheric and HXR Light Curves',
-                  font='Times New Roman', fontsize=30)
+                  fontsize=40)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
 
 
@@ -4229,8 +4228,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                     label = 'GFR')
 
 
-    ax2.set_ylabel('GFR Proxy', font='Times New Roman', fontsize=25)
-    ax2.set_title('Magnetic Shear, Reconnecting Electric Field Strength', font='Times New Roman', fontsize=30)
+    ax2.set_ylabel('GFR Proxy', fontsize=35)
+    ax2.set_title('Magnetic Shear, Reconnecting Electric Field Strength', fontsize=40)
     ax2.set_ylim([0,np.nanmax(GFR[gfr_trans:])+2])
     ax2.grid()
 
@@ -4242,8 +4241,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                 label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
     ax2.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
-    font = font_manager.FontProperties(family='Times New Roman',
-                                       style='normal', size=20) 
+    font = font_manager.FontProperties(style='normal', size=20) 
     ax2.legend(prop=font, fontsize=20)    
     ax2_0 = ax2.twinx()
     lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, '--rx', label = '$E_{pos}$')
@@ -4251,17 +4249,15 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax2_0.set_ylabel('Electric Field [V/cm]',font='Times New Roman',
-                  fontsize=25)
+    ax2_0.set_ylabel('Electric Field [V/cm]',
+                  fontsize=35)
 
 
-    font = font_manager.FontProperties(family='Times New Roman',
-                                       style='normal', size=20)
+    font = font_manager.FontProperties(style='normal', size=20)
 
     lns = lns1+lns2+lns3
     labs = [k.get_label() for k in lns]
-    font = font_manager.FontProperties(family='Times New Roman',
-                                       style='normal', size=16)
+    font = font_manager.FontProperties(style='normal', size=16)
     ax2.legend(lns, labs, prop=font, fontsize=20)
 
     # regions of separation/elongation make a little busy?
@@ -4284,9 +4280,9 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax3.grid()
     ax3.set_ylabel(
-        'Parallel PIL Distance [Mm]', font='Times New Roman', fontsize=25)
+        'Parallel PIL Distance [Mm]', fontsize=35)
     ax3.set_title('Ribbon Elongation',
-                  font='Times New Roman', fontsize=30)
+                  fontsize=40)
 
     ax3.set_xlim([dt1600[0], dt1600[-1]])
 
@@ -4297,8 +4293,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                 label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
     ax3.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
-    font = font_manager.FontProperties(family='Times New Roman',
-                                       style='normal', size=20)
+    font = font_manager.FontProperties(style='normal', size=20)
 
     ax3.legend(prop=font, fontsize=20)
 
@@ -4310,9 +4305,9 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
              c='blue', markersize=6)
 
     ax4.set_ylabel(
-        'Perpendicular PIL Distance [Mm]', font='Times New Roman', fontsize=25)
+        'Perpendicular PIL Distance [Mm]', fontsize=35)
     ax4.set_title('Ribbon Separation',
-                  font='Times New Roman', fontsize=30)
+                  fontsize=40)
 
     ax4.set_xlim([dt1600[0], dt1600[-1]])
 
@@ -4324,8 +4319,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     ax4.grid()
-    ax4.set_xlabel('Time [DD HH:MM]', font='Times New Roman',
-                   fontsize=25)
+    ax4.set_xlabel('Time [DD HH:MM]',
+                   fontsize=35)
     
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
