@@ -4006,20 +4006,16 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     return E_pos, E_neg, E_rat, time_E
 
 def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag = 0):
-    ang_prep_left = 1/left_gfr
-    ang_prep_right = 1/right_gfr
+    ang_prep = (left_gfr+right_gfr)/2
     
-    shear_ang_left = np.arctan(ang_prep_left)*180./np.pi
-    shear_ang_right = np.arctan(ang_prep_right)*180./np.pi
+    shear_ang = np.arctan(1/ang_prep)*180./np.pi
     
     timelab = range(0, 24*len(times), 24)
     s = str(dt1600[0])
     fig, ax = plt.subplots(figsize=(13, 7))
     if flag == 0:
-        ax.plot(timelab, shear_ang_left, c='green', marker='o',
+        ax.plot(timelab, shear_ang, c='green', marker='o',
                 label='Shear Angle, Left')
-
-        ax.plot(timelab, shear_ang_right, c='black', marker='o', label='Shear Angle, Right')
     elif flag == 1:
         ax.plot(timelab, right_gfr, c='black', marker='o', label='GFR proxy')
         ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
@@ -4031,7 +4027,7 @@ def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag = 0):
     ax.legend(fontsize=15)
     fig.savefig(str(flnum) + '_shear_angle.png')
     
-    return shear_ang_left, shear_ang_right
+    return shear_ang
 
 def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx, flag = 0):
     if flag == 0:
@@ -4215,10 +4211,10 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     font = font_manager.FontProperties(style='normal', size=20)
     ax1.legend(lns, labs, prop=font, fontsize=20, loc='lower center')
     ax1.set_ylabel('EUV Normalized Light Curves',
-                   fontsize=35)
+                   fontsize=30)
     ax1_0.set_ylabel(
         'HXR Flux [$cts* s^{-1}* cm^{-2}* keV^{-1}$]',
-        fontsize=35)
+        fontsize=30)
     ax1.set_title('Chromospheric and HXR Light Curves',
                   fontsize=40)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
@@ -4228,7 +4224,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                     label = 'GFR')
 
 
-    ax2.set_ylabel('GFR Proxy', fontsize=35)
+    ax2.set_ylabel('GFR Proxy', fontsize=30)
     ax2.set_title('Magnetic Shear, Reconnecting Electric Field Strength', fontsize=40)
     ax2.set_ylim([0,np.nanmax(GFR[gfr_trans:])+2])
     ax2.grid()
@@ -4250,7 +4246,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
     ax2_0.set_ylabel('Electric Field [V/cm]',
-                  fontsize=35)
+                  fontsize=30)
 
 
     font = font_manager.FontProperties(style='normal', size=20)
@@ -4280,7 +4276,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax3.grid()
     ax3.set_ylabel(
-        'Parallel PIL Distance [Mm]', fontsize=35)
+        'Parallel PIL Distance [Mm]', fontsize=30)
     ax3.set_title('Ribbon Elongation',
                   fontsize=40)
 
@@ -4305,7 +4301,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
              c='blue', markersize=6)
 
     ax4.set_ylabel(
-        'Perpendicular PIL Distance [Mm]', fontsize=35)
+        'Perpendicular PIL Distance [Mm]', fontsize=30)
     ax4.set_title('Ribbon Separation',
                   fontsize=40)
 
@@ -4320,7 +4316,19 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     ax4.grid()
     ax4.set_xlabel('Time [DD HH:MM]',
-                   fontsize=35)
+                   fontsize=30)
+    ax1.xaxis.set_tick_params(labelsize=24)
+    ax1.yaxis.set_tick_params(labelsize=24)
+    ax2.xaxis.set_tick_params(labelsize=24)
+    ax2.yaxis.set_tick_params(labelsize=24)
+    ax3.xaxis.set_tick_params(labelsize=24)
+    ax3.yaxis.set_tick_params(labelsize=24)
+    ax4.xaxis.set_tick_params(labelsize=24)
+    ax4.yaxis.set_tick_params(labelsize=24)
+    ax1_0.xaxis.set_tick_params(labelsize=24)
+    ax1_0.yaxis.set_tick_params(labelsize=24)
+    ax2_0.xaxis.set_tick_params(labelsize=24)
+    ax2_0.yaxis.set_tick_params(labelsize=24)
     
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
