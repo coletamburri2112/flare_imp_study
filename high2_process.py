@@ -304,7 +304,7 @@ E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
 E_pos = np.append(E_pos,E_pos[-1])
 E_neg = np.append(E_neg,E_neg[-1])
 
-shear_ang_left, shear_ang_right = fl_funcs.shear_to_angle(times,flnum,dt1600, gfr, gfr)
+shear_ang = fl_funcs.shear_to_angle(times,flnum,dt1600, gfr, gfr)
 
 quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, gfr, gfr, timelab, fl_funcs.find_nearest_ind, flag = 0)
 
@@ -325,4 +325,4 @@ fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
 
 file='high2shear'
 
-np.savez(file,shear_ang_left,shear_ang_right,gfr)
+np.savez(file,shear_ang,gfr)
