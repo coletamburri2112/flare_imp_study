@@ -4234,7 +4234,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
 
     ax2.set_ylabel('GFR Proxy', fontsize=30)
-    ax2.set_title('Magnetic Shear, Reconnecting Electric Field Strength', fontsize=40)
+    ax2.set_title('Magnetic Shear, Reconnection Electric Field Strength', fontsize=40)
     ax2.set_ylim([0,np.nanmax(GFR[gfr_trans:])+2])
     ax2.grid()
 
@@ -4324,22 +4324,22 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     ax4.grid()
-    ax4.set_xlabel('Time [DD HH:MM]',
+    ax4.set_xlabel('Time [HH:MM]',
                    fontsize=30)
     
-    if tick_space == 1:
-        ax1.set_xticks(dt1600[2::4])
-        ax2.set_xticks(dt1600[2::4])
-        ax3.set_xticks(dt1600[2::4])
-        ax4.set_xticks(dt1600[2::4])
-        ax1_0.set_xticks(dt1600[2::4])
-        ax2_0.set_xticks(dt1600[2::4])
-        ax1.set_xticklabels(dt1600_1[2::4])
-        ax2.set_xticklabels(dt1600_1[2::4])
-        ax3.set_xticklabels(dt1600_1[2::4])
-        ax4.set_xticklabels(dt1600_1[2::4])
-        ax1_0.set_xticklabels(dt1600_1[2::4])
-        ax2_0.set_xticklabels(dt1600_1[2::4])
+    if tick_space > 0:
+        ax1.set_xticks(dt1600[2::tick_space])
+        ax2.set_xticks(dt1600[2::tick_space])
+        ax3.set_xticks(dt1600[2::tick_space])
+        ax4.set_xticks(dt1600[2::tick_space])
+        ax1_0.set_xticks(dt1600[2::tick_space])
+        ax2_0.set_xticks(dt1600[2::tick_space])
+        ax1.set_xticklabels(dt1600_1[2::tick_space])
+        ax2.set_xticklabels(dt1600_1[2::tick_space])
+        ax3.set_xticklabels(dt1600_1[2::tick_space])
+        ax4.set_xticklabels(dt1600_1[2::tick_space])
+        ax1_0.set_xticklabels(dt1600_1[2::tick_space])
+        ax2_0.set_xticklabels(dt1600_1[2::tick_space])
 
 
     ax1.xaxis.set_tick_params(labelsize=24)
