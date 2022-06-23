@@ -4327,19 +4327,19 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.set_xlabel('Time [HH:MM]',
                    fontsize=30)
     
-    if tick_space == 1:
-        ax1.set_xticks(dt1600[2::8])
-        ax2.set_xticks(dt1600[2::8])
-        ax3.set_xticks(dt1600[2::8])
-        ax4.set_xticks(dt1600[2::8])
-        ax1_0.set_xticks(dt1600[2::8])
-        ax2_0.set_xticks(dt1600[2::8])
-        ax1.set_xticklabels(dt1600_1[2::8])
-        ax2.set_xticklabels(dt1600_1[2::8])
-        ax3.set_xticklabels(dt1600_1[2::8])
-        ax4.set_xticklabels(dt1600_1[2::8])
-        ax1_0.set_xticklabels(dt1600_1[2::8])
-        ax2_0.set_xticklabels(dt1600_1[2::8])
+    if tick_space > 0:
+        ax1.set_xticks(dt1600[2::tick_space])
+        ax2.set_xticks(dt1600[2::tick_space])
+        ax3.set_xticks(dt1600[2::tick_space])
+        ax4.set_xticks(dt1600[2::tick_space])
+        ax1_0.set_xticks(dt1600[2::tick_space])
+        ax2_0.set_xticks(dt1600[2::tick_space])
+        ax1.set_xticklabels(dt1600_1[2::tick_space])
+        ax2.set_xticklabels(dt1600_1[2::tick_space])
+        ax3.set_xticklabels(dt1600_1[2::tick_space])
+        ax4.set_xticklabels(dt1600_1[2::tick_space])
+        ax1_0.set_xticklabels(dt1600_1[2::tick_space])
+        ax2_0.set_xticklabels(dt1600_1[2::tick_space])
 
 
     ax1.xaxis.set_tick_params(labelsize=24)
