@@ -4058,7 +4058,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                   gfr_trans, E_pos, E_neg, time_E, low_hxr=0, high_hxr=800,
-                  period_flag=0, flag = 0):
+                  period_flag=0, flag = 0, tick_space = 0):
     """
     Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1), 
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
@@ -4155,6 +4155,14 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     None.
 
     """
+    
+    dt1600_1 = []
+    dt304_1 = []
+
+    for i in range(len(dt1600)):
+        dt1600_1.append(dt1600[i].strftime("%H:%M"))
+    for i in range(len(dt304)):
+        dt304_1.append(dt304[i].strftime("%H:%M"))
 
     min304 = min(filter_304[s304: e304])
     max304 = max(filter_304[s304: e304])
@@ -4177,9 +4185,9 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         GFR = right_gfr
 
     hxrmax0 = np.argmax(cspec_hxr_sum[low_hxr:high_hxr])
-    print(hxrmax0)
+
     hxrmaxt = fermitimes[hxrmax0]
-    print(hxrmaxt)
+
     hxrmax = find_nearest_ind(dt1600, hxrmaxt)
 
     max304_0 = np.nanargmax(filter_304)
@@ -4318,6 +4326,22 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.grid()
     ax4.set_xlabel('Time [DD HH:MM]',
                    fontsize=30)
+    
+    if tick_space == 1:
+        ax1.set_xticks(dt1600[2::4])
+        ax2.set_xticks(dt1600[2::4])
+        ax3.set_xticks(dt1600[2::4])
+        ax4.set_xticks(dt1600[2::4])
+        ax1_0.set_xticks(dt1600[2::4])
+        ax2_0.set_xticks(dt1600[2::4])
+        ax1.set_xticklabels(dt1600_1[2::4])
+        ax2.set_xticklabels(dt1600_1[2::4])
+        ax3.set_xticklabels(dt1600_1[2::4])
+        ax4.set_xticklabels(dt1600_1[2::4])
+        ax1_0.set_xticklabels(dt1600_1[2::4])
+        ax2_0.set_xticklabels(dt1600_1[2::4])
+
+
     ax1.xaxis.set_tick_params(labelsize=24)
     ax1.yaxis.set_tick_params(labelsize=24)
     ax2.xaxis.set_tick_params(labelsize=24)
@@ -4331,18 +4355,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax2_0.xaxis.set_tick_params(labelsize=24)
     ax2_0.yaxis.set_tick_params(labelsize=24)
     
-    ax1.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax1.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax2.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax2.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax3.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax3.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax4.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax4.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax1_0.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax1_0.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax2_0.xaxis.set_major_locator(MaxNLocator(5)) 
-    ax2_0.xaxis.set_major_locator(MaxNLocator(5)) 
+
+        
     
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
