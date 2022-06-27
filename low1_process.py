@@ -234,8 +234,8 @@ posxhi = xlim1_pos
 
 # Isolate ribbons appropriately for shear analysis
 aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
-    shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y, negylow=negylow,
-                           negyhi=negyhi, posylow=posylow, posyhi=posyhi,
+    shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y,
+                           negylow=negylow,negyhi=negyhi, posylow=posylow, posyhi=posyhi,
                            negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
                            posxhi=posxhi, flag=1)
 
@@ -255,7 +255,8 @@ guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
                                                  pil_left_near_pos_shear,
                                                  pil_right_near_neg_shear,
                                                  pil_left_near_neg_shear,
-                                                 sortedpil, fl_funcs.curve_length)
+                                                 sortedpil,
+                                                 fl_funcs.curve_length)
 
 # Guide field ratio to the right and left edges of ribbons
 left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
@@ -292,7 +293,9 @@ E_neg = np.append(E_neg,E_neg[-1])
 
 shear_ang = fl_funcs.shear_to_angle(times,flnum,dt1600, left_gfr, right_gfr)
 
-quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_ind, flag = 0)
+quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr,
+                                        timelab, fl_funcs.find_nearest_ind,
+                                        flag = 0)
 
 print(quartermaxtim)
 
