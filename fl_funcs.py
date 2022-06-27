@@ -3643,6 +3643,8 @@ def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
         Indices of PIL points nearest negative ribbon, leftmost extreme.
     sortedpil : arr
         Independent and dependent values of PIL, sorted along PIL.
+    curve_length : function
+        Function for determination of a curve length between two points.
 
     Returns
     -------
@@ -3805,7 +3807,8 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600, flag = 0):
         Guide field ratio, left edge of ribbons.
     flnum : int
         Flare number from RibbonDB database.
-
+    flag : int, optional
+        0 if traditional shear determination, 1 if antiparallel.  Default is 0.
     Returns
     -------
     None.
@@ -3927,6 +3930,46 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
 
 def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
                 flnum, dt1600, times, startind = 25):
+    """
+    
+
+    Parameters
+    ----------
+    conv_f : float
+        Conversion factor between pixels and Mm.
+    distpos : arr
+        Positive ribbon separation values.
+    distneg : arr
+        Negative ribbon separation values.
+    timelab : arr
+        Times corresponding 1600 A images.
+    hmi_dat : arr
+        SDO/HMI magnetogram image.
+    pos_rem : arr
+        Vetted ribbon images, positive polarity.
+    neg_rem : arr
+        Vetted ribbon images, negative polarity
+    flnum : int
+        RibbonDB event number
+    dt1600 : arr
+        Datetimes corresponding to 1600 A images.
+    times : arr
+        Times corresponding to 1600 A images.
+    startind : int, optional
+        End of transient period. The default is 25.
+
+    Returns
+    -------
+    E_pos : arr
+        Positive electric field time series.
+    E_neg : arr
+        Negative electric field time series.
+    E_rat : arr
+        Ratio of positive to negative electric field.
+    time_E : arr
+        Times corresponding to electric field stamps.
+
+    """
     
     hmi_pos = np.zeros(np.shape(hmi_dat))
     hmi_neg = np.zeros(np.shape(hmi_dat))
@@ -4006,7 +4049,31 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     
     return E_pos, E_neg, E_rat, time_E
 
-def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag = 0):
+def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag=0):
+    """
+    Determination of shear angle time series.
+
+    Parameters
+    ----------
+    times : arr
+        Times corresponding to 1600 angstrom images.
+    flnum : int
+        Flare number
+    dt1600 : arr
+        Datetime values corresponding to 1600 angstrom images.
+    left_gfr : arr
+        Time series of guide field ratio, left of AR.
+    right_gfr : arr
+        Time series of guide field ratio, right of AR
+    flag : int, optional
+        0 if traditional shear method, 1 if antiparallel.
+
+    Returns
+    -------
+    shear_ang : arr
+        Array of angles corresponding to determined shear.
+
+    """
     ang_prep = (left_gfr+right_gfr)/2
     
     shear_ang = np.arctan(1/ang_prep)*180./np.pi
@@ -4030,7 +4097,32 @@ def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag = 0):
     
     return shear_ang
 
-def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx, flag = 0):
+def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx,
+                   flag=0):
+    """
+    Determination of time to quarter-max of shear relative to minimum of shear.
+
+    Parameters
+    ----------
+    transtime : int
+        Number of points in transient.
+    right_gfr : arr
+        Guide field ratio, right of AR.
+    left_gfr : arr
+        Guide field ratio, left of AR.
+    timelab : arr
+        dt1600 time labels.
+    find_nearest_idx : function
+        Function to find index of array closest to a certain value.
+    flag : int, optional
+        0 if traditional shear determination, 1 if antiparallel.  Default is 0.
+
+    Returns
+    -------
+    quartermax_time : float
+        Minutes since flare start until the shear has reached 25% of max.
+
+    """
     if flag == 0:
         gfr = (right_gfr+left_gfr)/2
     if flag == 1:
@@ -4058,7 +4150,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                   gfr_trans, E_pos, E_neg, time_E, low_hxr=0, high_hxr=800,
-                  period_flag=0, flag = 0, tick_space = 0):
+                  period_flag=0, flag=0, tick_space=0):
     """
     Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1), 
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
@@ -4149,6 +4241,12 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         applied to Oct-13-2013 flare.
     period_flag : TYPE, optional
         DESCRIPTION. The default is 0.
+    flag : int, optional
+        0 (if traditional method of shear) or 1 (if antiparallel method of 
+        shear). The default is 0.
+    tick_space : int, optional
+        Flag, which, when nonzero and set to the number of ticks wanted on axis
+        labels, triggers that change; 0 otherwise, defaulting to matplotlib.
 
     Returns
     -------
@@ -4228,10 +4326,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   fontsize=40)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
 
-
     lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c='green', marker='o',
                     label = 'GFR')
-
 
     ax2.set_ylabel('GFR Proxy', fontsize=30)
     ax2.set_title('Magnetic Shear, Reconnection Electric Field Strength', fontsize=40)
@@ -4256,7 +4352,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax2_0.set_ylabel('Electric Field [V/cm]',
                   fontsize=30)
-
 
     font = font_manager.FontProperties(style='normal', size=20)
 
@@ -4341,7 +4436,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         ax1_0.set_xticklabels(dt1600_1[2::tick_space])
         ax2_0.set_xticklabels(dt1600_1[2::tick_space])
 
-
     ax1.xaxis.set_tick_params(labelsize=24)
     ax1.yaxis.set_tick_params(labelsize=24)
     ax2.xaxis.set_tick_params(labelsize=24)
@@ -4354,9 +4448,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1_0.yaxis.set_tick_params(labelsize=24)
     ax2_0.xaxis.set_tick_params(labelsize=24)
     ax2_0.yaxis.set_tick_params(labelsize=24)
-    
-
-        
     
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
