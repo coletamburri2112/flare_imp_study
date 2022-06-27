@@ -3390,7 +3390,7 @@ def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
         negyhi = int(round(med_y) + 100)
         negxlow = int(round(med_x) - 100)
         negxhi = int(round(med_x) + 100)
-    
+
         posylow = int(round(med_y) - 100)
         posyhi = int(round(med_y) + 100)
         posxlow = int(round(med_x) - 100)
@@ -3561,10 +3561,10 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
         [len(lr_coord_pos_shear), len(ivs_sort)])
     right_pil_dist_pos_shear = np.zeros([len(lr_coord_pos_shear),
                                          len(ivs_sort)])
-    
+
     pil_left_near_pos_shear = np.zeros([len(left_pil_dist_pos_shear), 3])
     pil_right_near_pos_shear = np.zeros([len(right_pil_dist_pos_shear), 3])
-    
+
     left_pil_dist_neg_shear = np.zeros(
         [len(lr_coord_neg_shear), len(ivs_sort)])
     right_pil_dist_neg_shear = np.zeros([len(lr_coord_neg_shear),
@@ -3582,7 +3582,7 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
             right_pil_dist_pos_shear[i, j] = np.sqrt((right_x - ivs_sort[j])**2
                                                      + (right_y -
                                                         dvs_sort[j])**2)
-            
+
     # Arrays of distances from all negative ribbon points to all PIL points, in
     # each dimension
     for i in range(len(lr_coord_neg_shear)):
@@ -3626,7 +3626,7 @@ def sheardists(lr_coord_pos_shear, lr_coord_neg_shear, ivs_sort, dvs_sort):
 
 def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
                   pil_right_near_neg_shear, pil_left_near_neg_shear,
-                  sortedpil,curve_length):
+                  sortedpil, curve_length):
     """
     Find length along the axis of the guide field, the PIL-parallel component
     of magnetic field.
@@ -3681,9 +3681,10 @@ def guidefieldlen(pil_right_near_pos_shear, pil_left_near_pos_shear,
 
     return guide_right, guide_left
 
+
 def guidefieldlen_alt(pil_right_near_pos_shear, pil_left_near_pos_shear,
-                  pil_right_near_neg_shear, pil_left_near_neg_shear,
-                  sortedpil, curve_length, flag='posright'):
+                      pil_right_near_neg_shear, pil_left_near_neg_shear,
+                      sortedpil, curve_length, flag='posright'):
     """
     Find length along the axis of the guide field, the PIL-parallel component
     of magnetic field - alternative, tracking opposite ends of ribbons.
@@ -3701,7 +3702,7 @@ def guidefieldlen_alt(pil_right_near_pos_shear, pil_left_near_pos_shear,
     sortedpil : arr
         Independent and dependent values of PIL, sorted along PIL.
     flag : str, optional
-        Ends of ribbons to check; either right positive/left negative or 
+        Ends of ribbons to check; either right positive/left negative or
         right negative/left positive.
 
     Returns
@@ -3732,6 +3733,7 @@ def guidefieldlen_alt(pil_right_near_pos_shear, pil_left_near_pos_shear,
             guide.append(curve_length(curvei))
 
     return guide
+
 
 def gfrcalc(guide_left, guide_right, distneg_med, distpos_med):
     """
@@ -3793,7 +3795,8 @@ def gfrcalc_alt(guide, distneg_med, distpos_med):
 
     return gfr
 
-def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600, flag = 0):
+
+def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600, flag=0):
     """
     Plots guide field ratio for right and left edges of ribbons.
 
@@ -3821,7 +3824,8 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600, flag = 0):
         ax.plot(timelab, right_gfr, c='red', marker='o',
                 label='GFR proxy, right')
 
-        ax.plot(timelab, left_gfr, c='blue', marker='o', label='GFR proxy, left')
+        ax.plot(timelab, left_gfr, c='blue', marker='o',
+                label='GFR proxy, left')
     elif flag == 1:
         ax.plot(timelab, right_gfr, c='blue', marker='o', label='GFR proxy')
         ax.set_xlabel('Time [s since '+s[5:-7]+']', font='Times New Roman',
@@ -3839,7 +3843,7 @@ def plt_gfr(times, right_gfr, left_gfr, flnum, dt1600, flag = 0):
 def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
                   high=800, ylo=1e-3, yhi=10):
     """
-    Processing of Fermi data in the 25-300 keV band (though applicable to 
+    Processing of Fermi data in the 25-300 keV band (though applicable to
     others), from a .sav file generated using the Fermi OSPEX database.
 
     Parameters
@@ -3928,10 +3932,11 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
 
     return raw_hxr_sum, cspec_hxr_sum, fermitimes
 
+
 def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
-                flnum, dt1600, times, startind = 25):
+                flnum, dt1600, times, startind=25):
     """
-    
+
 
     Parameters
     ----------
@@ -3970,84 +3975,86 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
         Times corresponding to electric field stamps.
 
     """
-    
+
     hmi_pos = np.zeros(np.shape(hmi_dat))
     hmi_neg = np.zeros(np.shape(hmi_dat))
     sum_pos = 0
     count_pos = 0
     sum_neg = 0
     count_neg = 0
-    
+
     s = str(dt1600[0])
-    
+
     pos_Mm_dist = conv_f*distpos[startind:]
     neg_Mm_dist = conv_f*distneg[startind:]
-    time_E = timelab[startind:]*60 #conversion to seconds
-    
+    time_E = timelab[startind:]*60  # conversion to seconds
+
     time_res = time_E[1] - time_E[0]
-    
+
     slab = s[startind:]
-    
+
     # velocities, in Mm/s
-    
-    pos_v_Mm = scipy.signal.medfilt(np.diff(pos_Mm_dist)/time_res, kernel_size=5)
-    neg_v_Mm = scipy.signal.medfilt(np.diff(neg_Mm_dist)/time_res, kernel_size=5)
-    
+
+    pos_v_Mm = scipy.signal.medfilt(np.diff(pos_Mm_dist)/time_res,
+                                    kernel_size=5)
+    neg_v_Mm = scipy.signal.medfilt(np.diff(neg_Mm_dist)/time_res,
+                                    kernel_size=5)
+
     # convert to m/s for SI units
-    
+
     pos_v = pos_v_Mm * 1e6
     neg_v = neg_v_Mm * 1e6
-    
+
     # setting velocities equal to zero because these are not real
     for i in range(len(pos_v)):
         if pos_v[i] < 0:
             pos_v[i] = 0
         if neg_v[i] < 0:
             neg_v[i] = 0
-    
-    for i in range(len(hmi_dat)):
-        for j in range(len(hmi_dat[0])):
-            if hmi_dat[i,j] > 0.0 and pos_rem[i,j] == 1:
-                hmi_pos[i,j] = hmi_dat[i,j]
-            
-            if hmi_dat[i,j] < 0.0 and neg_rem[i,j] == -1:
-                hmi_neg[i,j] = hmi_dat[i,j]
-                
-    for i in range(len(hmi_dat)):
-        for j in range(len(hmi_dat[0])):
-            if hmi_pos[i,j] > 0:
-                sum_pos += hmi_pos[i,j]
-                count_pos += 1
-            if hmi_neg[i,j] < 0:
-                sum_neg += hmi_neg[i,j]
-                count_neg += 1
-    
-    avg_B_pos = sum_pos/count_pos # in G
-    avg_B_neg = sum_neg/count_neg # in G
 
-    
-    E_pos = avg_B_pos*pos_v*1e-6 # in V/cm
-    E_neg = -avg_B_neg*neg_v*1e-6 # in V/cm
-    
+    for i in range(len(hmi_dat)):
+        for j in range(len(hmi_dat[0])):
+            if hmi_dat[i, j] > 0.0 and pos_rem[i, j] == 1:
+                hmi_pos[i, j] = hmi_dat[i, j]
+
+            if hmi_dat[i, j] < 0.0 and neg_rem[i, j] == -1:
+                hmi_neg[i, j] = hmi_dat[i, j]
+
+    for i in range(len(hmi_dat)):
+        for j in range(len(hmi_dat[0])):
+            if hmi_pos[i, j] > 0:
+                sum_pos += hmi_pos[i, j]
+                count_pos += 1
+            if hmi_neg[i, j] < 0:
+                sum_neg += hmi_neg[i, j]
+                count_neg += 1
+
+    avg_B_pos = sum_pos/count_pos  # in G
+    avg_B_neg = sum_neg/count_neg  # in G
+
+    E_pos = avg_B_pos*pos_v*1e-6  # in V/cm
+    E_neg = -avg_B_neg*neg_v*1e-6  # in V/cm
+
     E_rat = E_pos/E_neg
-    
-    fig,ax = plt.subplots(figsize=(20,7))
-    
-    ax.plot(time_E[0:-1]/60, E_pos, '--ro', label = '$E_{pos}$')
-    ax.plot(time_E[0:-1]/60, E_neg, '--bo', label = '$E_{neg}$')
-    ax.set_xlabel('Time [min since '+s[5:-7]+']',font = 'Times New Roman',
+
+    fig, ax = plt.subplots(figsize=(20, 7))
+
+    ax.plot(time_E[0:-1]/60, E_pos, '--ro', label='$E_{pos}$')
+    ax.plot(time_E[0:-1]/60, E_neg, '--bo', label='$E_{neg}$')
+    ax.set_xlabel('Time [min since '+s[5:-7]+']', font='Times New Roman',
                   fontsize=18)
-    ax.set_xlim([0,time_E[-1]/60])
+    ax.set_xlim([0, time_E[-1]/60])
     ax.grid()
-    ax.set_ylabel('Electric Field [V/cm]',font='Times New Roman',
+    ax.set_ylabel('Electric Field [V/cm]', font='Times New Roman',
                   fontsize=18)
-    ax.set_title('Reconnection Electric Field Strength',font='Times New Roman',
-                 fontsize=25)
+    ax.set_title('Reconnection Electric Field Strength',
+                 font='Times New Roman', fontsize=25)
     ax.legend()
-    
+
     fig.savefig(str(flnum) + '_E_field.png')
-    
+
     return E_pos, E_neg, E_rat, time_E
+
 
 def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag=0):
     """
@@ -4075,9 +4082,9 @@ def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag=0):
 
     """
     ang_prep = (left_gfr+right_gfr)/2
-    
+
     shear_ang = np.arctan(1/ang_prep)*180./np.pi
-    
+
     timelab = range(0, 24*len(times), 24)
     s = str(dt1600[0])
     fig, ax = plt.subplots(figsize=(13, 7))
@@ -4094,8 +4101,9 @@ def shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr, flag=0):
     ax.grid()
     ax.legend(fontsize=15)
     fig.savefig(str(flnum) + '_shear_angle.png')
-    
+
     return shear_ang
+
 
 def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx,
                    flag=0):
@@ -4127,18 +4135,18 @@ def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx,
         gfr = (right_gfr+left_gfr)/2
     if flag == 1:
         gfr = right_gfr
-        
+
     mingfr = np.nanmin(gfr[transtime:])
     maxgfr = np.nanmax(gfr[transtime:])
 
-    minmaxavg = mingfr+0.5*np.mean([mingfr,maxgfr])
+    minmaxavg = mingfr+0.5*np.mean([mingfr, maxgfr])
 
-    idx = find_nearest_idx(gfr[transtime:],minmaxavg)
-        
+    idx = find_nearest_idx(gfr[transtime:], minmaxavg)
+
     quartermax_time = timelab[transtime+idx] - timelab[transtime]
-    
+
     return quartermax_time
-    
+
 
 def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
@@ -4152,7 +4160,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   gfr_trans, E_pos, E_neg, time_E, low_hxr=0, high_hxr=800,
                   period_flag=0, flag=0, tick_space=0):
     """
-    Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1), 
+    Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1),
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
     proxy (panel 4, a measurement of shear).  the peak times for the Fermi HXR
     25-300 keV band, 304 Angstrom light curve, and 1600 Angstrom light curves
@@ -4242,7 +4250,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     period_flag : TYPE, optional
         DESCRIPTION. The default is 0.
     flag : int, optional
-        0 (if traditional method of shear) or 1 (if antiparallel method of 
+        0 (if traditional method of shear) or 1 (if antiparallel method of
         shear). The default is 0.
     tick_space : int, optional
         Flag, which, when nonzero and set to the number of ticks wanted on axis
@@ -4253,7 +4261,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     None.
 
     """
-    
+
     dt1600_1 = []
     dt304_1 = []
 
@@ -4278,7 +4286,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     if flag == 0:
         GFR = np.mean([right_gfr, left_gfr], axis=0)
     elif flag == 1:
-        # if the alterative version of GFR, take only right_gfr (the input 
+        # if the alterative version of GFR, take only right_gfr (the input
         # should just be gfr)
         GFR = right_gfr
 
@@ -4326,12 +4334,14 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   fontsize=40)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
 
-    lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c='green', marker='o',
-                    label = 'GFR')
+    lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c='green',
+                    marker='o',
+                    label='GFR')
 
     ax2.set_ylabel('GFR Proxy', fontsize=30)
-    ax2.set_title('Magnetic Shear, Reconnection Electric Field Strength', fontsize=40)
-    ax2.set_ylim([0,np.nanmax(GFR[gfr_trans:])+2])
+    ax2.set_title('Magnetic Shear, Reconnection Electric Field Strength',
+                  fontsize=40)
+    ax2.set_ylim([0, np.nanmax(GFR[gfr_trans:])+2])
     ax2.grid()
 
     ax2.set_xlim([dt1600[0], dt1600[-1]])
@@ -4342,16 +4352,16 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                 label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
     ax2.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
-    font = font_manager.FontProperties(style='normal', size=20) 
-    ax2.legend(prop=font, fontsize=20)    
+    font = font_manager.FontProperties(style='normal', size=20)
+    ax2.legend(prop=font, fontsize=20)
     ax2_0 = ax2.twinx()
-    lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, '--rx', label = '$E_{pos}$')
-    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, '--bx', label = '$E_{neg}$')
+    lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, '--rx', label='$E_{pos}$')
+    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, '--bx', label='$E_{neg}$')
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
     ax2_0.set_ylabel('Electric Field [V/cm]',
-                  fontsize=30)
+                     fontsize=30)
 
     font = font_manager.FontProperties(style='normal', size=20)
 
@@ -4397,7 +4407,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax3.legend(prop=font, fontsize=20)
 
-
     ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], '-o', c='red',
              markersize=6)
 
@@ -4421,7 +4430,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.grid()
     ax4.set_xlabel('Time [HH:MM]',
                    fontsize=30)
-    
+
     if tick_space > 0:
         ax1.set_xticks(dt1600[2::tick_space])
         ax2.set_xticks(dt1600[2::tick_space])
@@ -4448,7 +4457,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1_0.yaxis.set_tick_params(labelsize=24)
     ax2_0.xaxis.set_tick_params(labelsize=24)
     ax2_0.yaxis.set_tick_params(labelsize=24)
-    
+
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
             ax3.axvline(dt1600[i], c='green')
@@ -4458,7 +4467,6 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
             ax3.axvline(dt1600[k], c='green')
             ax3.axvline(dt1600[l], c='red')
             ax3.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
-
 
     fig.savefig(str(flnum) + '_summary.png')
 
