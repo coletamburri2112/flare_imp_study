@@ -29,7 +29,6 @@ yearstr = '2013'
 
 bestflarefile = "/Users/owner/Desktop/CU_Research/MAT_SOURCE/bestperf_more.mat"
 
-
 print("Loading the data...")
 
 sav_data_aia, sav_data, best304, start304, peak304, end304, eventindices,\
@@ -115,8 +114,8 @@ startin, peakin, endin, times, s304, e304, filter_304, med304, std304, \
                                         flnum, start304, peak304, end304,
                                         times304, curves304)
 
-posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos_step, aia8_neg_step,
-                                                     aiadat, nt)
+posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos_step,
+                                                     aia8_neg_step, aiadat, nt)
 
 print("Determining the regions of separation and elongation.")
 
@@ -220,7 +219,6 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
 print("Begin determination of shear.")
 
 
-
 # Establish limits for ribbons corresponding to shear code.
 negylow = ylim0_neg
 negyhi = ylim1_neg
@@ -235,9 +233,9 @@ posxhi = xlim1_pos
 # Isolate ribbons appropriately for shear analysis
 aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
     shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y,
-                           negylow=negylow,negyhi=negyhi, posylow=posylow, posyhi=posyhi,
-                           negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
-                           posxhi=posxhi, flag=1)
+                           negylow=negylow, negyhi=negyhi, posylow=posylow,
+                           posyhi=posyhi, negxlow=negxlow, negxhi=negxhi,
+                           posxlow=posxlow, posxhi=posxhi, flag=1)
 
 # Left and right coordinates of positive and negative ribbons
 lr_coord_neg_shear, lr_coord_pos_shear = \
@@ -269,9 +267,9 @@ fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
 
 print("Fermi Processing")
 
-raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr, 
-                                                                yearstr, 
-                                                                instrument, 
+raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr,
+                                                                yearstr,
+                                                                instrument,
                                                                 day, mo, year)
 
 # Figure for timestamp comparison
@@ -283,34 +281,34 @@ gfr_trans = 26
 # Electric field computation
 
 E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
-                                                   distneg_med, timelab, 
-                                                   hmi_dat, pos_rem, neg_rem, 
+                                                   distneg_med, timelab,
+                                                   hmi_dat, pos_rem, neg_rem,
                                                    flnum, dt1600, times,
                                                    startind=gfr_trans)
 
-E_pos = np.append(E_pos,E_pos[-1])
-E_neg = np.append(E_neg,E_neg[-1])
+E_pos = np.append(E_pos, E_pos[-1])
+E_neg = np.append(E_neg, E_neg[-1])
 
-shear_ang = fl_funcs.shear_to_angle(times,flnum,dt1600, left_gfr, right_gfr)
+shear_ang = fl_funcs.shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr)
 
 quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr,
                                         timelab, fl_funcs.find_nearest_ind,
-                                        flag = 0)
+                                        flag=0)
 
 print(quartermaxtim)
 
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
-                  filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
-                  dt304, timelab, conv_f,
-                  elonperiod_start_pos, elonperiod_end_pos,
-                  elonperiod_start_neg, elonperiod_end_neg,
-                  sepperiod_start_pos, sepperiod_end_pos,
-                  sepperiod_start_neg, sepperiod_end_neg, exp_ind,
-                  s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
-                  indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, E_pos, E_neg, time_E,
-                  low_hxr=0, high_hxr=800,  period_flag = 0, tick_space = 16)
+                       filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm,
+                       distneg_Mm, dt304, timelab, conv_f,
+                       elonperiod_start_pos, elonperiod_end_pos,
+                       elonperiod_start_neg, elonperiod_end_neg,
+                       sepperiod_start_pos, sepperiod_end_pos,
+                       sepperiod_start_neg, sepperiod_end_neg, exp_ind,
+                       s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
+                       indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
+                       gfr_trans, E_pos, E_neg, time_E,
+                       low_hxr=0, high_hxr=800,  period_flag=0, tick_space=16)
 
-file='low1shear'
+file = 'low1shear'
 
-np.savez(file,shear_ang,right_gfr,left_gfr)
+np.savez(file, shear_ang, right_gfr, left_gfr)
