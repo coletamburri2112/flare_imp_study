@@ -22,6 +22,7 @@ flnum = 1924
 instrument = 'n5'
 daystr = '04'
 mostr = 'apr'
+mostrcap = 'Apr'
 yearstr = '2014'
 
 bestflarefile = "/Users/owner/Desktop/CU_Research/MAT_SOURCE/bestperf_more.mat"
@@ -320,7 +321,7 @@ fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
                        sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                        s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                        indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                       gfr_trans, E_pos, E_neg, time_E,
+                       gfr_trans, E_pos, E_neg, time_E, daystr,mostrcap,yearstr,
                        low_hxr=3500, high_hxr=4500,  period_flag=0,
                        tick_space=4)
 

@@ -58,6 +58,7 @@ from astropy.convolution import convolve, Gaussian2DKernel
 import time as timepkg
 from matplotlib import font_manager
 from matplotlib.ticker import MaxNLocator
+import pandas as pd
 
 
 def conv_facts():
@@ -2219,9 +2220,9 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600,
         ax3 = ax2.twinx()
 
         # 1600 Angstrom light curve
-        lc1600 = ax3.plot(dt1600, normpos1600, linewidth=3, color='red',
+        lc1600 = ax3.plot(dt1600, scipy.signal.medfilt(normpos1600,kernel_size=5), linewidth=3, color='red',
                           label=r'1600$\AA$, +')
-        lc1600 = ax3.plot(dt1600, normneg1600, linewidth=3, color='blue',
+        lc1600 = ax3.plot(dt1600, scipy.signal.medfilt(normneg1600, kernel_size=5), linewidth=3, color='blue',
                           label=r'1600$\AA$, -')
 
         ax2.set_xlim([dt1600[0], dt1600[-1]])
@@ -4157,8 +4158,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, E_pos, E_neg, time_E, low_hxr=0, high_hxr=800,
-                  period_flag=0, flag=0, tick_space=0):
+                  gfr_trans, E_pos, E_neg, time_E, day, mo, year,low_hxr=0,
+                  high_hxr=800, period_flag=0, flag=0, tick_space=0):
     """
     Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1),
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
@@ -4282,6 +4283,10 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     norm304 = (filter_304 - min304) / (max304 - min304)
     normpos1600 = (pos1600 - minpos1600) / (maxpos1600 - minpos1600)
     normneg1600 = (neg1600 - minneg1600) / (maxneg1600 - minneg1600)
+    
+    
+    euvdf = pd.DataFrame({'euv':norm304},columns=['euv'])
+    euvdf_fix = euvdf.fillna(method='ffill').fillna(method='bfill')
 
     if flag == 0:
         GFR = np.mean([right_gfr, left_gfr], axis=0)
@@ -4302,24 +4307,27 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     max1600pos = np.argmax(normpos1600)
     max1600neg = np.argmax(normneg1600)
+    
 
-    fig, [ax1, ax2, ax3, ax4] = plt.subplots(4, 1, figsize=(20, 35))
-    lns1 = ax1.plot(dt1600, normpos1600, linewidth=1, color='red', marker='.',
-                    linestyle='dashed',
+    fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0])
+    
+    fermidf = pd.DataFrame({'hxr':fermi},columns=['hxr'])
+    fermidf_fix = fermidf.fillna(method='ffill').fillna(method='bfill')
+
+    fig, ((ax1, ax3),(ax2, ax4)) = plt.subplots(2,2, figsize=(35, 20))
+    
+    lns1 = ax1.plot(dt1600, scipy.signal.medfilt(normpos1600,kernel_size=5), linewidth=6, color='red',
                     label=r'Norm. 1600 $\AA$ Light Curve, +')
-    lns2 = ax1.plot(dt1600, normneg1600, linewidth=1, color='blue', marker='.',
-                    linestyle='dashed',
+    lns2 = ax1.plot(dt1600, normneg1600, color='blue',linewidth=6,
                     label=r'Norm. 1600 $\AA$ Light Curve, -')
 
-    lns3 = ax1.plot(dt304, norm304, color='black', linewidth=1, marker='.',
-                    linestyle='dashed',
+    lns3 = ax1.plot(dt304[s304:e304], scipy.signal.medfilt(euvdf_fix.euv[s304:e304],kernel_size=5),color='black', linewidth=6,
                     label=r'Norm. 304 $\AA$ Light Curve')
     ax1_0 = ax1.twinx()
     lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
-                      np.log10(scipy.signal.medfilt(
-                          cspec_hxr_sum[low_hxr:high_hxr, 0], 3)),
-                      marker='.', linestyle='dashed',
-                      label='Fermi Bkgd. Sub. Cts.')
+                      scipy.signal.medfilt(
+                          fermidf_fix.hxr, kernel_size=9),
+                      label='Fermi Bkgd. Sub. Cts.', color = 'magenta',linewidth=6)
     ax1.grid()
     lns = lns1+lns2+lns3+lns4
     labs = [k.get_label() for k in lns]
@@ -4333,12 +4341,15 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1.set_title('Chromospheric and HXR Light Curves',
                   fontsize=40)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
-
+    ax1.axvline(dt1600[hxrmax])
+    ax1.axvline(dt1600[max304], color='black',linestyle='dashdot')
+    ax1.axvline(dt1600[max1600pos], color='red',linestyle='dashed')
+    ax1.axvline(dt1600[max1600neg], color='blue', linestyle='dotted')
     lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c='green',
                     marker='o',
                     label='GFR')
 
-    ax2.set_ylabel('GFR Proxy', fontsize=30)
+    ax2.set_ylabel('Magnetic Shear Proxy', fontsize=30)
     ax2.set_title('Magnetic Shear, Reconnection Electric Field Strength',
                   fontsize=40)
     ax2.set_ylim([0, np.nanmax(GFR[gfr_trans:])+2])
@@ -4390,7 +4401,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax3.grid()
     ax3.set_ylabel(
-        'Parallel PIL Distance [Mm]', fontsize=30)
+        'Distance Parallel to PIL [Mm]', fontsize=30)
     ax3.set_title('Ribbon Elongation',
                   fontsize=40)
 
@@ -4414,7 +4425,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
              c='blue', markersize=6)
 
     ax4.set_ylabel(
-        'Perpendicular PIL Distance [Mm]', fontsize=30)
+        'Distance Perpendicular to PIL [Mm]', fontsize=30)
     ax4.set_title('Ribbon Separation',
                   fontsize=40)
 
@@ -4428,7 +4439,10 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.axvline(dt1600[max1600neg], color='blue',
                 label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
     ax4.grid()
-    ax4.set_xlabel('Time [HH:MM]',
+    ax4.set_xlabel('Time on '+day+' '+mo+' '+year+' [HH:MM]',
+                   fontsize=30)
+    
+    ax2.set_xlabel('Time on '+day+' '+mo+' '+year+' [HH:MM]',
                    fontsize=30)
 
     if tick_space > 0:
