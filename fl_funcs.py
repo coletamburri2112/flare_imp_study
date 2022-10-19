@@ -4295,11 +4295,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         # should just be gfr)
         GFR = right_gfr
 
-    hxrmax0 = np.argmax(cspec_hxr_sum[low_hxr:high_hxr])
-
-    hxrmaxt = fermitimes[hxrmax0]
-
-    hxrmax = find_nearest_ind(dt1600, hxrmaxt)
+    
 
     max304_0 = np.nanargmax(filter_304)
     max304t = dt304[max304_0]
@@ -4310,76 +4306,80 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     
 
     fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0])
-    
+    fermitimessel = fermitimes[low_hxr:high_hxr]
     fermidf = pd.DataFrame({'hxr':fermi},columns=['hxr'])
     fermidf_fix = fermidf.fillna(method='ffill').fillna(method='bfill')
 
+    hxrmax0 = np.argmax(fermidf_fix.hxr)
+    
+    hxrmaxt = fermitimessel[hxrmax0]
+    
+    hxrmax = find_nearest_ind(dt1600, hxrmaxt)
+    
     fig, ((ax1, ax3),(ax2, ax4)) = plt.subplots(2,2, figsize=(35, 20))
     
     lns1 = ax1.plot(dt1600, scipy.signal.medfilt(normpos1600,kernel_size=5), linewidth=6, color='red',
-                    label=r'Norm. 1600 $\AA$ Light Curve, +')
+                    label=r'1600 $\AA$, +')
     lns2 = ax1.plot(dt1600, normneg1600, color='blue',linewidth=6,
-                    label=r'Norm. 1600 $\AA$ Light Curve, -')
+                    label=r'1600 $\AA$, -')
 
     lns3 = ax1.plot(dt304[s304:e304], scipy.signal.medfilt(euvdf_fix.euv[s304:e304],kernel_size=5),color='black', linewidth=6,
-                    label=r'Norm. 304 $\AA$ Light Curve')
+                    label=r'304 $\AA$')
     ax1_0 = ax1.twinx()
+    ax1.axes.xaxis.set_ticklabels([])
     lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
                       scipy.signal.medfilt(
                           fermidf_fix.hxr, kernel_size=9),
-                      label='Fermi Bkgd. Sub. Cts.', color = 'magenta',linewidth=6)
+                      label='FERMI HXR', color = 'magenta',linewidth=6)
     ax1.grid()
     lns = lns1+lns2+lns3+lns4
     labs = [k.get_label() for k in lns]
-    font = font_manager.FontProperties(style='normal', size=20)
-    ax1.legend(lns, labs, prop=font, fontsize=20, loc='lower center')
-    ax1.set_ylabel('EUV Normalized Light Curves',
+    font = font_manager.FontProperties(style='normal', size=25)
+    ax1.legend(lns, labs, prop=font)
+    ax1.set_ylabel('Normalized EUV Light Curves',
                    fontsize=30)
     ax1_0.set_ylabel(
-        'HXR Flux [$cts* s^{-1}* cm^{-2}* keV^{-1}$]',
+        'HXR Flux [$log(cts/s/cm^{2}/keV)$]',
         fontsize=30)
-    ax1.set_title('Chromospheric and HXR Light Curves',
+    ax1.set_title('(a) EUV and HXR Light Curves',
                   fontsize=40)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
-    ax1.axvline(dt1600[hxrmax])
-    ax1.axvline(dt1600[max304], color='black',linestyle='dashdot')
-    ax1.axvline(dt1600[max1600pos], color='red',linestyle='dashed')
-    ax1.axvline(dt1600[max1600neg], color='blue', linestyle='dotted')
+    ax1.axvline(dt1600[hxrmax],color='magenta',linewidth=4)
+    ax1.axvline(dt1600[max304], color='black',linestyle='dashed',linewidth=4)
+    ax1.axvline(dt1600[max1600pos], color='red',linestyle='dashed',linewidth=4)
+    ax1.axvline(dt1600[max1600neg], color='blue', linestyle='dashed',linewidth=4)
     lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c='green',
-                    marker='o',
+                    linewidth=6,
                     label='GFR')
 
-    ax2.set_ylabel('Magnetic Shear Proxy', fontsize=30)
-    ax2.set_title('Magnetic Shear, Reconnection Electric Field Strength',
+    ax2.set_ylabel('Guide Field Ratio', fontsize=30)
+    ax2.set_title(r'(b) Magnetic Shear, $|E_{rec}|$',
                   fontsize=40)
     ax2.set_ylim([0, np.nanmax(GFR[gfr_trans:])+2])
     ax2.grid()
 
     ax2.set_xlim([dt1600[0], dt1600[-1]])
-    ax2.axvline(dt1600[hxrmax], label='Max. HXR')
-    ax2.axvline(dt1600[max304], color='black',
-                label=r'Max. 304 $\AA$', linestyle='dashdot')
-    ax2.axvline(dt1600[max1600pos], color='red',
-                label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
-    ax2.axvline(dt1600[max1600neg], color='blue',
-                label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
+    ax2.axvline(dt1600[hxrmax],color='magenta',linewidth=4)
+    ax2.axvline(dt1600[max304], color='black',linestyle='dashed',linewidth=4)
+    ax2.axvline(dt1600[max1600pos], color='red',linestyle='dashed',linewidth=4)
+    ax2.axvline(dt1600[max1600neg], color='blue', linestyle='dashed',linewidth=4)
     font = font_manager.FontProperties(style='normal', size=20)
-    ax2.legend(prop=font, fontsize=20)
+    #ax2.legend(prop=font, fontsize=20)
     ax2_0 = ax2.twinx()
-    lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, '--rx', label='$E_{pos}$')
-    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, '--bx', label='$E_{neg}$')
+    lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, color='red',linewidth=6, label='$|E_{rec, +}|$')
+    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, color='blue',linewidth=6, label='$|E_{rec, -}|$')
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax2_0.set_ylabel('Electric Field [V/cm]',
+    ax2_0.set_ylabel(r'$E_{rec}$ [V/cm]',
                      fontsize=30)
 
     font = font_manager.FontProperties(style='normal', size=20)
 
     lns = lns1+lns2+lns3
     labs = [k.get_label() for k in lns]
-    font = font_manager.FontProperties(style='normal', size=16)
-    ax2.legend(lns, labs, prop=font, fontsize=20)
+    font = font_manager.FontProperties(style='normal', size=25)
+    ax2.legend(lns, labs, prop=font, fontsize=25)
 
     # regions of separation/elongation make a little busy?
 
@@ -4393,40 +4393,35 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
             ax2.axvline(dt1600[l], c='red')
             ax2.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
 
-    ax3.plot(dt1600[indstrt_elon:-1], lens_pos_Mm[indstrt_elon:-1], '-o',
-             c='red', markersize=6)
+    ax3.plot(dt1600[indstrt_elon:-1], lens_pos_Mm[indstrt_elon:-1],
+             c='red', linewidth=6)
 
-    ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1], '-o',
-             c='blue', markersize=6)
+    ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1],
+             c='blue',linewidth=6)
 
     ax3.grid()
-    ax3.set_ylabel(
-        'Distance Parallel to PIL [Mm]', fontsize=30)
-    ax3.set_title('Ribbon Elongation',
+    #ax3.set_ylabel(
+    #    'Distance Parallel to PIL [Mm]', fontsize=30)
+    ax3.set_title('(c) Distance Parallel to PIL [Mm]',
                   fontsize=40)
 
     ax3.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax3.axvline(dt1600[hxrmax], label='Max. HXR')
-    ax3.axvline(dt1600[max304], color='black',
-                label=r'Max. 304 $\AA$', linestyle='dashdot')
-    ax3.axvline(dt1600[max1600pos], color='red',
-                label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
-    ax3.axvline(dt1600[max1600neg], color='blue',
-                label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
-    font = font_manager.FontProperties(style='normal', size=20)
 
-    ax3.legend(prop=font, fontsize=20)
+    ax3.axvline(dt1600[hxrmax],color='magenta',linewidth=4)
+    ax3.axvline(dt1600[max304], color='black',linestyle='dashed',linewidth=4)
+    ax3.axvline(dt1600[max1600pos], color='red',linestyle='dashed',linewidth=4)
+    ax3.axvline(dt1600[max1600neg], color='blue', linestyle='dashed',linewidth=4)
+    ax3.axes.xaxis.set_ticklabels([])
+    ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], c='red',
+             markersize=6, linewidth=6)
 
-    ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], '-o', c='red',
-             markersize=6)
+    ax4.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1],
+             c='blue', linewidth=6)
 
-    ax4.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1], '-o',
-             c='blue', markersize=6)
-
-    ax4.set_ylabel(
-        'Distance Perpendicular to PIL [Mm]', fontsize=30)
-    ax4.set_title('Ribbon Separation',
+    #ax4.set_ylabel(
+    #    'Distance Perpendicular to PIL [Mm]', fontsize=30)
+    ax4.set_title('(d) Distance Perpendicular to PIL [Mm]',
                   fontsize=40)
 
     ax4.set_xlim([dt1600[0], dt1600[-1]])
@@ -4471,6 +4466,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1_0.yaxis.set_tick_params(labelsize=24)
     ax2_0.xaxis.set_tick_params(labelsize=24)
     ax2_0.yaxis.set_tick_params(labelsize=24)
+    
+   
 
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
