@@ -4158,8 +4158,9 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                  gfr_trans, E_pos, E_neg, time_E, day, mo, year,low_hxr=0,
-                  high_hxr=800, period_flag=0, flag=0, tick_space=0):
+                  gfr_trans, E_pos, E_neg, time_E, day, mo, year, xcl, xclnum,
+                  imp, low_hxr=0, high_hxr=800, period_flag=0, flag=0,
+                  tick_space=0):
     """
     Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1),
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
@@ -4371,7 +4372,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax2_0.set_ylabel(r'$E_{rec}$ [V/cm]',
+    ax2_0.set_ylabel(r'$|E_{rec}|$ [V/cm]',
                      fontsize=30)
 
     font = font_manager.FontProperties(style='normal', size=20)
@@ -4393,11 +4394,11 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
             ax2.axvline(dt1600[l], c='red')
             ax2.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
 
-    ax3.plot(dt1600[indstrt_elon:-1], lens_pos_Mm[indstrt_elon:-1],
-             c='red', linewidth=6)
+    lns1 = ax3.plot(dt1600[indstrt_elon:-1], lens_pos_Mm[indstrt_elon:-1],
+             c='red', linewidth=6, label = 'Positive Ribbon')
 
-    ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1],
-             c='blue',linewidth=6)
+    lns2 = ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1],
+             c='blue',linewidth=6, label = 'Negative Ribbon')
 
     ax3.grid()
     #ax3.set_ylabel(
@@ -4412,12 +4413,16 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax3.axvline(dt1600[max304], color='black',linestyle='dashed',linewidth=4)
     ax3.axvline(dt1600[max1600pos], color='red',linestyle='dashed',linewidth=4)
     ax3.axvline(dt1600[max1600neg], color='blue', linestyle='dashed',linewidth=4)
+    lns = lns1+lns2
+    labs = [k.get_label() for k in lns]
+    font = font_manager.FontProperties(style='normal', size=25)
+    ax3.legend(lns, labs, prop=font, fontsize=25)
     ax3.axes.xaxis.set_ticklabels([])
-    ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], c='red',
-             markersize=6, linewidth=6)
+    lns1 = ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], c='red',
+             markersize=6, linewidth=6, label = 'Positive Ribbon')
 
-    ax4.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1],
-             c='blue', linewidth=6)
+    lns2 = ax4.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1],
+             c='blue', linewidth=6, label = 'Negative Ribbon')
 
     #ax4.set_ylabel(
     #    'Distance Perpendicular to PIL [Mm]', fontsize=30)
@@ -4426,18 +4431,18 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax4.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax4.axvline(dt1600[hxrmax], label='Max. HXR')
-    ax4.axvline(dt1600[max304], color='black',
-                label=r'Max. 304 $\AA$', linestyle='dashdot')
-    ax4.axvline(dt1600[max1600pos], color='red',
-                label=r'Max. pos. 1600 $\AA$', linestyle='dashed')
-    ax4.axvline(dt1600[max1600neg], color='blue',
-                label=r'Max. neg. 1600 $\AA$', linestyle='dotted')
+    ax4.axvline(dt1600[hxrmax],color='magenta',linewidth=4)
+    ax4.axvline(dt1600[max304], color='black',linestyle='dashed',linewidth=4)
+    ax4.axvline(dt1600[max1600pos], color='red',linestyle='dashed',linewidth=4)
+    ax4.axvline(dt1600[max1600neg], color='blue', linestyle='dashed',linewidth=4)
     ax4.grid()
-    ax4.set_xlabel('Time on '+day+' '+mo+' '+year+' [HH:MM]',
+    ax4.set_xlabel('Time, '+day+' '+mo+' '+year+' [HH:MM]',
                    fontsize=30)
-    
-    ax2.set_xlabel('Time on '+day+' '+mo+' '+year+' [HH:MM]',
+    lns = lns1+lns2
+    labs = [k.get_label() for k in lns]
+    font = font_manager.FontProperties(style='normal', size=25)
+    ax4.legend(lns, labs, prop=font, fontsize=25)
+    ax2.set_xlabel('Time, '+day+' '+mo+' '+year+' [HH:MM]',
                    fontsize=30)
 
     if tick_space > 0:
@@ -4466,7 +4471,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1_0.yaxis.set_tick_params(labelsize=24)
     ax2_0.xaxis.set_tick_params(labelsize=24)
     ax2_0.yaxis.set_tick_params(labelsize=24)
-    
+    fig.suptitle(day+'-'+mo+'-'+year+', GOES '+xcl+str(xclnum)+r', i$ = $'+str(imp)+r' $ln[nW/m^2/s]$',fontsize=40,fontstyle='italic')
    
 
     if period_flag == 1:
