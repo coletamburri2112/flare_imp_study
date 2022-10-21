@@ -315,6 +315,7 @@ print(quartermaxtim)
 
 muted = fl_funcs.color_muted()
 vibrant = fl_funcs.color_vibrant()
+medc = fl_funcs.color_medc()
 
 fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
                        filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm,
@@ -326,7 +327,7 @@ fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
                        s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                        indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                        gfr_trans, E_pos, E_neg, time_E, daystr,mostrcap,yearstr,
-                       xcl,xclnum,imp, muted, vibrant, low_hxr=3500, high_hxr=4500,
+                       xcl,xclnum,imp, muted, vibrant, medc, low_hxr=3500, high_hxr=4500,
                        period_flag=0, tick_space=4)
 
 file = 'high1shear'
