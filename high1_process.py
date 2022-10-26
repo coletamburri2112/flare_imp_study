@@ -26,7 +26,7 @@ mostrcap = 'Apr'
 yearstr = '2014'
 imp = -4.73
 
-bestflarefile = "/Users/owner/Desktop/CU_Research/MAT_SOURCE/bestperf_more.mat"
+bestflarefile = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/all_and_best_Oct_2022.mat'
 
 
 print("Loading the data...")
