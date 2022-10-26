@@ -4397,7 +4397,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   fontsize=50)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
     ax1.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
-    ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
+    ax1.axvline(dt1600[max304], color=medc[1],linestyle='dashed',linewidth=4)
     ax1.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
     ax1.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c=muted[2],
@@ -4416,8 +4416,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax2.grid()
 
     ax2.set_xlim([dt1600[0], dt1600[-1]])
-    ax2.axvline(dt1600[hxrmax],color=muted[3],linestyle='dashed',linewidth=4)
-    ax2.axvline(dt1600[max304], color=medc[4],linestyle='dotted',linewidth=4)
+    ax2.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
+    ax2.axvline(dt1600[max304], color=medc[1],linestyle='dashed',linewidth=4)
     ax2.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
     ax2.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     font = font_manager.FontProperties(style='normal', size=35)
@@ -4464,8 +4464,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax3.set_xlim([dt1600[0], dt1600[-1]])
 
 
-    ax3.axvline(dt1600[hxrmax],color=muted[3],linestyle='dashed',linewidth=4)
-    ax3.axvline(dt1600[max304], color=medc[4],linestyle='dotted',linewidth=4)
+    ax3.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
+    ax3.axvline(dt1600[max304], color=medc[1],linestyle='dashed',linewidth=4)
     ax3.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
     ax3.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     lns = lns1+lns2
@@ -4486,8 +4486,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax4.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax4.axvline(dt1600[hxrmax],color=muted[3],linestyle='dashed',linewidth=4)
-    ax4.axvline(dt1600[max304], color=medc[4],linestyle='dotted',linewidth=4)
+    ax4.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
+    ax4.axvline(dt1600[max304], color=medc[1],linestyle='dashed',linewidth=4)
     ax4.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
     ax4.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     ax4.grid()
