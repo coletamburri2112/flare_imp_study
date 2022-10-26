@@ -2152,7 +2152,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600,
     col2 = ax1.contour(X, Y, hmi_cumul_mask1[0, :, :], cmap='seismic')
 
     # Plot 304 Angstrom light curve
-    lc304 = ax2.plot(dt304, norm304, color='black', linewidth=1,
+    lc304 = ax2.plot(dt304, norm304, color = 'black', linewidth=1,
                      label=r'Norm. 304\AA Light Curve')
     ax3 = ax2.twinx()
 
