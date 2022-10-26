@@ -304,12 +304,12 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
     # Load matlab file, get 304 light curves and start/peak/end times for flare
     best304 = sio.loadmat(bestflarefile)
 
-    start304 = best304['starttimes_corr_more'][:, 0]
-    peak304 = best304['maxtimes_corr_more'][:, 0]
-    end304 = best304['endtimes_corr_more'][:, 0]
-    eventindices = best304['starttimes_corr_more'][:, 1]
-    times304 = best304['event_times_more']
-    curves304 = best304['event_curves_more']
+    start304 = best304['starttimes_corr'][:, 0]
+    peak304 = best304['maxtimes_corr'][:, 0]
+    end304 = best304['endtimes_corr'][:, 0]
+    eventindices = best304['starttimes_corr'][:, 1]
+    times304 = best304['event_times']
+    curves304 = best304['event_curves']
     sav_fname_aia = pjoin(data_dir, "/Users/owner/Desktop/Final_Selection/"
                           "AIA_Files/aia1600blos" + str(year).zfill(4) +
                           str(mo).zfill(2) + str(day).zfill(2) + "_" +
@@ -4370,11 +4370,11 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     
     lns1 = ax1.plot(dt1600, normpos1600,markersize=5,linewidth=6, color=vibrant[4],
                     label=r'1600 \AA, +')
-    lns2 = ax1.plot(dt1600, normneg1600, color=muted[0],linewidth=6,
+    lns2 = ax1.plot(dt1600, normneg1600, color='#81C4E7',linewidth=6,
                     label=r'1600 \AA, -')
 
     lns3 = ax1.plot(dt304[s304:e304], scipy.signal.medfilt(euvdf_fix.euv[s304:e304],
-                                                           kernel_size=5),color=medc[4], 
+                                                           kernel_size=5),color=medc[1], 
                     linewidth=6,
                     label=r'304 \AA')
     ax1_0 = ax1.twinx()
@@ -4382,7 +4382,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
                       scipy.signal.medfilt(
                           fermidf_fix.hxr, kernel_size=21),
-                      label='FERMI HXR', color = muted[3],linewidth=6)
+                      label='FERMI HXR', color='#4EB265',linewidth=6)
     ax1.grid()
     lns = lns1+lns2+lns3+lns4
     labs = [k.get_label() for k in lns]
@@ -4396,10 +4396,10 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1.set_title('(a) Light Curves, Shear,  and Rec. Electric Field',
                   fontsize=50)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
-    ax1.axvline(dt1600[hxrmax],color=muted[3],linestyle='dashed',linewidth=4)
-    ax1.axvline(dt1600[max304], color=medc[4],linestyle='dotted',linewidth=4)
+    ax1.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
+    ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
     ax1.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
-    ax1.axvline(dt1600[max1600neg], color=muted[0], linestyle='dashdot',linewidth=4)
+    ax1.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c=muted[2],
                     linewidth=6,
                     label='GFR')
@@ -4419,12 +4419,12 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax2.axvline(dt1600[hxrmax],color=muted[3],linestyle='dashed',linewidth=4)
     ax2.axvline(dt1600[max304], color=medc[4],linestyle='dotted',linewidth=4)
     ax2.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
-    ax2.axvline(dt1600[max1600neg], color=muted[0], linestyle='dashdot',linewidth=4)
+    ax2.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     font = font_manager.FontProperties(style='normal', size=35)
     #ax2.legend(prop=font, fontsize=20)
     ax2_0 = ax2.twinx()
     lns2 = ax2_0.plot(dt1600[gfr_trans:], E_pos, color=vibrant[4],linewidth=6, label='$|E_{rec, +}|$')
-    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, color=muted[0],linewidth=6, label='$|E_{rec, -}|$')
+    lns3 = ax2_0.plot(dt1600[gfr_trans:], E_neg, color='#81C4E7',linewidth=6, label='$|E_{rec, -}|$')
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
@@ -4453,7 +4453,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
              c=vibrant[4], linewidth=6, label = 'Positive Ribbon')
 
     lns2 = ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1],
-             c=muted[0],linewidth=6, label = 'Negative Ribbon')
+             c='#81C4E7',linewidth=6, label = 'Negative Ribbon')
 
     ax3.grid()
     ax3.set_ylabel(
@@ -4467,7 +4467,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax3.axvline(dt1600[hxrmax],color=muted[3],linestyle='dashed',linewidth=4)
     ax3.axvline(dt1600[max304], color=medc[4],linestyle='dotted',linewidth=4)
     ax3.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
-    ax3.axvline(dt1600[max1600neg], color=muted[0], linestyle='dashdot',linewidth=4)
+    ax3.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     lns = lns1+lns2
     labs = [k.get_label() for k in lns]
     font = font_manager.FontProperties(style='normal', size=35,family='Tahoma')
@@ -4477,7 +4477,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
              markersize=6, linewidth=6, label = 'Positive Ribbon')
 
     lns2 = ax4.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1],
-             c=muted[0], linewidth=6, label = 'Negative Ribbon')
+             c='#81C4E7', linewidth=6, label = 'Negative Ribbon')
 
     ax4.set_ylabel(
         'PIL-Perpendicular Distance [Mm]', fontsize=35)
@@ -4489,7 +4489,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.axvline(dt1600[hxrmax],color=muted[3],linestyle='dashed',linewidth=4)
     ax4.axvline(dt1600[max304], color=medc[4],linestyle='dotted',linewidth=4)
     ax4.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
-    ax4.axvline(dt1600[max1600neg], color=muted[0], linestyle='dashdot',linewidth=4)
+    ax4.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     ax4.grid()
     ax4.set_xlabel('Time, '+day+' '+mo+' '+year+' [HH:MM]',
                    fontsize=35)
