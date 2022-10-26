@@ -4195,7 +4195,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                   gfr_trans, E_pos, E_neg, time_E, day, mo, year, xcl, xclnum,
-                  imp, muted, vibrant, medc, low_hxr=0, high_hxr=800, period_flag=0, flag=0,
+                  imp, muted, vibrant, medc, level,low_hxr=0, high_hxr=800, period_flag=0, flag=0,
                   tick_space=0):
     """
     Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1),
@@ -4301,7 +4301,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     """
 
     plt.rcParams['text.usetex']=True
-    plt.rcParams['font.family']='Helvetica'
+    plt.rcParams['font.family']='sans-serif'
+    plt.rcParams['font.sans-serif'] = ['Tahoma']
     
     dt1600_1 = []
     dt304_1 = []
@@ -4533,10 +4534,11 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     fig.align_ylabels([ax1,ax2])
     fig.align_ylabels([ax1_0,ax2_0])
     fig.align_ylabels([ax3,ax4])
+
     
    
     fig.suptitle(day+'-'+mo+'-'+year+', GOES '+xcl+str(xclnum)+', '+
-                 r'$i =$ '+str(imp)+r' $ln[1/min]$',fontsize=60)
+                 r'$i =$ '+str(imp)+r' $ln[min^{-1}]$ ('+level+')',fontsize=60)
     
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.setp(ax3.get_xticklabels(), visible=False)
