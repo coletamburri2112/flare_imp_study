@@ -229,10 +229,10 @@ fl_funcs.exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
                        exponential, exponential_neg, poptposflx, poptnegflx,
                        flnum)
 
-print("Ribbon Area Plot")
+#print("Ribbon Area Plot")
 
-fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix,
-                      neg_area_pix, peak_pos, peak_neg, exp_ind)
+#fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix,
+#                      neg_area_pix, peak_pos, peak_neg, exp_ind)
 
 print("Begin shear determination.")
 

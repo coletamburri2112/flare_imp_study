@@ -11,22 +11,20 @@ from fl_funcs import exponential_neg
 import numpy as np
 
 year = 2013
-mo = 5
-day = 16
-sthr = 21
-stmin = 36
-arnum = 11748
-xclnum = 1.3
+mo = 10
+day = 15
+sthr = 8
+stmin = 26
+arnum = 11865
+xclnum = 1.8
 xcl = 'M'
-flnum = 1242
+flnum = 1414
 instrument = 'n5'
-daystr = '16'
-mostr = 'may'
-mostrcap = 'May'
+daystr = '15'
+mostr = 'oct'
 yearstr = '2013'
-imp = -5.06
 
-bestflarefile = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/all_and_best_Oct_2022.mat'
+bestflarefile = "/Users/owner/Desktop/CU_Research/MAT_SOURCE/bestperf_more.mat"
 
 
 print("Loading the data...")
@@ -44,42 +42,51 @@ hmi_cumul_mask1, hmi_step_mask1, hmi_pos_mask_c, hmi_neg_mask_c \
     = fl_funcs.pos_neg_masking(aia_cumul8, aia_step8, hmi_dat, last_mask)
 
 neg_rem, pos_rem = fl_funcs.spur_removal_sep(hmi_neg_mask_c, hmi_pos_mask_c,
-                                             pos_crit=2, neg_crit=2,
-                                             jhi=475, jhi2=490)
+                                             pos_crit=3, neg_crit=2,
+                                             ihi=500, ilo=325, jlo=250,
+                                             jhi=475, jhi2=500, jlo2=325,
+                                             ilo2=320, ihi2=500)
 
 print("Convolving the HMI images and making the PIL mask.")
 
-hmi_con_pos_c, hmi_con_neg_c, pil_mask_c = fl_funcs.gauss_conv(pos_rem,
-                                                               neg_rem,
-                                                               sigma=4)
+hmi_con_pos_c, hmi_con_neg_c, pil_mask_c = fl_funcs.gauss_conv(
+    pos_rem, neg_rem)
 
 pil_mask_c, ivs, dvs, hmik = fl_funcs.pil_gen(pil_mask_c, hmi_dat)
 
 print("Separation values determination.")
 
-aia8_pos_step, aia8_neg_step = fl_funcs.mask_sep(aia_step8, hmi_dat)
+aia8_pos, aia8_neg = fl_funcs.mask_sep(aia_step8, hmi_dat)
 
-pos_rem0, neg_rem0 = fl_funcs.spur_removal_sep2(aia8_pos_step, aia8_neg_step)
+pos_rem0, neg_rem0 = fl_funcs.spur_removal_sep2(aia8_pos, aia8_neg,
+                                                jhi=500, jlo=325, khi=475,
+                                                klo=400, jhi2=500, jlo2=250,
+                                                khi2=500, klo2=325)
 
 distpos_med, distpos_mean, distneg_med, distpos_mean \
     = fl_funcs.separation(aia_step8, ivs, dvs, pos_rem0, neg_rem0)
+
+distpos_med[17] = 0
 
 print("Elongation values determination.")
 
 aia8_pos_2, aia8_neg_2 = fl_funcs.mask_elon(aia_cumul8, hmi_dat)
 
-neg_rem1, pos_rem1 = fl_funcs.spur_removal_elon(aia8_pos_2, aia8_neg_2)
+neg_rem1, pos_rem1 = fl_funcs.spur_removal_elon(aia8_pos_2, aia8_neg_2,
+                                                jhi=500, jlo=400, khi=475,
+                                                klo=250, jhi2=500, jlo2=400,
+                                                khi2=500, klo2=350)
 
 ivs_lim, dvs_lim, med_x, med_y = fl_funcs.lim_pil(ivs, dvs)
 
-ylim0_neg = 200
-ylim1_neg = 600
-ylim0_pos = 200
-ylim1_pos = 600
-xlim0_neg = 200
-xlim1_neg = 600
-xlim0_pos = 200
-xlim1_pos = 600
+ylim0_neg = 400
+ylim1_neg = int(round(med_y)+100)
+ylim0_pos = int(round(med_y)-100)
+ylim1_pos = int(round(med_y)+100)
+xlim0_neg = 300
+xlim1_neg = 400
+xlim0_pos = 350
+xlim1_pos = int(round(med_y)+100)
 
 aia_pos_rem, aia_neg_rem = fl_funcs.rib_lim_elon(aia8_pos_2, aia8_neg_2,
                                                  pos_rem1, neg_rem1, med_x,
@@ -88,44 +95,18 @@ aia_pos_rem, aia_neg_rem = fl_funcs.rib_lim_elon(aia8_pos_2, aia8_neg_2,
                                                  xlim0_pos, xlim1_pos,
                                                  xlim0_neg, xlim1_neg)
 
-rib_pos_1, rib_pos_2, rib_neg_1, rib_neg_2 = fl_funcs.split_rib(aia_pos_rem,
-                                                                aia_neg_rem,
-                                                                380, 400)
-
-lr_coord_neg_1, lr_coord_pos_1 = fl_funcs.find_rib_coordinates(rib_pos_1,
-                                                               rib_neg_1)
-
-lr_coord_neg_2, lr_coord_pos_2 = fl_funcs.find_rib_coordinates(rib_pos_2,
-                                                               rib_neg_2)
+lr_coord_neg, lr_coord_pos = fl_funcs.find_rib_coordinates(aia_pos_rem,
+                                                           aia_neg_rem)
 
 ivs_sort, dvs_sort, sortedpil = fl_funcs.sort_pil(ivs_lim, dvs_lim)
 
-pil_right_near_pos_1, pil_left_near_pos_1, pil_right_near_neg_1,\
-    pil_left_near_neg_1 = fl_funcs.elon_dist_arrays(lr_coord_pos_1,
-                                                    lr_coord_neg_1, ivs_lim,
-                                                    dvs_lim, ivs_sort,
-                                                    dvs_sort)
+pil_right_near_pos, pil_left_near_pos, pil_right_near_neg, pil_left_near_neg \
+    = fl_funcs.elon_dist_arrays(lr_coord_pos, lr_coord_neg, ivs_lim, dvs_lim,
+                                ivs_sort, dvs_sort)
 
-pil_right_near_pos_2, pil_left_near_pos_2, pil_right_near_neg_2,\
-    pil_left_near_neg_2 = fl_funcs.elon_dist_arrays(lr_coord_pos_2,
-                                                    lr_coord_neg_2,
-                                                    ivs_lim, dvs_lim, ivs_sort,
-                                                    dvs_sort)
-
-lens_pos_1, lens_neg_1 = fl_funcs.elongation(pil_right_near_pos_1,
-                                             pil_left_near_pos_1,
-                                             pil_right_near_neg_1,
-                                             pil_left_near_neg_1,
-                                             sortedpil)
-
-lens_pos_2, lens_neg_2 = fl_funcs.elongation(pil_right_near_pos_2,
-                                             pil_left_near_pos_2,
-                                             pil_right_near_neg_2,
-                                             pil_left_near_neg_2,
-                                             sortedpil)
-
-lens_pos = [sum(x) for x in zip(lens_pos_1, lens_pos_2)]
-lens_neg = [sum(x) for x in zip(lens_neg_1, lens_neg_2)]
+lens_pos, lens_neg = fl_funcs.elongation(pil_right_near_pos, pil_left_near_pos,
+                                         pil_right_near_neg, pil_left_near_neg,
+                                         sortedpil)
 
 dist_pos = distpos_med
 dist_neg = distneg_med
@@ -142,10 +123,9 @@ startin, peakin, endin, times, s304, e304, filter_304, med304, std304, \
     timelab, aiadat, nt, dn1600, time304, times1600 \
     = fl_funcs.prep_304_1600_parameters(sav_data_aia, sav_data, eventindices,
                                         flnum, start304, peak304, end304,
-                                        times304, curves304, outflag=1242)
+                                        times304, curves304)
 
-posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos_step,
-                                                     aia8_neg_step,
+posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos, aia8_neg,
                                                      aiadat, nt)
 
 print("Determining the regions of separation and elongation.")
@@ -225,8 +205,8 @@ rec_rate_pos, rec_rate_neg = fl_funcs.rec_rate(rec_flux_pos, rec_flux_neg,
                                                dn1600, dt1600, peak_pos,
                                                peak_neg, flnum)
 
-exp_ind = np.argmax(pos1600)
-exp_ind_area = np.argmax(pos1600)
+exp_ind = np.argmax(rec_rate_pos+1)
+exp_ind_area = exp_ind
 
 print("Exponential curve fitting for the fluxes.")
 
@@ -234,8 +214,7 @@ poptposflx, pcovposflx, poptnegflx, pcovnegflx, \
     poptpos, poptneg, pcovpos, pcovneg, rise_pos_flx, \
     rise_neg_flx = fl_funcs.exp_curve_fit(exp_ind, exp_ind_area, pos_pix,
                                           neg_pix, exponential,
-                                          exponential_neg, pos_area,
-                                          neg_area)
+                                          exponential_neg, pos_area, neg_area)
 
 print("Exponential curve plot.")
 
@@ -264,10 +243,10 @@ posxhi = xlim1_pos
 
 # Isolate ribbons appropriately for shear analysis
 aia_neg_rem_shear, aia_pos_rem_shear = fl_funcs.\
-    shear_ribbon_isolation(aia8_neg_step, aia8_pos_step, med_x, med_y,
-                           negylow=negylow, negyhi=negyhi, posylow=posylow,
-                           posyhi=posyhi, negxlow=negxlow, negxhi=negxhi,
-                           posxlow=posxlow, posxhi=posxhi, flag=1)
+    shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y, negylow=negylow,
+                           negyhi=negyhi, posylow=posylow, posyhi=posyhi,
+                           negxlow=negxlow, negxhi=negxhi, posxlow=posxlow,
+                           posxhi=posxhi)
 
 # Left and right coordinates of positive and negative ribbons
 lr_coord_neg_shear, lr_coord_pos_shear = \
@@ -285,8 +264,7 @@ guide_right, guide_left = fl_funcs.guidefieldlen(pil_right_near_pos_shear,
                                                  pil_left_near_pos_shear,
                                                  pil_right_near_neg_shear,
                                                  pil_left_near_neg_shear,
-                                                 sortedpil,
-                                                 fl_funcs.curve_length)
+                                                 sortedpil)
 
 # Guide field ratio to the right and left edges of ribbons
 left_gfr, right_gfr = fl_funcs.gfrcalc(guide_left, guide_right,
@@ -299,12 +277,12 @@ fl_funcs.plt_gfr(times, right_gfr, left_gfr, flnum, dt1600)
 
 print("Fermi Processing")
 
-raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr,
-                                                                yearstr,
-                                                                instrument,
+raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr, 
+                                                                yearstr, 
+                                                                instrument, 
                                                                 day, mo, year,
-                                                                low=16500,
-                                                                high=18000,
+                                                                low=6100,
+                                                                high=7200,
                                                                 ylo=1e-3,
                                                                 yhi=100)
 
@@ -312,42 +290,22 @@ raw_hxr_sum, cspec_hxr_sum, fermitimes = fl_funcs.process_fermi(daystr, mostr,
 
 indstrt_sep = 1
 indstrt_elon = 1
-gfr_trans = 7
-
-E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
-                                                   distneg_med, timelab,
-                                                   hmi_dat, pos_rem, neg_rem,
-                                                   flnum, dt1600, times,
-                                                   startind=gfr_trans)
-
-E_pos = np.append(E_pos, E_pos[-1])
-E_neg = np.append(E_neg, E_neg[-1])
-
-shear_ang = fl_funcs.shear_to_angle(times, flnum, dt1600, left_gfr, right_gfr)
-
-quartermaxtim = fl_funcs.quartermaxtime(
-    gfr_trans, right_gfr, left_gfr, timelab, fl_funcs.find_nearest_ind, flag=0)
-
-print(quartermaxtim)
-
-muted = fl_funcs.color_muted()
-vibrant = fl_funcs.color_vibrant()
-medc = fl_funcs.color_medc()
-level = 'mid'
+gfr_trans = 1
 
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
-                       filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm,
-                       distneg_Mm, dt304, timelab, conv_f,
-                       elonperiod_start_pos, elonperiod_end_pos,
-                       elonperiod_start_neg, elonperiod_end_neg,
-                       sepperiod_start_pos, sepperiod_end_pos,
-                       sepperiod_start_neg, sepperiod_end_neg, exp_ind,
-                       s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
-                       indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                       gfr_trans, E_pos, E_neg, time_E, daystr,mostrcap,yearstr,
-                       xcl,xclnum,imp, muted, vibrant, medc, level,low_hxr=16500,
-                       high_hxr=18000,  period_flag=0, tick_space=8)
+                  filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm, distneg_Mm,
+                  dt304, timelab, conv_f,
+                  elonperiod_start_pos, elonperiod_end_pos,
+                  elonperiod_start_neg, elonperiod_end_neg,
+                  sepperiod_start_pos, sepperiod_end_pos,
+                  sepperiod_start_neg, sepperiod_end_neg, exp_ind,
+                  s304, e304, pos1600, neg1600, dn1600, indstrt_elon, 
+                  indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
+                  gfr_trans, low_hxr=6100, high_hxr=7200,  period_flag = 0)
 
-file = 'mid1shear'
+# Electric field computation
 
-np.savez(file, shear_ang, right_gfr, left_gfr)
+E_pos, E_neg, E_rat, time_E = fl_funcs.E_field_det(conv_f, distpos_med,
+                                                   distneg_med, timelab, 
+                                                   hmi_dat, pos_rem, neg_rem, 
+                                                   flnum, startind=1)

@@ -24,10 +24,12 @@ flnum = 1401
 instrument = 'n5'
 daystr = '13'
 mostr = 'oct'
+mostrcap = 'Oct'
 yearstr = '2013'
+imp = -6.18
 
 
-bestflarefile = "/Users/owner/Desktop/CU_Research/MAT_SOURCE/bestperf_more.mat"
+bestflarefile = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/all_and_best_Oct_2022.mat'
 
 print("Loading the data...")
 
@@ -205,10 +207,10 @@ fl_funcs.exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
                        exponential, exponential_neg, poptposflx, poptnegflx,
                        flnum)
 
-print("Ribbon Area Plot")
+#print("Ribbon Area Plot")
 
-fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix,
-                      neg_area_pix, peak_pos, peak_neg, exp_ind)
+#fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix,
+#                      neg_area_pix, peak_pos, peak_neg, exp_ind)
 
 print("Reconnection Rate Determination, Plotting.")
 
@@ -297,6 +299,11 @@ quartermaxtim = fl_funcs.quartermaxtime(gfr_trans, right_gfr, left_gfr,
 
 print(quartermaxtim)
 
+muted = fl_funcs.color_muted()
+vibrant = fl_funcs.color_vibrant()
+medc = fl_funcs.color_medc()
+level = 'low'
+
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                        filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm,
                        distneg_Mm, dt304, timelab, conv_f,
@@ -306,8 +313,9 @@ fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                        sepperiod_start_neg, sepperiod_end_neg, exp_ind,
                        s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                        indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
-                       gfr_trans, E_pos, E_neg, time_E,
-                       low_hxr=0, high_hxr=800,  period_flag=0, tick_space=16)
+                       gfr_trans, E_pos, E_neg, time_E,daystr,mostrcap,yearstr,
+                       xcl,xclnum,imp, muted, vibrant, medc, level,
+                       low_hxr=0, high_hxr=800,  period_flag=0, tick_space=20)
 
 file = 'low1shear'
 
