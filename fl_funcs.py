@@ -1615,6 +1615,26 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
         peakin = np.where(dn1600 == find_nearest(dn1600, peak304))
         endin = np.where(dn1600 == find_nearest(dn1600, end304))
 
+    if outflag == 1953:
+        file1953 = '/Users/owner/Desktop/CU_Research/nineteenfiftythree.mat'
+        ev304 = sio.loadmat(file1953)
+
+        curve304_0 = ev304['smspl']
+        time304_0 = ev304['windowthr']
+        st304 = ev304['tst']
+        peak304 = ev304['maxt']
+        end304 = ev304['tend']
+
+        curve304 = []
+        time304 = []
+        for i in range(len(curve304_0)):
+            curve304.append(curve304_0[i][0])
+            time304.append(time304_0[0][i])
+
+        startin = np.where(dn1600 == find_nearest(dn1600, st304))
+        peakin = np.where(dn1600 == find_nearest(dn1600, peak304))
+        endin = np.where(dn1600 == find_nearest(dn1600, end304))
+        
     elif outflag == 0:
         # Find index of nearest index to flare number in 304 flares array
         ind = (np.isclose(eventindices, flnum))
@@ -4195,7 +4215,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                   gfr_trans, E_pos, E_neg, time_E, day, mo, year, xcl, xclnum,
-                  imp, muted, vibrant, medc, level,low_hxr=0, high_hxr=800, period_flag=0, flag=0,
+                  imp, muted, vibrant, medc, level,low_hxr=0, high_hxr=800, period_flag=0, fermioff=0, flag=0,
                   tick_space=0):
     """
     Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1),
@@ -4378,37 +4398,46 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                                                            kernel_size=5),color=medc[1], 
                     linewidth=6,
                     label=r'304 \AA')
-    ax1_0 = ax1.twinx()
+    if fermioff  == 0:
+
+        minfer = min(scipy.signal.medfilt(
+            fermidf_fix.hxr[0:500], kernel_size=9))
+        maxfer = max(scipy.signal.medfilt(
+            fermidf_fix.hxr[0:500], kernel_size=9))
+        ax1_0 = ax1.twinx()
+        ax1_0.set_ylim(minfer,maxfer)
+        lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
+                          scipy.signal.medfilt(
+                              fermidf_fix.hxr, kernel_size=21),
+                          label='FERMI HXR', color='#4EB265',linewidth=6)
+        ax1_0.set_ylabel(
+            'HXR Flux [$log(cts/s/cm^{2}/keV)$]',
+            fontsize=35)
+        lns = lns1+lns2+lns3+lns4
+        ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
+    else:
+        lns = lns1+lns2+lns3
+   
     ax1.axes.xaxis.set_ticklabels([])
-    lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
-                      scipy.signal.medfilt(
-                          fermidf_fix.hxr, kernel_size=21),
-                      label='FERMI HXR', color='#4EB265',linewidth=6)
+
     ax1.grid()
-    lns = lns1+lns2+lns3+lns4
+
     labs = [k.get_label() for k in lns]
     font = font_manager.FontProperties(style='normal', size=35,family='Tahoma')
     ax1.legend(lns, labs, prop=font)
     ax1.set_ylabel('Normalized EUV Light Curves',
                    fontsize=35)
-    ax1_0.set_ylabel(
-        'HXR Flux [$log(cts/s/cm^{2}/keV)$]',
-        fontsize=35)
+
     ax1.set_title('(a) Light Curves, Shear,  and Rec. Electric Field',
                   fontsize=50)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
     ax1.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
-    ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
     ax1.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
     ax1.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c=muted[2],
                     linewidth=6,
                     label='GFR')
-    minfer = min(scipy.signal.medfilt(
-        fermidf_fix.hxr[0:500], kernel_size=9))
-    maxfer = max(scipy.signal.medfilt(
-        fermidf_fix.hxr[0:500], kernel_size=9))
-    ax1_0.set_ylim(minfer,maxfer)
+
     
     ax2.set_ylabel('Guide Field Ratio (GFR)', fontsize=35)
     #ax2.set_title(r'(b) Magnetic Shear and $|E_{rec}|$',
@@ -4502,20 +4531,23 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                    fontsize=35)
 
     if tick_space > 0:
-        ax1.set_xticks(dt1600[4::tick_space])
-        ax2.set_xticks(dt1600[4::tick_space])
-        ax3.set_xticks(dt1600[4::tick_space])
-        ax4.set_xticks(dt1600[4::tick_space])
-        ax1_0.set_xticks(dt1600[4::tick_space])
-        ax2_0.set_xticks(dt1600[4::tick_space])
-        ax1.set_xticklabels(dt1600_1[4::tick_space])
-        ax2.set_xticklabels(dt1600_1[4::tick_space])
-        ax3.set_xticklabels(dt1600_1[4::tick_space])
-        ax4.set_xticklabels(dt1600_1[4::tick_space])
-        ax1_0.set_xticklabels(dt1600_1[4::tick_space])
-        ax2_0.set_xticklabels(dt1600_1[4::tick_space])
-        
-    ax1_0.set_yticks([0, -1,-2])
+        ax1.set_xticks(dt1600[2::tick_space])
+        ax2.set_xticks(dt1600[2::tick_space])
+        ax3.set_xticks(dt1600[2::tick_space])
+        ax4.set_xticks(dt1600[2::tick_space])
+        if fermioff == 0:
+            ax1_0.set_xticks(dt1600[2::tick_space])
+        ax2_0.set_xticks(dt1600[2::tick_space])
+        ax1.set_xticklabels(dt1600_1[2::tick_space])
+        ax2.set_xticklabels(dt1600_1[2::tick_space])
+        ax3.set_xticklabels(dt1600_1[2::tick_space])
+        ax4.set_xticklabels(dt1600_1[2::tick_space])
+        if fermioff == 0:
+            ax1_0.set_xticklabels(dt1600_1[2::tick_space])
+        ax2_0.set_xticklabels(dt1600_1[2::tick_space])
+       
+    if fermioff  == 0:
+        ax1_0.set_yticks([0, -1,-2])
 
 
     
@@ -4527,12 +4559,15 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax3.yaxis.set_tick_params(labelsize=35)
     ax4.xaxis.set_tick_params(labelsize=35)
     ax4.yaxis.set_tick_params(labelsize=35)
-    ax1_0.xaxis.set_tick_params(labelsize=35)
-    ax1_0.yaxis.set_tick_params(labelsize=35)
+    if fermioff == 0:
+        ax1_0.xaxis.set_tick_params(labelsize=35)
+        ax1_0.yaxis.set_tick_params(labelsize=35)
     ax2_0.xaxis.set_tick_params(labelsize=35)
     ax2_0.yaxis.set_tick_params(labelsize=35)
     fig.align_ylabels([ax1,ax2])
-    fig.align_ylabels([ax1_0,ax2_0])
+    
+    if fermioff == 0:
+        fig.align_ylabels([ax1_0,ax2_0])
     fig.align_ylabels([ax3,ax4])
 
     

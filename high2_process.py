@@ -126,7 +126,7 @@ startin, peakin, endin, times, s304, e304, filter_304, med304, std304, \
     timelab, aiadat, nt, dn1600, time304, times1600 \
     = fl_funcs.prep_304_1600_parameters(sav_data_aia, sav_data, eventindices,
                                         flnum, start304, peak304, end304,
-                                        times304, curves304)
+                                        times304, curves304,outflag = 1953)
 
 posrib, negrib, pos1600, neg1600 = fl_funcs.img_mask(aia8_pos_step,
                                                      aia8_neg_step, aiadat, nt)
@@ -229,10 +229,10 @@ fl_funcs.exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
                        exponential, exponential_neg, poptposflx, poptnegflx,
                        flnum)
 
-print("Ribbon Area Plot")
+#print("Ribbon Area Plot")
 
-fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix,
-                      neg_area_pix, peak_pos, peak_neg, exp_ind)
+#fl_funcs.rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix,
+#                      neg_area_pix, peak_pos, peak_neg, exp_ind)
 
 print("Begin determination of shear")
 
@@ -329,7 +329,7 @@ fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
                        indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                        gfr_trans, E_pos, E_neg, time_E, daystr,mostrcap,yearstr,
                        xcl,xclnum,imp, muted, vibrant, medc, level, low_hxr=5000,
-                       high_hxr=7000,  period_flag=0,
+                       high_hxr=7000,  period_flag=0,fermioff=1,
                        flag=1, tick_space=2)
 
 
