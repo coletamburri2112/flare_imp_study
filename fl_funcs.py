@@ -1616,7 +1616,7 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
         endin = np.where(dn1600 == find_nearest(dn1600, end304))
 
     if outflag == 1953:
-        file1953 = '/Users/owner/Desktop/CU_Research/nineteenfiftythree.mat'
+        file1953 = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/nineteenfiftythree.mat'
         ev304 = sio.loadmat(file1953)
 
         curve304_0 = ev304['smspl']
@@ -4414,7 +4414,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
             'HXR Flux [$log(cts/s/cm^{2}/keV)$]',
             fontsize=35)
         lns = lns1+lns2+lns3+lns4
-        ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
+        ax1.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
     else:
         lns = lns1+lns2+lns3
    
@@ -4431,7 +4431,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax1.set_title('(a) Light Curves, Shear,  and Rec. Electric Field',
                   fontsize=50)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
-    ax1.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
+    ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
     ax1.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
     ax1.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c=muted[2],
