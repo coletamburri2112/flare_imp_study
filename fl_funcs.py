@@ -3918,6 +3918,10 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
 
     cspec_hxr = bksub_cspec[:, hxrinds]
     raw_hxr = raw_cspec[:, hxrinds]
+
+    cspec_hxr_sum = np.zeros(len(times))
+    raw_hxr_sum = np.zeros(len(times))
+    
     cspec_hxr_sum = np.sum(cspec_hxr, axis=2)
     raw_hxr_sum = np.sum(raw_hxr, axis=2)
 
@@ -4365,8 +4369,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     max1600pos = np.argmax(normpos1600)
     max1600neg = np.argmax(normneg1600)
     
-
-    fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0])
+    fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0]/275.0)
     fermitimessel = fermitimes[low_hxr:high_hxr]
     fermidf = pd.DataFrame({'hxr':fermi},columns=['hxr'])
     fermidf_fix = fermidf.fillna(method='ffill').fillna(method='bfill')
@@ -4547,7 +4550,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         ax2_0.set_xticklabels(dt1600_1[2::tick_space])
        
     if fermioff  == 0:
-        ax1_0.set_yticks([0, -1,-2])
+        ax1_0.set_yticks([-2,-3,-4])
 
 
     
@@ -4573,7 +4576,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     
    
     fig.suptitle(day+'-'+mo+'-'+year+', GOES '+xcl+str(xclnum)+', '+
-                 r'$i =$ '+str(imp)+r' $ln[min^{-1}]$ ('+level+')',fontsize=60)
+                 r'$i =$ '+str(imp)+r' [$ln(min^{-1})$] ('+level+')',fontsize=60)
     
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.setp(ax3.get_xticklabels(), visible=False)
