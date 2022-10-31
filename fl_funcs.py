@@ -4369,7 +4369,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     max1600pos = np.argmax(normpos1600)
     max1600neg = np.argmax(normneg1600)
     
-    fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0]/275.0)
+    fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0]/275.0)#divide by wavelength band for consistency with OSPEX; file gives cts/s/cm^2, this will divide by wavelength range after summing over all
     fermitimessel = fermitimes[low_hxr:high_hxr]
     fermidf = pd.DataFrame({'hxr':fermi},columns=['hxr'])
     fermidf_fix = fermidf.fillna(method='ffill').fillna(method='bfill')
@@ -4445,7 +4445,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax2.set_ylabel('Guide Field Ratio (GFR)', fontsize=35)
     #ax2.set_title(r'(b) Magnetic Shear and $|E_{rec}|$',
     #              fontsize=50)
-    ax2.set_ylim([0, np.nanmax(GFR[gfr_trans:])+2])
+    ax2.set_ylim([-0.2, np.nanmax(GFR[gfr_trans:])+2])
     ax2.grid()
 
     ax2.set_xlim([dt1600[0], dt1600[-1]])
@@ -4461,7 +4461,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax2_0.set_ylabel(r'$|E_{rec}|$ [V/cm]',
+    ax2_0.set_ylabel(r'$|E_{rec}|$ $[V/cm]$',
                      fontsize=35)
 
 
@@ -4490,7 +4490,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax3.grid()
     ax3.set_ylabel(
-        'PIL-Parallel Distance [Mm]', fontsize=35)
+        r'PIL-Parallel Distance $[Mm]$', fontsize=35)
     ax3.set_title('(b) PIL-Relative Ribbon Motion',
                   fontsize=50)
 
@@ -4513,7 +4513,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
              c='#81C4E7', linewidth=6, label = 'Negative Ribbon')
 
     ax4.set_ylabel(
-        'PIL-Perpendicular Distance [Mm]', fontsize=35)
+        r'PIL-Perpendicular Distance $[Mm]$', fontsize=35)
     #ax4.set_title('(d) Distance Perpendicular to PIL',
     #              fontsize=50)
 
@@ -4576,7 +4576,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     
    
     fig.suptitle(day+'-'+mo+'-'+year+', GOES '+xcl+str(xclnum)+', '+
-                 r'$i =$ '+str(imp)+r' [$ln(min^{-1})$] ('+level+')',fontsize=60)
+                 r'$i =$ '+str(imp)+r' $ln(min^{-1})$ ('+level+')',fontsize=60)
     
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.setp(ax3.get_xticklabels(), visible=False)
