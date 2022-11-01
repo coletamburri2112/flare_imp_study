@@ -4408,7 +4408,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         maxfer = max(scipy.signal.medfilt(
             fermidf_fix.hxr[0:500], kernel_size=9))
         ax1_0 = ax1.twinx()
-        ax1_0.set_ylim(minfer,maxfer)
+        ax1_0.set_ylim(minfer-0.25,maxfer+0.25)
         lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
                           scipy.signal.medfilt(
                               fermidf_fix.hxr, kernel_size=21),
@@ -4550,7 +4550,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         ax2_0.set_xticklabels(dt1600_1[2::tick_space])
        
     if fermioff  == 0:
-        ax1_0.set_yticks([-2,-3,-4])
+        ax1_0.set_yticks([-2,-3,-4,-5])
 
 
     
