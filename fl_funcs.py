@@ -4550,7 +4550,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         ax2_0.set_xticklabels(dt1600_1[2::tick_space])
        
     if fermioff  == 0:
-        ax1_0.set_yticks([-2,-3,-4,-5])
+        ax1_0.set_yticks([-2,-3,-4])
 
 
     
