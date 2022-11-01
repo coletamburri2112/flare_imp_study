@@ -1596,7 +1596,7 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
 
     # if flare not in list
     if outflag == 1242:
-        file1242 = '/Users/owner/Desktop/CU_Research/twelvefortytwo.mat'
+        file1242 = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/twelvefortytwo.mat'
         ev304 = sio.loadmat(file1242)
 
         curve304_0 = ev304['smspl']
