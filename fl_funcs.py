@@ -9,6 +9,7 @@ Created on Tue Mar 22 07:09:33 2022
 # University of Colorado Boulder
 # Advisors: Maria D. Kazachenko and Adam F. Kowalski
 
+
 # Major working functions for analysis of SDO/EVE 304 Angstrom light curves,
 # SDO/AIA 1600 Angstrom images and ribbon masks, and SDO/HMI magnetograms.
 # Includes algorithm for determination of separation and elongation of both
@@ -60,6 +61,8 @@ from matplotlib import font_manager
 from matplotlib.ticker import MaxNLocator
 import pandas as pd
 from matplotlib import gridspec
+import latex
+import netCDF4 as nc
 
 
 def conv_facts():
@@ -310,13 +313,13 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
     eventindices = best304['starttimes_corr'][:, 1]
     times304 = best304['event_times']
     curves304 = best304['event_curves']
-    sav_fname_aia = pjoin(data_dir, "/Users/owner/Desktop/Final_Selection/"
+    sav_fname_aia = pjoin(data_dir, "/Users/coletamburri/Desktop/Imp_Study_Transfer/"
                           "AIA_Files/aia1600blos" + str(year).zfill(4) +
                           str(mo).zfill(2) + str(day).zfill(2) + "_" +
                           str(sthr).zfill(2) + str(stmin).zfill(2) + "_" +
                           str(arnum).zfill(5) + "_"+xcl + str(xclnum) + ".sav")
     sav_data_aia = readsav(sav_fname_aia)
-    sav_fname = ("/Users/owner/Desktop/CU_Research/HMI_files/posfile" +
+    sav_fname = ("/Users/coletamburri/Desktop/Imp_Study_Transfer/HMI_files/posfile" +
                  str(year).zfill(4) + str(mo).zfill(2) + str(day).zfill(2) +
                  "_" + str(sthr).zfill(2) + str(stmin).zfill(2) + "_" +
                  str(arnum).zfill(5) + "_"+xcl + str(xclnum) +
@@ -1596,7 +1599,7 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
 
     # if flare not in list
     if outflag == 1242:
-        file1242 = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/twelvefortytwo.mat'
+        file1242 = '/Users/coletamburri/Desktop/imp_dev/twelvefortytwo.mat'
         ev304 = sio.loadmat(file1242)
 
         curve304_0 = ev304['smspl']
@@ -1616,7 +1619,7 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
         endin = np.where(dn1600 == find_nearest(dn1600, end304))
 
     if outflag == 1953:
-        file1953 = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/nineteenfiftythree.mat'
+        file1953 = '/Users/coletamburri/Desktop/imp_dev/nineteenfiftythree.mat'
         ev304 = sio.loadmat(file1953)
 
         curve304_0 = ev304['smspl']
@@ -2184,10 +2187,10 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600,
 
     ax1.set_title(str(year) + "-" + str(mo) + "-" + str(day) + ", AR" +
                   str(arnum)+"\n" + xcl + str(xclnum) + " Class Flare\n",
-                  font='Times New Roman', fontsize=35)
-    ax2.set_title(r'304\AA and 1600\AA Light Curves', fontsize=35)
+                  font='Times New Roman', fontsize=45)
+    ax2.set_title(r'304\AA and 1600\AA Light Curves', fontsize=45)
 
-    ax0.set_title('Ribbon Separation and Elongation', fontsize=35)
+    ax0.set_title('Ribbon Separation and Elongation', fontsize=45)
     ax0.legend(fontsize=15)
     ax0.grid()
     ax2.set_xlim([dn1600[0], dn1600[-1]])
@@ -2278,14 +2281,14 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600,
         ax0.axvline(dt1600[t], linewidth=4, color='black')
         ax1.set_title(str(year) + "-" + str(mo) + "-" + str(day) + ", AR" +
                       str(arnum) + ", " + xcl + str(xclnum) + " Class Flare",
-                      fontsize=35)
-        ax2.set_title(r'304\AA and 1600\AA Light Curves', fontsize=35)
+                      fontsize=45)
+        ax2.set_title(r'304\AA and 1600\AA Light Curves', fontsize=45)
         ax0.set_xlim([dt1600[0], dt1600[-1]])
         ax0.set_xlabel(['Time since 00:00 UT [min], ' + year + '-' + mo + '-' +
                         day], fontsize=15)
         ax0.set_ylabel('Separation [Mm]', fontsize=15)
         ax5.set_ylabel('Elongation [Mm]', fontsize=15)
-        ax0.set_title('Ribbon Separation and Elongation', fontsize=35)
+        ax0.set_title('Ribbon Separation and Elongation', fontsize=45)
         ax0.legend(fontsize=15)
         ax0.grid()
         ax1.text(57, 95, str(dt1600[t].hour).zfill(2) + ':' +
@@ -2309,7 +2312,7 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600,
         ani = animat.FuncAnimation(fig, animate, frames=5, interval=20,
                                    repeat_delay=0)
 
-    ani.save(['/Users/owner/Desktop/' + mo + '_' + day + '_' + year + '.gif'],
+    ani.save(['/Users/coletamburri/Desktop/' + mo + '_' + day + '_' + year + '.gif'],
              dpi=200)
 
     return None
@@ -2506,7 +2509,7 @@ def pil_poly_plot(X, Y, pil_mask_c, hmi_dat, ivs, dvs, conv_f, xarr_Mm,
     cbar.ax.set_xlabel('HMI Contours [kG]', font='Times New Roman',
                        fontsize=17, fontweight='bold')
     ax.set_title('PIL Mask and Polynomial', font='Times New Roman',
-                 fontsize=35, fontweight='bold')
+                 fontsize=45, fontweight='bold')
     fig.savefig(str(flnum) + '_pilpolyplot.png')
 
     return None
@@ -2548,7 +2551,7 @@ def ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt, dt1600):
     ax1.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',
                    fontsize=15)
     ax1.set_title('Positive Ribbon Separation', font='Times New Roman',
-                  fontsize=35)
+                  fontsize=45)
 
     # Plot separation, negative ribbon
     ax2.plot(timelab[pltstrt:], dist_neg[pltstrt:], '-+', c='red',
@@ -2560,7 +2563,7 @@ def ribbon_sep_plot(dist_pos, dist_neg, times, flnum, pltstrt, dt1600):
     ax2.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',
                    fontsize=15)
     ax2.set_title('Negative Ribbon Separation', font='Times New Roman',
-                  fontsize=35)
+                  fontsize=45)
 
     fig.savefig(str(flnum) + 'sep_raw_plt.png')
 
@@ -2609,7 +2612,7 @@ def ribbon_elon_plot(lens_pos, lens_neg, times, pltstrt, flnum, dt1600):
                    fontsize=17)
     ax1.set_ylabel('Cartesian Pixel Distance', font='Times New Roman',
                    fontsize=17)
-    ax1.set_title('Ribbon Elongation', font='Times New Roman', fontsize=35)
+    ax1.set_title('Ribbon Elongation', font='Times New Roman', fontsize=45)
 
     fig.savefig(str(flnum) + 'elon_raw_plt.png')
 
@@ -2671,7 +2674,7 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
     ax3.set_ylabel('Elongation Rate [Mm/sec]', font='Times New Roman',
                    fontsize=17)
     ax3.set_title('Ribbon Elongation Rate', font='Times New Roman',
-                  fontsize=35)
+                  fontsize=45)
 
     ax1.plot(timelab[indstart:-1], lens_pos_Mm[indstart:-1], '-o', c='red',
              markersize=6, label='mean')
@@ -2681,10 +2684,10 @@ def elon_period_plot(dpos_len, dneg_len, times, times1600, lens_pos_Mm,
     ax1.grid()
     ax1.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
     ax1.set_title('Ribbon Elongation, Positive Ribbon',
-                  font='Times New Roman', fontsize=35)
+                  font='Times New Roman', fontsize=45)
     ax2.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
     ax2.set_title('Ribbon Elongation, Negative Ribbon',
-                  font='Times New Roman', fontsize=35)
+                  font='Times New Roman', fontsize=45)
     ax2.grid()
 
     for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
@@ -2756,7 +2759,7 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
     ax3.set_ylabel('Separation Rate [Mm/sec]', font='Times New Roman',
                    fontsize=17)
     ax3.set_title('Ribbon Separation Rate', font='Times New Roman',
-                  fontsize=35)
+                  fontsize=45)
 
     ax1.plot(timelab[indstrt:-1], distpos_Mm[indstrt:-1], '-o', c='red',
              markersize=6, label='mean')
@@ -2765,10 +2768,10 @@ def sep_period_plot(dpos_dist, dneg_dist, times, distpos_Mm, distneg_Mm, flnum,
     ax1.grid()
     ax1.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
     ax1.set_title('Ribbon Separation, Positive Ribbon',
-                  font='Times New Roman', fontsize=35)
+                  font='Times New Roman', fontsize=45)
     ax2.set_ylabel('Distance [Mm]', font='Times New Roman', fontsize=17)
     ax2.set_title('Ribbon Separation, Negative Ribbon',
-                  font='Times New Roman', fontsize=35)
+                  font='Times New Roman', fontsize=45)
     ax2.grid()
 
     for i, j in zip(sepperiod_start_pos, sepperiod_end_pos):
@@ -2922,7 +2925,7 @@ def inst_flux_process(aia8_inst_pos, aia8_inst_neg, flnum, conv_f, hmi,
     ax.axvline(peak_neg, c='blue', linestyle='-.')
     ax.set_ylabel('Reconnection Flux [Mx]', font='Times New Roman',
                   fontsize=20)
-    ax.set_title('Reconnection Flux', font='Times New Roman', fontsize=35)
+    ax.set_title('Reconnection Flux', font='Times New Roman', fontsize=45)
     ax.legend()
 
     fig.savefig(str(flnum) + '_inst_flx.png')
@@ -3012,7 +3015,7 @@ def cumul_flux_process(aia8_pos, aia8_neg, conv_f, flnum, peak_pos, peak_neg,
     ax.axvline(peak_neg, c='blue', linestyle='-.')
     ax.set_ylabel('Reconnection Flux [Mx]', font='Times New Roman',
                   fontsize=20)
-    ax.set_title('Reconnection Flux', font='Times New Roman', fontsize=35)
+    ax.set_title('Reconnection Flux', font='Times New Roman', fontsize=45)
     ax.legend()
 
     fig.savefig(str(flnum) + '_cumul_flx.png')
@@ -3148,7 +3151,7 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
     ax.axvline(peak_neg, c='blue', linestyle='-.')
     ax.set_ylabel('Reconnection Flux [Mx]',
                   font='Times New Roman', fontsize=20)
-    ax.set_title('Reconnection Flux', font='Times New Roman', fontsize=35)
+    ax.set_title('Reconnection Flux', font='Times New Roman', fontsize=45)
     ax.plot(rise_pos_time, ds2*exponential(range(0, len(rise_pos_flx)),
                                            *poptposflx), 'r-',
             label='Exponential Model, +')
@@ -3182,12 +3185,12 @@ def exp_curve_plt(dt1600, rec_flux_pos, rec_flux_neg, rise_pos_flx,
 
     ax1.set_ylabel(r'Rec. Flx [Mx]', font='Times New Roman', fontsize=20)
     ax1.set_title('Reconnection Flux, Impulsive Phase',
-                  font='Times New Roman', fontsize=35)
+                  font='Times New Roman', fontsize=45)
     ax1.set_xlim(dt1600[0], dt1600[exp_ind])
     ax1.legend(fontsize=15)
     ax2.set_ylabel(r'Rec. Flx [Mx]', font='Times New Roman', fontsize=20)
     ax2.set_title('Reconnection Flux, Impulsive Phase',
-                  font='Times New Roman', fontsize=35)
+                  font='Times New Roman', fontsize=45)
     ax2.set_xlim(dt1600[0], dt1600[exp_ind])
     ax2.legend(fontsize=15)
 
@@ -3248,7 +3251,7 @@ def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix,
     ax.plot(rise_neg_time, exponential(range(0, len(rise_neg_area)), *poptneg),
             'b-', label='Exponential Model, -')
     ax.set_ylabel('Ribbon Area [cm^2]', font='Times New Roman', fontsize=20)
-    ax.set_title('Ribbon Area', font='Times New Roman', fontsize=35)
+    ax.set_title('Ribbon Area', font='Times New Roman', fontsize=45)
 
     # If end of modeling region is before end of impulsive phase
     ax.axvline(dt1600[exp_ind])
@@ -3274,12 +3277,12 @@ def rib_area_plt(dt1600, poptpos, poptneg, flnum, pos_area_pix, neg_area_pix,
     ax1.set_ylabel('Ribbon Area [cm^2]', font='Times New Roman',
                    fontsize=20)
     ax1.set_title('Ribbon Area, Impulsive Phase', font='Times New Roman',
-                  fontsize=35)
+                  fontsize=45)
     ax1.set_xlim(dt1600[0], dt1600[exp_ind])
     ax1.legend(fontsize=15)
     ax2.set_ylabel('Ribbon Area [cm^2]', font='Times New Roman', fontsize=20)
     ax2.set_title('Ribbon Area, Impulsive Phase', font='Times New Roman',
-                  fontsize=35)
+                  fontsize=45)
     ax2.set_xlim(dt1600[0], dt1600[exp_ind])
     ax2.legend(fontsize=15)
 
@@ -3332,7 +3335,7 @@ def rec_rate(rec_flux_pos, rec_flux_neg, dn1600, dt1600, peak_pos, peak_neg,
     ax.axvline(peak_neg, c='blue', linestyle='-.')
     ax.set_ylabel('Reconnection Rate [Mx/s]', font='Times New Roman',
                   fontsize=20)
-    ax.set_title('Reconnection Rate', font='Times New Roman', fontsize=35)
+    ax.set_title('Reconnection Rate', font='Times New Roman', fontsize=45)
 
     fig.savefig(str(flnum) + '_recrate.png')
 
@@ -3343,7 +3346,7 @@ def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
                            pt_range=[-2, -1, 1, 2], poscrit=6, negcrit=6,
                            negylow=400, negyhi=0, negxlow=300,
                            negxhi=400, posylow=0, posyhi=0,
-                           posxlow=350, posxhi=0, flag=0):
+                           posxlow=450, posxhi=0, flag=0):
     """
     Isolates ribbons with the shear algorithm in mind.
 
@@ -3386,7 +3389,7 @@ def shear_ribbon_isolation(aia8_neg, aia8_pos, med_x, med_y,
         default is 0.
     posxlow : int, optional
         Low x-dimension of image to search through, positive ribbon. The
-        default is 350.
+        default is 450.
     posxhi : int, optional
         High x-dimension of image to search through, positive ribbon. The
         default is 0.
@@ -3900,7 +3903,7 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
 
     """
 
-    directory = '/Users/owner/Desktop/CU_Research/Fermi_April_2022/'\
+    directory = '/Users/coletamburri/Desktop/Imp_Study_Transfer/'\
         'Fermi_Events_sav/'
 
     filename_cspec = directory + 'fermi_' + instrument + '_cspec_bkgd_' + day \
@@ -4076,7 +4079,7 @@ def E_field_det(conv_f, distpos, distneg, timelab, hmi_dat, pos_rem, neg_rem,
     ax.set_ylabel('Electric Field [V/cm]', font='Times New Roman',
                   fontsize=18)
     ax.set_title('Reconnection Electric Field Strength',
-                 font='Times New Roman', fontsize=35)
+                 font='Times New Roman', fontsize=45)
     ax.legend()
 
     fig.savefig(str(flnum) + '_E_field.png')
@@ -4177,7 +4180,7 @@ def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx,
 
 def color_muted():
     muted =['#332288',  '#88CCEE', '#44AA99', '#117733','#999933', '#DDCC77',
-            '#CC6677',  '#882255','#AA4499', '#DDDDDD']
+            '#CC6677',  '#882245','#AA4499', '#DDDDDD']
     # 0=indigo
     # 1=cyan
     # 2=teal
@@ -4196,14 +4199,14 @@ def color_vibrant():
     return vibrant
 
 def color_medc(printc='no'):
-    contrast = [(255,255,255), (238,204,102), (238,153,170), (102,153,204), 
+    contrast = [(245,245,245), (238,204,102), (238,153,170), (102,153,204), 
                 (153,119,0), (153,68,85), (0,68,136), (0,0,0)]
     
     # 0 is white, 1 is light yellow, 2 is light red, 3 is light blue,
     # 4 is dark yellow, 5 is dark red, 6 is dark blue, 7 is black
     for i in range(len(contrast)):    
         r, g, b = contrast[i]    
-        contrast[i] = (r / 255., g / 255., b / 255.)
+        contrast[i] = (r / 245., g / 245., b / 245.)
 
     return contrast
 
@@ -4219,8 +4222,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   s304, e304, pos1600, neg1600, dn1600, indstrt_elon,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                   gfr_trans, E_pos, E_neg, time_E, day, mo, year, xcl, xclnum,
-                  imp, muted, vibrant, medc, level,low_hxr=0, high_hxr=800, period_flag=0, fermioff=0, flag=0,
-                  tick_space=0):
+                  imp, muted, vibrant, medc, sxr_fn, level,low_hxr=0, high_hxr=800, period_flag=0, fermioff=0, flag=0,
+                  tick_space=0,fllab='Low1'):
     """
     Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1),
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
@@ -4370,6 +4373,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     max1600neg = np.argmax(normneg1600)
     
     fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0]/275.0)#divide by wavelength band for consistency with OSPEX; file gives cts/s/cm^2, this will divide by wavelength range after summing over all
+    #fermi = cspec_hxr_sum[low_hxr:high_hxr,0]/275.0
     fermitimessel = fermitimes[low_hxr:high_hxr]
     fermidf = pd.DataFrame({'hxr':fermi},columns=['hxr'])
     fermidf_fix = fermidf.fillna(method='ffill').fillna(method='bfill')
@@ -4382,9 +4386,26 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         
     # 0 is white, 1 is light yellow, 2 is light red, 3 is light blue,
     # 4 is dark yellow, 5 is dark red, 6 is dark blue, 7 is black
+    # processing sxr
+    
+    
+    
+    ds = nc.Dataset(sxr_fn)
+    sxr18flux = ds['b_flux']
+    
+    times_thisday = []
+    for i in range(len(ds['time'])):
+        times_thisday.append(nc.num2date(int(ds['time'][i].data),units=ds['time'].units,only_use_cftime_datetimes=False,only_use_python_datetimes=True))
+
+    sxrlow = find_nearest_ind(times_thisday,dt1600[0])
+    sxrhigh = find_nearest_ind(times_thisday,dt1600[-1])
+    minsxr = min(sxr18flux[sxrlow:sxrhigh])
+    maxsxr = max(sxr18flux[sxrlow:sxrhigh])
+    
+    normsxr = (sxr18flux - minsxr) / (maxsxr - minsxr)
     
     #fig, ((ax1, ax3),(ax2, ax4)) = plt.subplots(2,2, figsize=(40, 20))
-    fig = plt.figure(figsize=(40, 20))
+    fig = plt.figure(figsize=(30, 20))
     # set height ratios for subplots
     gs = gridspec.GridSpec(2,2) 
     ax1 = plt.subplot(gs[0,0])
@@ -4396,6 +4417,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                     label=r'1600 \AA, +')
     lns2 = ax1.plot(dt1600, normneg1600, color='#81C4E7',linewidth=6,
                     label=r'1600 \AA, -')
+    lns6 = ax1.plot(times_thisday,normsxr,linewidth=6,label=r'GOES 1-8 \AA')
 
     lns3 = ax1.plot(dt304[s304:e304], scipy.signal.medfilt(euvdf_fix.euv[s304:e304],
                                                            kernel_size=5),color=medc[1], 
@@ -4412,14 +4434,14 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
         lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
                           scipy.signal.medfilt(
                               fermidf_fix.hxr, kernel_size=21),
-                          label='FERMI HXR', color='#4EB265',linewidth=6)
+                          label='HXR', color='#4EB265',linewidth=6)
         ax1_0.set_ylabel(
-            'HXR Flux [$log(cts/s/cm^{2}/keV)$]',
-            fontsize=35)
-        lns = lns1+lns2+lns3+lns4
+            'HXR Flux',
+            fontsize=45)
+        lns = lns1+lns2+lns3+lns4+lns6
         ax1.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
     else:
-        lns = lns1+lns2+lns3
+        lns = lns1+lns2+lns3+lns6
    
     ax1.axes.xaxis.set_ticklabels([])
 
@@ -4428,10 +4450,10 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     labs = [k.get_label() for k in lns]
     font = font_manager.FontProperties(style='normal', size=35,family='Tahoma')
     ax1.legend(lns, labs, prop=font)
-    ax1.set_ylabel('Normalized EUV Light Curves',
-                   fontsize=35)
-
-    ax1.set_title('(a) Light Curves, Shear,  and Rec. Electric Field',
+    ax1.set_ylabel('EUV Light Curves',
+                   fontsize=45)
+    ax1.set_ylim([-0.1,1.1])
+    ax1.set_title('Flare Energy Dynamics',
                   fontsize=50)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
     ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
@@ -4442,7 +4464,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                     label='GFR')
 
     
-    ax2.set_ylabel('Guide Field Ratio (GFR)', fontsize=35)
+    ax2.set_ylabel('GFR', fontsize=45)
     #ax2.set_title(r'(b) Magnetic Shear and $|E_{rec}|$',
     #              fontsize=50)
     ax2.set_ylim([-0.2, np.nanmax(GFR[gfr_trans:])+2])
@@ -4462,7 +4484,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
     ax2_0.set_ylabel(r'$|E_{rec}|$ $[V/cm]$',
-                     fontsize=35)
+                     fontsize=45)
 
 
     lns = lns1+lns2+lns3
@@ -4490,11 +4512,12 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax3.grid()
     ax3.set_ylabel(
-        r'PIL-Parallel Distance $[Mm]$', fontsize=35)
-    ax3.set_title('(b) PIL-Relative Ribbon Motion',
+        r'$d_{\parallel}$ [Mm]', fontsize=45)
+    ax3.set_title('PIL-Relative Ribbon Motion',
                   fontsize=50)
 
     ax3.set_xlim([dt1600[0], dt1600[-1]])
+    ax3.yaxis.set_label_position("right")
 
 
     ax3.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
@@ -4503,8 +4526,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax3.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     lns = lns1+lns2
     labs = [k.get_label() for k in lns]
-    font = font_manager.FontProperties(style='normal', size=35,family='Tahoma')
-    ax3.legend(lns, labs, prop=font, fontsize=35)
+    font = font_manager.FontProperties(style='normal', size=45,family='Tahoma')
+    ax3.legend(lns, labs, prop=font, fontsize=45)
     ax3.axes.xaxis.set_ticklabels([])
     lns1 = ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], c=vibrant[4],
              markersize=6, linewidth=6, label = 'Positive Ribbon')
@@ -4513,9 +4536,10 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
              c='#81C4E7', linewidth=6, label = 'Negative Ribbon')
 
     ax4.set_ylabel(
-        r'PIL-Perpendicular Distance $[Mm]$', fontsize=35)
+        r'$d_{\perp}$ [Mm]', fontsize=45)
     #ax4.set_title('(d) Distance Perpendicular to PIL',
     #              fontsize=50)
+    ax4.yaxis.set_label_position("right")
 
     ax4.set_xlim([dt1600[0], dt1600[-1]])
 
@@ -4525,13 +4549,13 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax4.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     ax4.grid()
     ax4.set_xlabel('Time, '+day+' '+mo+' '+year+' [HH:MM]',
-                   fontsize=35)
+                   fontsize=45)
     lns = lns1+lns2
     labs = [k.get_label() for k in lns]
-    font = font_manager.FontProperties(style='normal', size=35,family='Tahoma')
-    #ax4.legend(lns, labs, prop=font, fontsize=35)
+    font = font_manager.FontProperties(style='normal', size=45,family='Tahoma')
+    #ax4.legend(lns, labs, prop=font, fontsize=45)
     ax2.set_xlabel('Time, '+day+' '+mo+' '+year+' [HH:MM]',
-                   fontsize=35)
+                   fontsize=45)
 
     if tick_space > 0:
         ax1.set_xticks(dt1600[2::tick_space])
@@ -4551,22 +4575,25 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
        
     if fermioff  == 0:
         ax1_0.set_yticks([-2,-3,-4])
+        
+    ax3.yaxis.tick_right()
+    ax4.yaxis.tick_right()
 
 
-    
-    ax1.xaxis.set_tick_params(labelsize=35)
-    ax1.yaxis.set_tick_params(labelsize=35)
-    ax2.xaxis.set_tick_params(labelsize=35)
-    ax2.yaxis.set_tick_params(labelsize=35)
-    ax3.xaxis.set_tick_params(labelsize=35)
-    ax3.yaxis.set_tick_params(labelsize=35)
-    ax4.xaxis.set_tick_params(labelsize=35)
-    ax4.yaxis.set_tick_params(labelsize=35)
+    labsize=45
+    ax1.xaxis.set_tick_params(labelsize=labsize)
+    ax1.yaxis.set_tick_params(labelsize=labsize)
+    ax2.xaxis.set_tick_params(labelsize=labsize)
+    ax2.yaxis.set_tick_params(labelsize=labsize)
+    ax3.xaxis.set_tick_params(labelsize=labsize)
+    ax3.yaxis.set_tick_params(labelsize=labsize)
+    ax4.xaxis.set_tick_params(labelsize=labsize)
+    ax4.yaxis.set_tick_params(labelsize=labsize)
     if fermioff == 0:
-        ax1_0.xaxis.set_tick_params(labelsize=35)
-        ax1_0.yaxis.set_tick_params(labelsize=35)
-    ax2_0.xaxis.set_tick_params(labelsize=35)
-    ax2_0.yaxis.set_tick_params(labelsize=35)
+        ax1_0.xaxis.set_tick_params(labelsize=labsize)
+        ax1_0.yaxis.set_tick_params(labelsize=labsize)
+    ax2_0.xaxis.set_tick_params(labelsize=labsize)
+    ax2_0.yaxis.set_tick_params(labelsize=labsize)
     fig.align_ylabels([ax1,ax2])
     
     if fermioff == 0:
@@ -4575,8 +4602,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     
    
-    fig.suptitle(day+'-'+mo+'-'+year+', GOES '+xcl+str(xclnum)+', '+
-                 r'$i =$ '+str(imp)+r' $ln(min^{-1})$ ('+level+')',fontsize=60)
+    fig.suptitle('Event '+fllab+' (GOES '+xcl+str(xclnum)+', '+
+                 r'$i =$ '+str(imp)+r' $ln[min^{-1}]$)',fontsize=70)
     
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.setp(ax3.get_xticklabels(), visible=False)
