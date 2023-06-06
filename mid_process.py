@@ -26,7 +26,7 @@ mostrcap = 'May'
 yearstr = '2013'
 imp = -5.06
 
-bestflarefile = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/all_and_best_Oct_2022.mat'
+bestflarefile = '/Users/coletamburri/Desktop/imp_dev/all_and_best_Oct_2022.mat'
 
 
 print("Loading the data...")
@@ -334,6 +334,8 @@ muted = fl_funcs.color_muted()
 vibrant = fl_funcs.color_vibrant()
 medc = fl_funcs.color_medc()
 level = 'mid'
+sxr_fn='/Users/coletamburri/Desktop/sci_gxrs-l2-irrad_g15_d201310516_v0-0-0.nc'
+
 
 fl_funcs.plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                        filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm,

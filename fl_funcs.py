@@ -63,6 +63,7 @@ import pandas as pd
 from matplotlib import gridspec
 import latex
 import netCDF4 as nc
+from matplotlib import font_manager
 
 
 def conv_facts():
@@ -2218,9 +2219,9 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600,
 
         # HMI contour over 1600 Angstrom image
         col2 = ax1.contour(X, Y, hmi_cumul_mask1[t, :, :], cmap='seismic')
-        ax1.set_xlabel('Horizontal Distance from Image Center [Mm]',
+        ax1.set_xlabel(r'Horizontal Distance from Image Center [$Mm$]',
                        fontsize=15)
-        ax1.set_ylabel('Vertical Distance from Image Center [Mm]',
+        ax1.set_ylabel(r'Vertical Distance from Image Center [$Mm$]',
                        fontsize=15)
 
         # Separation curves
@@ -2286,8 +2287,8 @@ def lc_plot(times, nt, time304, filter_304, s304, e304, dn1600, pos1600,
         ax0.set_xlim([dt1600[0], dt1600[-1]])
         ax0.set_xlabel(['Time since 00:00 UT [min], ' + year + '-' + mo + '-' +
                         day], fontsize=15)
-        ax0.set_ylabel('Separation [Mm]', fontsize=15)
-        ax5.set_ylabel('Elongation [Mm]', fontsize=15)
+        ax0.set_ylabel(r'Separation [$Mm$]', fontsize=15)
+        ax5.set_ylabel(r'Elongation [$Mm$]', fontsize=15)
         ax0.set_title('Ribbon Separation and Elongation', fontsize=45)
         ax0.legend(fontsize=15)
         ax0.grid()
@@ -4170,7 +4171,7 @@ def quartermaxtime(transtime, right_gfr, left_gfr, timelab, find_nearest_idx,
     mingfr = np.nanmin(gfr[transtime:])
     maxgfr = np.nanmax(gfr[transtime:])
 
-    minmaxavg = mingfr+0.5*np.mean([mingfr, maxgfr])
+    minmaxavg = mingfr+.25*(maxgfr-mingfr)
 
     idx = find_nearest_idx(gfr[transtime:], minmaxavg)
 
@@ -4223,7 +4224,8 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
                   indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                   gfr_trans, E_pos, E_neg, time_E, day, mo, year, xcl, xclnum,
                   imp, muted, vibrant, medc, sxr_fn, level,low_hxr=0, high_hxr=800, period_flag=0, fermioff=0, flag=0,
-                  tick_space=0,fllab='Low1'):
+                  tick_space=0,fllab='Low1',locationleg='upper left',ylimflag='off',pilparlim=[-0.5,35],pilperplim=[-0.5,6.5],
+                  gfrlim=[-0.5,12.5],Ereclim=[-0.5,8.5],sxroff=0,ax1legloc='upper left'):
     """
     Four-panel plot to compare HXR/1600 Angstrom/304 Angstrom (panel 1),
     ribbon separation (panel 2), ribbon elongation (panel 3), guide field ratio
@@ -4330,6 +4332,13 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     plt.rcParams['text.usetex']=True
     plt.rcParams['font.family']='sans-serif'
     plt.rcParams['font.sans-serif'] = ['Tahoma']
+    plt.rc('text.latex', preamble=r'\usepackage[cm]{sfmath}')
+
+    #rc = {"font.family" : "sans-serif", 
+    #  "mathtext.fontset" : "cm"}
+    #plt.rcParams.update(rc)
+    #plt.rcParams["font.serif"] = ["Times New Roman"] + plt.rcParams["font.serif"]
+
     
     dt1600_1 = []
     dt304_1 = []
@@ -4371,8 +4380,13 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     max1600pos = np.argmax(normpos1600)
     max1600neg = np.argmax(normneg1600)
+    fermi = cspec_hxr_sum[low_hxr:high_hxr,0]/275.0
+    minfermi = min(fermi)
+    maxfermi = max(fermi)
     
-    fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0]/275.0)#divide by wavelength band for consistency with OSPEX; file gives cts/s/cm^2, this will divide by wavelength range after summing over all
+    normfermi = (fermi - minfermi)/(maxfermi-minfermi)
+    
+    #fermi = np.log10(cspec_hxr_sum[low_hxr:high_hxr,0]/275.0)#divide by wavelength band for consistency with OSPEX; file gives cts/s/cm^2, this will divide by wavelength range after summing over all
     #fermi = cspec_hxr_sum[low_hxr:high_hxr,0]/275.0
     fermitimessel = fermitimes[low_hxr:high_hxr]
     fermidf = pd.DataFrame({'hxr':fermi},columns=['hxr'])
@@ -4405,42 +4419,53 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     normsxr = (sxr18flux - minsxr) / (maxsxr - minsxr)
     
     #fig, ((ax1, ax3),(ax2, ax4)) = plt.subplots(2,2, figsize=(40, 20))
-    fig = plt.figure(figsize=(30, 20))
+    fig = plt.figure(figsize=(13, 35))
     # set height ratios for subplots
-    gs = gridspec.GridSpec(2,2) 
+    gs = gridspec.GridSpec(3,1) 
     ax1 = plt.subplot(gs[0,0])
     ax2 = plt.subplot(gs[1,0],sharex=ax1)
-    ax3 = plt.subplot(gs[0,1])
-    ax4 = plt.subplot(gs[1,1],sharex=ax3)
+    ax3 = plt.subplot(gs[2,0],sharex=ax1)
+    #ax4 = plt.subplot(gs[3,0],sharex=ax1)
     
     lns1 = ax1.plot(dt1600, normpos1600,markersize=5,linewidth=6, color=vibrant[4],
                     label=r'1600 \AA, +')
     lns2 = ax1.plot(dt1600, normneg1600, color='#81C4E7',linewidth=6,
                     label=r'1600 \AA, -')
-    lns6 = ax1.plot(times_thisday,normsxr,linewidth=6,label=r'GOES 1-8 \AA')
 
     lns3 = ax1.plot(dt304[s304:e304], scipy.signal.medfilt(euvdf_fix.euv[s304:e304],
                                                            kernel_size=5),color=medc[1], 
                     linewidth=6,
                     label=r'304 \AA')
-    if fermioff  == 0:
 
-        minfer = min(scipy.signal.medfilt(
-            fermidf_fix.hxr[0:500], kernel_size=9))
-        maxfer = max(scipy.signal.medfilt(
-            fermidf_fix.hxr[0:500], kernel_size=9))
-        ax1_0 = ax1.twinx()
-        ax1_0.set_ylim(minfer-0.25,maxfer+0.25)
-        lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
-                          scipy.signal.medfilt(
-                              fermidf_fix.hxr, kernel_size=21),
-                          label='HXR', color='#4EB265',linewidth=6)
-        ax1_0.set_ylabel(
-            'HXR Flux',
-            fontsize=45)
-        lns = lns1+lns2+lns3+lns4+lns6
-        ax1.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
-    else:
+    
+    if fermioff  == 0 and sxroff == 0:
+
+        # minfer = min(scipy.signal.medfilt(
+        #     fermidf_fix.hxr[0:500], kernel_size=9))
+        # maxfer = max(scipy.signal.medfilt(
+        #     fermidf_fix.hxr[0:500], kernel_size=9))
+        # ax1_0 = ax1.twinx()
+        # ax1_0.set_ylim(minfer-0.25,maxfer+0.25)
+        # lns4 = ax1_0.plot(fermitimes[low_hxr:high_hxr],
+        #                   scipy.signal.medfilt(
+        #                       fermidf_fix.hxr, kernel_size=21),
+        #                   label='HXR', color='#4EB265',linewidth=6)
+        # ax1_0.set_ylabel(
+        #     r'HXR Flux [$log(cts/s/cm^{2}/keV)$]',
+        #     fontsize=45)
+        lns6 = ax1.plot(times_thisday,normsxr,linewidth=6,label=r'GOES SXR')
+        lns7 = ax1.plot(fermitimes[low_hxr:high_hxr], scipy.signal.medfilt(normfermi,kernel_size=5),color='#4EB265', 
+                        linewidth=6,
+                        label='Fermi HXR')
+        lns = lns1+lns2+lns3+lns6+lns7
+        #ax1.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
+    elif fermioff == 0 and sxroff == 1:
+        lns7 = ax1.plot(fermitimes[low_hxr:high_hxr], scipy.signal.medfilt(normfermi,kernel_size=5),color='#4EB265', 
+                        linewidth=6,
+                        label='Fermi HXR')
+        lns = lns1+lns2+lns3+lns7
+    elif fermioff == 1 and sxroff == 0:
+        lns6 = ax1.plot(times_thisday,normsxr,linewidth=6,label=r'GOES SXR')
         lns = lns1+lns2+lns3+lns6
    
     ax1.axes.xaxis.set_ticklabels([])
@@ -4449,32 +4474,35 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     labs = [k.get_label() for k in lns]
     font = font_manager.FontProperties(style='normal', size=35,family='Tahoma')
-    ax1.legend(lns, labs, prop=font)
-    ax1.set_ylabel('EUV Light Curves',
+    ax1.legend(lns, labs, prop=font,loc=ax1legloc,framealpha=0.95)
+    ax1.set_ylabel('Normalized Light Curves',
                    fontsize=45)
     ax1.set_ylim([-0.1,1.1])
-    ax1.set_title('Flare Energy Dynamics',
-                  fontsize=50)
+   
+    #ax1.set_title('Flare Energy Dynamics',
+    #              fontsize=50)
     ax1.set_xlim([dt1600[0], dt1600[-1]])
-    ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
-    ax1.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
-    ax1.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
+    #ax1.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
+    #ax1.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
+    #ax1.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     lns1 = ax2.plot(dt1600[gfr_trans:-1], GFR[gfr_trans:-1], c=muted[2],
                     linewidth=6,
                     label='GFR')
 
     
-    ax2.set_ylabel('GFR', fontsize=45)
+    ax2.set_ylabel('Guide Field Ratio (GFR)', fontsize=45)
     #ax2.set_title(r'(b) Magnetic Shear and $|E_{rec}|$',
     #              fontsize=50)
-    ax2.set_ylim([-0.2, np.nanmax(GFR[gfr_trans:])+2])
+    #ax2.set_ylim([-0.2, np.nanmax(GFR[gfr_trans:])+2])
+    ax2.set_ylim(gfrlim)
     ax2.grid()
+    
 
     ax2.set_xlim([dt1600[0], dt1600[-1]])
-    ax2.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
-    ax2.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
-    ax2.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
-    ax2.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
+    #ax2.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
+    #ax2.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
+    #ax2.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
+    #ax2.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     font = font_manager.FontProperties(style='normal', size=35)
     #ax2.legend(prop=font, fontsize=20)
     ax2_0 = ax2.twinx()
@@ -4485,99 +4513,110 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax2_0.set_ylabel(r'$|E_{rec}|$ $[V/cm]$',
                      fontsize=45)
+    
+    ax2_0.set_ylim(Ereclim)
 
 
     lns = lns1+lns2+lns3
     labs = [k.get_label() for k in lns]
     font = font_manager.FontProperties(style='normal', size=35,family='Tahoma')
     ax2.legend(lns, labs, prop=font, fontsize=35)
-
+    ax2.axes.xaxis.set_ticklabels([])
+    ax2_0.axes.xaxis.set_ticklabels([])
     # regions of separation/elongation make a littlfe busy?
 
     if period_flag == 1:
         for i, j in zip(sepperiod_start_pos, sepperiod_end_pos):
-            ax2.axvline(dt1600[i], c='green')
-            ax2.axvline(dt1600[j], c='red')
+            #ax2.axvline(dt1600[i], c='green')
+            #ax2.axvline(dt1600[j], c='red')
             ax2.axvspan(dt1600[i], dt1600[j], alpha=0.5, color='pink')
         for k, l in zip(elonperiod_start_neg, elonperiod_end_neg):
-            ax2.axvline(dt1600[k], c='green')
-            ax2.axvline(dt1600[l], c='red')
+            #ax2.axvline(dt1600[k], c='green')
+            #ax2.axvline(dt1600[l], c='red')
             ax2.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
 
     lns1 = ax3.plot(dt1600[indstrt_elon:-1], lens_pos_Mm[indstrt_elon:-1],
-             c=vibrant[4], linewidth=6, label = 'Positive Ribbon')
+             c=vibrant[4], linewidth=6, label = r'$d_{\parallel, +}$')
 
     lns2 = ax3.plot(dt1600[indstrt_elon:-1], lens_neg_Mm[indstrt_elon:-1],
-             c='#81C4E7',linewidth=6, label = 'Negative Ribbon')
+             c='#81C4E7',linewidth=6, label = r'$d_{\parallel, -}$')
 
     ax3.grid()
     ax3.set_ylabel(
-        r'$d_{\parallel}$ [Mm]', fontsize=45)
-    ax3.set_title('PIL-Relative Ribbon Motion',
-                  fontsize=50)
+        r'PIL-Parallel Distance ($d_{\parallel}$) [$Mm$]', fontsize=45)
+    #ax3.set_title('PIL-Relative Ribbon Motion',
+    #              fontsize=50)
+
+    
 
     ax3.set_xlim([dt1600[0], dt1600[-1]])
-    ax3.yaxis.set_label_position("right")
+    #ax3.yaxis.set_label_position("right")
+    ax4 = ax3.twinx()
+    #ax3.set_ylim([0,33])
+    ax3.set_ylim(pilparlim)
 
-
-    ax3.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
-    ax3.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
-    ax3.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
-    ax3.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
-    lns = lns1+lns2
-    labs = [k.get_label() for k in lns]
-    font = font_manager.FontProperties(style='normal', size=45,family='Tahoma')
-    ax3.legend(lns, labs, prop=font, fontsize=45)
+    #ax3.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
+    #ax3.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
+    #ax3.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
+    
     ax3.axes.xaxis.set_ticklabels([])
-    lns1 = ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], c=vibrant[4],
-             markersize=6, linewidth=6, label = 'Positive Ribbon')
+    lns3 = ax4.plot(dt1600[indstrt_sep:-1], distpos_Mm[indstrt_sep:-1], c=vibrant[4],
+             markersize=6, linestyle='dashed',linewidth=6, label = r'$d_{\perp, +}$')
 
-    lns2 = ax4.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1],
-             c='#81C4E7', linewidth=6, label = 'Negative Ribbon')
+    lns4 = ax4.plot(dt1600[indstrt_sep:-1], distneg_Mm[indstrt_sep:-1],
+             c='#81C4E7', linestyle='dashed',linewidth=6, label = r'$d_{\perp, -}$')
 
     ax4.set_ylabel(
-        r'$d_{\perp}$ [Mm]', fontsize=45)
+        r'PIL-Perpendicular Distance ($d_{\perp}$) [$Mm$]', fontsize=45,fontname="Tahoma")
     #ax4.set_title('(d) Distance Perpendicular to PIL',
     #              fontsize=50)
-    ax4.yaxis.set_label_position("right")
+    #ax4.yaxis.set_label_position("right")
 
     ax4.set_xlim([dt1600[0], dt1600[-1]])
+    
 
-    ax4.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
-    ax4.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
-    ax4.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
-    ax4.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
-    ax4.grid()
-    ax4.set_xlabel('Time, '+day+' '+mo+' '+year+' [HH:MM]',
+
+    #ax4.set_ylim([0,2.25])
+    ax4.set_ylim(pilperplim)
+    #ax4.axvline(dt1600[hxrmax],color='#4EB265',linestyle='dashed',linewidth=4)
+    #ax4.axvline(dt1600[max304], color=medc[1],linestyle='dotted',linewidth=4)
+    #ax4.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
+    #ax4.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
+    #ax4.grid()
+    ax3.set_xlabel('Time, '+day+' '+mo+' '+year+r' [$UT$]',
                    fontsize=45)
-    lns = lns1+lns2
+    lns = lns1+lns2+lns3+lns4
     labs = [k.get_label() for k in lns]
     font = font_manager.FontProperties(style='normal', size=45,family='Tahoma')
+    ax3.legend(lns, labs, prop=font, fontsize=35,loc=locationleg)
+    #lns = lns1+lns2+lns3+lns4
+    #labs = [k.get_label() for k in lns]
+    #font = font_manager.FontProperties(style='normal', size=45,family='Tahoma')
     #ax4.legend(lns, labs, prop=font, fontsize=45)
-    ax2.set_xlabel('Time, '+day+' '+mo+' '+year+' [HH:MM]',
+    ax2.set_xlabel('Time, '+day+' '+mo+' '+year+r' [$UT$]',
                    fontsize=45)
 
     if tick_space > 0:
         ax1.set_xticks(dt1600[2::tick_space])
-        ax2.set_xticks(dt1600[2::tick_space])
+        #ax2.set_xticks(dt1600[2::tick_space])
         ax3.set_xticks(dt1600[2::tick_space])
         ax4.set_xticks(dt1600[2::tick_space])
-        if fermioff == 0:
-            ax1_0.set_xticks(dt1600[2::tick_space])
-        ax2_0.set_xticks(dt1600[2::tick_space])
+        #if fermioff == 0:
+        #    ax1_0.set_xticks(dt1600[2::tick_space])
+        #ax2_0.set_xticks(dt1600[2::tick_space])
         ax1.set_xticklabels(dt1600_1[2::tick_space])
-        ax2.set_xticklabels(dt1600_1[2::tick_space])
+        #ax2.set_xticklabels(dt1600_1[2::tick_space])
         ax3.set_xticklabels(dt1600_1[2::tick_space])
         ax4.set_xticklabels(dt1600_1[2::tick_space])
-        if fermioff == 0:
-            ax1_0.set_xticklabels(dt1600_1[2::tick_space])
-        ax2_0.set_xticklabels(dt1600_1[2::tick_space])
+        #if fermioff == 0:
+        #    ax1_0.set_xticklabels(dt1600_1[2::tick_space])
+        #ax2_0.set_xticklabels(dt1600_1[2::tick_space])
        
-    if fermioff  == 0:
-        ax1_0.set_yticks([-2,-3,-4])
+    #if fermioff  == 0:
+    #    ax1_0.set_yticks([-2,-3,-4])
         
-    ax3.yaxis.tick_right()
-    ax4.yaxis.tick_right()
+    #ax3.yaxis.tick_right()
+    #ax4.yaxis.tick_right()
 
 
     labsize=45
@@ -4589,37 +4628,41 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     ax3.yaxis.set_tick_params(labelsize=labsize)
     ax4.xaxis.set_tick_params(labelsize=labsize)
     ax4.yaxis.set_tick_params(labelsize=labsize)
-    if fermioff == 0:
-        ax1_0.xaxis.set_tick_params(labelsize=labsize)
-        ax1_0.yaxis.set_tick_params(labelsize=labsize)
+    #if fermioff == 0:
+    #    ax1_0.xaxis.set_tick_params(labelsize=labsize)
+    #    ax1_0.yaxis.set_tick_params(labelsize=labsize)
     ax2_0.xaxis.set_tick_params(labelsize=labsize)
     ax2_0.yaxis.set_tick_params(labelsize=labsize)
     fig.align_ylabels([ax1,ax2])
     
-    if fermioff == 0:
-        fig.align_ylabels([ax1_0,ax2_0])
+
+    #if fermioff == 0:
+    #    fig.align_ylabels([ax1_0,ax2_0])
     fig.align_ylabels([ax3,ax4])
 
     
-   
-    fig.suptitle('Event '+fllab+' (GOES '+xcl+str(xclnum)+', '+
-                 r'$i =$ '+str(imp)+r' $ln[min^{-1}]$)',fontsize=70)
+    ax1.set_title('Event '+fllab,fontsize=55)
+    #ax1.set_title('Event '+fllab+'\n'+'(GOES '+xcl+str(xclnum)+', '+
+    #             r'$i =$ '+str(imp)+r' $ln[min^{-1}]$)',fontsize=55)
     
     plt.setp(ax1.get_xticklabels(), visible=False)
-    plt.setp(ax3.get_xticklabels(), visible=False)
+    plt.setp(ax2.get_xticklabels(), visible=False)
+    plt.setp(ax2_0.get_xticklabels(), visible=False)
+    #plt.setp(ax3.get_xticklabels(), visible=False)
     plt.subplots_adjust(hspace=.0)
 
     if period_flag == 1:
         for i, j in zip(elonperiod_start_pos, elonperiod_end_pos):
-            ax3.axvline(dt1600[i], c='green')
-            ax3.axvline(dt1600[j], c='red')
-            ax3.axvspan(dt1600[i], dt1600[j], alpha=0.5, color='pink')
+            print(0)
+            #ax3.axvline(dt1600[i], c='green')
+            #ax3.axvline(dt1600[j], c='red')
+            #ax3.axvspan(dt1600[i], dt1600[j], alpha=0.5, color='pink')
         for k, l in zip(elonperiod_start_neg, elonperiod_end_neg):
-            ax3.axvline(dt1600[k], c='green')
-            ax3.axvline(dt1600[l], c='red')
-            ax3.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
+            print(0)#ax3.axvline(dt1600[k], c='green')
+            #ax3.axvline(dt1600[l], c='red')
+            #ax3.axvspan(dt1600[k], dt1600[l], alpha=0.5, color='cyan')
 
-    plt.yticks(fontname = "Tahoma")
+   
     fig.savefig(str(flnum) + '_summary.png')
 
     return None

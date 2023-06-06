@@ -330,7 +330,7 @@ fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
                        indstrt_sep, fermitimes, raw_hxr_sum, cspec_hxr_sum,
                        gfr_trans, E_pos, E_neg, time_E, daystr,mostrcap,yearstr,
                        xcl,xclnum,imp, muted, vibrant, medc,sxr_fn,level,low_hxr=3500, high_hxr=4500,
-                       period_flag=0, tick_space=4,fllab='High1')
+                       period_flag=0, tick_space=4,fermioff=1,fllab='High1')
 
 file = 'high1shear'
 
