@@ -4511,7 +4511,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
 
     ax2_0.set_xlim([dt1600[0], dt1600[-1]])
 
-    ax2_0.set_ylabel(r'$|E_{rec}|$ $[V/cm]$',
+    ax2_0.set_ylabel(r'$|E_{rec}|$ $[V\; cm^{-1}]$',
                      fontsize=45)
     
     ax2_0.set_ylim(Ereclim)
@@ -4583,7 +4583,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     #ax4.axvline(dt1600[max1600pos], color=vibrant[4],linestyle='dashdot',linewidth=4)
     #ax4.axvline(dt1600[max1600neg], color='#81C4E7', linestyle='dashdot',linewidth=4)
     #ax4.grid()
-    ax3.set_xlabel('Time, '+day+' '+mo+' '+year+r' [$UT$]',
+    ax3.set_xlabel('Time, '+year+' '+mo+' '+day+r' [$UT$]',
                    fontsize=45)
     lns = lns1+lns2+lns3+lns4
     labs = [k.get_label() for k in lns]
@@ -4593,7 +4593,7 @@ def plt_fourpanel(times, right_gfr, left_gfr, flnum, dt1600, time304,
     #labs = [k.get_label() for k in lns]
     #font = font_manager.FontProperties(style='normal', size=45,family='Tahoma')
     #ax4.legend(lns, labs, prop=font, fontsize=45)
-    ax2.set_xlabel('Time, '+day+' '+mo+' '+year+r' [$UT$]',
+    ax2.set_xlabel('Time, '+year+' '+mo+' '+day+r' [$UT$]',
                    fontsize=45)
 
     if tick_space > 0:
