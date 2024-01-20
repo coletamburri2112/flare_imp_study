@@ -27,7 +27,7 @@ mostrcap = 'Apr'
 yearstr = '2014'
 imp = -4.18
 
-bestflarefile = '/Users/owner/Desktop/Oct_2022_Imp/imp_dev/all_and_best_Oct_2022.mat'
+bestflarefile = '/Users/coletamburri/Desktop/Impulsiveness_Paper/imp_dev/all_and_best_Jan_2024_alt.mat'
 
 
 print("Loading the data...")
@@ -35,7 +35,7 @@ print("Loading the data...")
 sav_data_aia, sav_data, best304, start304, peak304, end304, eventindices,\
     times304, curves304, aia_cumul8, aia_step8, last_cumul8, hmi_dat,\
     last_mask = fl_funcs.load_variables(bestflarefile, year, mo, day, sthr,
-                                        stmin, arnum, xclnum, xcl)
+                                        stmin, arnum, xclnum, xcl,flag=1)
 
 X, Y, conv_f, xarr_Mm, yarr_Mm = fl_funcs.conv_facts()
 
@@ -317,7 +317,7 @@ muted = fl_funcs.color_muted()
 vibrant = fl_funcs.color_vibrant()
 medc = fl_funcs.color_medc()
 level = 'high'
-sxr_fn='/Users/coletamburri/Desktop/sci_gxrs-l2-irrad_g15_d20140415_v0-0-0.nc'
+sxr_fn='/Users/coletamburri/Desktop/Impulsiveness_Paper/sci_gxrs-l2-irrad_g15_d20140415_v0-0-0.nc'
 
 fl_funcs.plt_fourpanel(times, gfr, gfr, flnum, dt1600, time304,
                        filter_304, lens_pos_Mm, lens_neg_Mm, distpos_Mm,

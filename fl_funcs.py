@@ -244,7 +244,7 @@ def find_nearest_ind(array, value):
 
 
 def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
-                   xcl):
+                   xcl,flag=0):
     """
     Load variables from HMI and AIA files.
 
@@ -301,6 +301,7 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
         throughout the flare.
     last_mask : list
         The last ribbon mask, multiplied by the HMI image for polarity.
+    flag: if diff posfile (for high2 processing, Jan 2024)
 
     """
     data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
@@ -314,17 +315,25 @@ def load_variables(bestflarefile, year, mo, day, sthr, stmin, arnum, xclnum,
     eventindices = best304['starttimes_corr'][:, 1]
     times304 = best304['event_times']
     curves304 = best304['event_curves']
-    sav_fname_aia = pjoin(data_dir, "/Users/coletamburri/Desktop/Imp_Study_Transfer/"
+    sav_fname_aia = pjoin(data_dir, "/Users/coletamburri/Desktop/Impulsiveness_Paper/Imp_Study_Transfer/"
                           "AIA_Files/aia1600blos" + str(year).zfill(4) +
                           str(mo).zfill(2) + str(day).zfill(2) + "_" +
                           str(sthr).zfill(2) + str(stmin).zfill(2) + "_" +
                           str(arnum).zfill(5) + "_"+xcl + str(xclnum) + ".sav")
     sav_data_aia = readsav(sav_fname_aia)
-    sav_fname = ("/Users/coletamburri/Desktop/Imp_Study_Transfer/HMI_files/posfile" +
+    sav_fname = ("/Users/coletamburri/Desktop/Impulsiveness_Paper/Imp_Study_Transfer/HMI_files/posfile" +
                  str(year).zfill(4) + str(mo).zfill(2) + str(day).zfill(2) +
                  "_" + str(sthr).zfill(2) + str(stmin).zfill(2) + "_" +
                  str(arnum).zfill(5) + "_"+xcl + str(xclnum) +
                  "_cut08_sat5000.00_brad.sav")
+    
+    if flag == 1:
+        sav_fname = ("/Users/coletamburri/Desktop/data4cole/posfile" +
+                     str(year).zfill(4) + str(mo).zfill(2) + str(day).zfill(2) +
+                     "_" + str(sthr).zfill(2) + str(stmin).zfill(2) + "_" +
+                     str(arnum).zfill(5) + "_"+xcl + str(xclnum) +
+                     "_cut08_sat5000.00_blos.sav")
+    
     sav_data = readsav(sav_fname)
 
     aia_cumul8 = sav_data.pos8
@@ -1600,7 +1609,7 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
 
     # if flare not in list
     if outflag == 1242:
-        file1242 = '/Users/coletamburri/Desktop/imp_dev/twelvefortytwo.mat'
+        file1242 = '/Users/coletamburri/Desktop/Impulsiveness_Paper/imp_dev/twelvefortytwo.mat'
         ev304 = sio.loadmat(file1242)
 
         curve304_0 = ev304['smspl']
@@ -1620,7 +1629,7 @@ def prep_304_1600_parameters(sav_data_aia, sav_data, eventindices, flnum,
         endin = np.where(dn1600 == find_nearest(dn1600, end304))
 
     if outflag == 1953:
-        file1953 = '/Users/coletamburri/Desktop/imp_dev/nineteenfiftythree.mat'
+        file1953 = '/Users/coletamburri/Desktop/Impulsiveness_Paper/imp_dev/nineteenfiftythree.mat'
         ev304 = sio.loadmat(file1953)
 
         curve304_0 = ev304['smspl']
@@ -3904,7 +3913,7 @@ def process_fermi(day, month, year, instrument, dayint, moint, yearint, low=0,
 
     """
 
-    directory = '/Users/coletamburri/Desktop/Imp_Study_Transfer/'\
+    directory = '/Users/coletamburri/Desktop/Impulsiveness_Paper/Imp_Study_Transfer/'\
         'Fermi_Events_sav/'
 
     filename_cspec = directory + 'fermi_' + instrument + '_cspec_bkgd_' + day \
